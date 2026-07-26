@@ -39,13 +39,28 @@ FROM nginx:1.27-alpine AS runtime
 
 # Drop the packaged default site so only our configuration is served.
 RUN rm -f /etc/nginx/conf.d/default.conf
-COPY nginx.conf /etc/nginx/conf.d/lxtranslator.conf
+
+# Templates are rendered into conf.d by the image's entrypoint at start up,
+# which is what turns the backend address into a deploy time setting.
+COPY nginx.conf.template /etc/nginx/templates/lxtranslator.conf.template
+
+# Backend the /api/ block forwards to: scheme and host, no path and no trailing
+# slash. The default matches the service name used in the Compose example; a
+# deployment whose backend lives elsewhere overrides it.
+ENV API_UPSTREAM=http://server:4000
+
+# Restrict substitution to the two variables the template actually uses.
+# Unfiltered, the entrypoint substitutes every environment variable it can see,
+# so an unrelated variable sharing a name with an nginx variable would rewrite
+# the configuration.
+ENV NGINX_ENVSUBST_FILTER='^(API_UPSTREAM|NGINX_LOCAL_RESOLVERS)$'
 
 COPY --from=build /app/dist /usr/share/nginx/html
 
 # nginx needs to write its pid and caches, so those paths are handed to the
-# unprivileged user rather than running the server as root.
-RUN chown -R nginx:nginx /usr/share/nginx/html /var/cache/nginx \
+# unprivileged user rather than running the server as root. conf.d is included
+# because the entrypoint writes the rendered template there before nginx starts.
+RUN chown -R nginx:nginx /usr/share/nginx/html /var/cache/nginx /etc/nginx/conf.d \
   && touch /var/run/nginx.pid \
   && chown nginx:nginx /var/run/nginx.pid
 
