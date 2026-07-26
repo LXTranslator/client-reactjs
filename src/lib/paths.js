@@ -78,6 +78,7 @@ export const paths = {
   namespace: (namespace) => `/${segment(namespace)}`,
   namespaceSettings: (namespace) => `/${segment(namespace)}/settings`,
   namespaceMembers: (namespace) => `/${segment(namespace)}/settings/members`,
+  namespaceExportFormats: (namespace) => `/${segment(namespace)}/settings/export_formats`,
 
   project: (namespace, projectId) => `/${segment(namespace)}/project/${segment(projectId)}`,
   projectUploads: (namespace, projectId) =>

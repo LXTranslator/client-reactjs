@@ -232,6 +232,12 @@ export function NamespaceSettingsPage() {
                 <Link className="btn btn--ghost" to={paths.namespaceMembers(namespace.user_id)}>
                   Manage members
                 </Link>
+                <Link
+                  className="btn btn--ghost"
+                  to={paths.namespaceExportFormats(namespace.user_id)}
+                >
+                  Export formats
+                </Link>
               </div>
             </form>
           </section>

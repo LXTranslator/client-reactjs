@@ -166,6 +166,22 @@ export async function apiRequest(path, options = {}) {
 }
 
 /**
+ * Builds the `export_format` query fragment, omitting it when none is chosen.
+ *
+ * Omitting rather than sending `default` keeps a download URL identical to the
+ * one this client produced before formats existed, so a bookmarked or scripted
+ * request is unaffected.
+ *
+ * @param {string} [exportFormat] Format identifier.
+ * @param {boolean} [continuation] True when a query string has already begun.
+ * @returns {string} The fragment, or an empty string.
+ */
+function exportFormatQuery(exportFormat, continuation = false) {
+  if (!exportFormat || exportFormat === 'default') return '';
+  return `${continuation ? '&' : '?'}export_format=${encodeURIComponent(exportFormat)}`;
+}
+
+/**
  * Endpoint helpers.
  *
  * Naming every endpoint in one object means a path change is a single edit, and
@@ -282,6 +298,28 @@ export const api = {
   mergeFileKeys: (fileId, formData) =>
     apiRequest(`/files/${encodeURIComponent(fileId)}/keys`, { method: 'POST', formData }),
 
+  /* Export formats. */
+  listExportFormats: (namespace) =>
+    apiRequest(`/namespaces/${encodeURIComponent(namespace)}/export_formats`),
+  createExportFormat: (namespace, body) =>
+    apiRequest(`/namespaces/${encodeURIComponent(namespace)}/export_formats`, {
+      method: 'POST',
+      body,
+    }),
+  updateExportFormat: (namespace, formatId, body) =>
+    apiRequest(
+      `/namespaces/${encodeURIComponent(namespace)}/export_formats/${encodeURIComponent(formatId)}`,
+      { method: 'PATCH', body },
+    ),
+  removeExportFormat: (namespace, formatId) =>
+    apiRequest(
+      `/namespaces/${encodeURIComponent(namespace)}/export_formats/${encodeURIComponent(formatId)}`,
+      { method: 'DELETE' },
+    ),
+  /** The same catalogue, reached from the file being downloaded. */
+  listFileExportFormats: (fileId) =>
+    apiRequest(`/files/${encodeURIComponent(fileId)}/export_formats`),
+
   /* Translations. */
   getTranslations: (fileId) => apiRequest(`/files/${encodeURIComponent(fileId)}/translations`),
   updateTranslation: (fileId, translationId, body) =>
@@ -294,14 +332,25 @@ export const api = {
       method: 'PATCH',
       body,
     }),
-  downloadAll: (fileId) => apiRequest(`/files/${encodeURIComponent(fileId)}/download`),
+  /*
+   * Downloads.
+   *
+   * `format` is how the download is packaged and `export_format` is the shape of
+   * the documents inside it. They are separate on the server for that reason,
+   * and kept separate here so a caller cannot conflate them.
+   */
+  downloadAll: (fileId, exportFormat) =>
+    apiRequest(`/files/${encodeURIComponent(fileId)}/download${exportFormatQuery(exportFormat)}`),
   /** Every locale in one archive, returned as a Blob rather than JSON. */
-  downloadArchive: (fileId) =>
-    apiRequest(`/files/${encodeURIComponent(fileId)}/download?format=zip`, {
-      responseType: 'blob',
-    }),
-  downloadLocale: (fileId, lang) =>
-    apiRequest(`/files/${encodeURIComponent(fileId)}/download?lang=${encodeURIComponent(lang)}`),
+  downloadArchive: (fileId, exportFormat) =>
+    apiRequest(
+      `/files/${encodeURIComponent(fileId)}/download?format=zip${exportFormatQuery(exportFormat, true)}`,
+      { responseType: 'blob' },
+    ),
+  downloadLocale: (fileId, lang, exportFormat) =>
+    apiRequest(
+      `/files/${encodeURIComponent(fileId)}/download?lang=${encodeURIComponent(lang)}${exportFormatQuery(exportFormat, true)}`,
+    ),
 
   /* Catalogue. */
   listProviders: () => apiRequest('/providers', { auth: false }),

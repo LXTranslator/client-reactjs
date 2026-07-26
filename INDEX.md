@@ -93,6 +93,7 @@ One file per route.
 | [`src/pages/OrganizationCreatePage.jsx`](src/pages/OrganizationCreatePage.jsx) | Creates an organization, checking identifier and email availability. |
 | [`src/pages/NamespaceSettingsPage.jsx`](src/pages/NamespaceSettingsPage.jsx) | Organization profile, contact email and two step deletion. |
 | [`src/pages/NamespaceMembersPage.jsx`](src/pages/NamespaceMembersPage.jsx) | Member invitation, role changes and removal. |
+| [`src/pages/NamespaceExportFormatsPage.jsx`](src/pages/NamespaceExportFormatsPage.jsx) | Export format catalogue and creation, with a live leaf preview. |
 | [`src/pages/ProjectsPage.jsx`](src/pages/ProjectsPage.jsx) | A namespace's project list and creation, at `/:namespace`. |
 | [`src/pages/ProjectDetailPage.jsx`](src/pages/ProjectDetailPage.jsx) | File list with processing status polling. |
 | [`src/pages/ProjectUploadsPage.jsx`](src/pages/ProjectUploadsPage.jsx) | File upload with multi select target languages. |
@@ -126,6 +127,7 @@ Layered exactly as the design system specifies, imported in order by `main.jsx`.
 | [`tests/organization.test.jsx`](tests/organization.test.jsx) | Organization creation, availability, contact email and deletion tests. |
 | [`tests/editor.test.jsx`](tests/editor.test.jsx) | Archive download, adding languages, merging keys and the compare dropdown. |
 | [`tests/locales.test.js`](tests/locales.test.js) | Locale catalogue, A to Z indexing, search and code validation. |
+| [`tests/exportFormat.test.jsx`](tests/exportFormat.test.jsx) | Format selection on the editor download and the format management page. |
 
 ## Agent Configuration
 

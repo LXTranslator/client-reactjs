@@ -157,8 +157,29 @@ the server surfaces in the interface with no client change.
 | `api.getTranslations(fileId)` | `GET /files/:fileId/translations` |
 | `api.updateTranslation(fileId, translationId, body)` | `PATCH /files/:fileId/translations/:translationId` |
 | `api.updateMasterText(fileId, keyId, body)` | `PATCH /files/:fileId/keys/:keyId` |
-| `api.downloadLocale(fileId, lang)` | `GET /files/:fileId/download?lang=` |
-| `api.downloadAll(fileId)` | `GET /files/:fileId/download` |
+| `api.downloadLocale(fileId, lang, exportFormat)` | `GET /files/:fileId/download?lang=` |
+| `api.downloadAll(fileId, exportFormat)` | `GET /files/:fileId/download` |
+| `api.downloadArchive(fileId, exportFormat)` | `GET /files/:fileId/download?format=zip` |
+| `api.listFileExportFormats(fileId)` | `GET /files/:fileId/export_formats` |
+
+## Export formats
+
+| Helper | Endpoint |
+|---|---|
+| `api.listExportFormats(namespace)` | `GET /namespaces/:namespace/export_formats` |
+| `api.createExportFormat(namespace, body)` | `POST /namespaces/:namespace/export_formats` |
+| `api.updateExportFormat(namespace, formatId, body)` | `PATCH /namespaces/:namespace/export_formats/:formatId` |
+| `api.removeExportFormat(namespace, formatId)` | `DELETE /namespaces/:namespace/export_formats/:formatId` |
+
+A format describes the shape a downloaded locale document is written in, and it
+belongs to a namespace rather than to a project, so one description serves every
+project underneath.
+
+Two ship with the server and appear in every namespace: `default`, which carries
+the translated string beside the fingerprint of the English master, and
+`key_value`, which carries the bare string. Both are marked `built_in` and the
+server refuses to change or remove either, so the interface shows no control
+that would fail.
 
 ### Upload
 
@@ -196,7 +217,14 @@ pointing an anchor at the endpoint, because a plain link cannot carry the
 Authorization header. `src/lib/download.js` then hands the result to the browser
 as a file.
 
-Each exported leaf carries the value and its tracking hash:
+`format` and `export_format` answer different questions and stay separate here
+as they do on the server: `format` is how the download is packaged, and
+`export_format` is the shape of the documents inside it. The client omits
+`export_format` entirely when the default is selected, so a URL it produces is
+identical to the one it produced before formats existed.
+
+In the `default` format each exported leaf carries the value and its tracking
+hash:
 
 ```json
 {
@@ -208,3 +236,13 @@ Each exported leaf carries the value and its tracking hash:
   }
 }
 ```
+
+In `key_value` the same locale comes back ready to use as it is:
+
+```json
+{ "greeting": { "hello": "สวัสดี {name}" } }
+```
+
+That trade is real and the editor says so when the format is selected: a
+document with no fingerprint cannot tell a consumer that its English source
+changed. The stale markers in the editor still do.

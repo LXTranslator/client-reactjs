@@ -31,6 +31,25 @@ export const LANG_CODE_PATTERN = LOCALE_CODE_PATTERN;
 /** Project names: letters, digits, spaces, dots, underscores and hyphens. */
 export const PROJECT_NAME_PATTERN = /^[A-Za-z0-9 ._-]+$/;
 
+/**
+ * Export format identifiers, mirroring the server's `FORMAT_ID_PATTERN`.
+ *
+ * The identifier reaches a query string and a stored unique key, so the
+ * character set is the same narrow one namespace identifiers use.
+ */
+export const FORMAT_ID_PATTERN = /^[a-z0-9_]{2,50}$/;
+
+/**
+ * Leaf field names, mirroring the server's `FIELD_NAME_PATTERN`.
+ *
+ * Starting with a letter is what keeps `__proto__` out, which matters because
+ * the name becomes a key in an exported JSON document.
+ */
+export const FIELD_NAME_PATTERN = /^[a-z][a-z0-9_]{0,39}$/;
+
+/** Identifiers the server ships and refuses to let a namespace redefine. */
+export const BUILT_IN_FORMAT_IDS = Object.freeze(['default', 'key_value']);
+
 /** Minimum password length. Length carries most of the strength. */
 export const PASSWORD_MIN_LENGTH = 10;
 
@@ -55,6 +74,11 @@ export const PLACEHOLDERS = Object.freeze({
   apiKey: 'your_provider_api_key',
   apiKeyLabel: 'primary',
   memberIdentifier: 'teammate_id or teammate@example.com',
+  formatId: 'flat_text',
+  formatName: 'Flat text',
+  formatDescription: 'One dotted key per line, no fingerprint',
+  valueField: 'value',
+  hashField: 'hash',
 });
 
 /**
@@ -273,6 +297,44 @@ export function validateTranslationFile(file, options = {}) {
   if (file.size === 0) return 'That file is empty.';
   if (file.size > maxBytes) {
     return `The file must be ${Math.floor(maxBytes / 1024)} KB or smaller.`;
+  }
+  return null;
+}
+
+/**
+ * Validates an export format identifier.
+ *
+ * @param {string} value Candidate value.
+ * @returns {string|null} An error message, or null when valid.
+ */
+export function validateFormatId(value) {
+  const trimmed = String(value ?? '').trim();
+  if (trimmed.length === 0) return 'Enter an identifier.';
+  if (BUILT_IN_FORMAT_IDS.includes(trimmed)) {
+    return `"${trimmed}" is built in and cannot be redefined.`;
+  }
+  if (!FORMAT_ID_PATTERN.test(trimmed)) {
+    return 'Use 2 to 50 lowercase letters, digits and underscores.';
+  }
+  return null;
+}
+
+/**
+ * Validates a leaf field name.
+ *
+ * The rule is the server's, repeated here so a name that would be refused is
+ * caught before the request rather than after it. The server refuses it too;
+ * this is a courtesy, not the defence.
+ *
+ * @param {string} value Candidate value.
+ * @param {boolean} [required] Whether an empty value is a failure.
+ * @returns {string|null} An error message, or null when valid.
+ */
+export function validateFieldName(value, required = true) {
+  const trimmed = String(value ?? '').trim();
+  if (trimmed.length === 0) return required ? 'Enter a field name.' : null;
+  if (!FIELD_NAME_PATTERN.test(trimmed)) {
+    return 'Start with a letter, then lowercase letters, digits and underscores.';
   }
   return null;
 }
