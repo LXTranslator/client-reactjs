@@ -71,6 +71,10 @@ server {
         # of the process, which breaks whenever a hosting platform moves the
         # backend. With a variable an unreachable backend is a 502 on /api/ and
         # nothing more.
+        #
+        # Resolving per request needs a nameserver named here. The entrypoint
+        # fills NGINX_LOCAL_RESOLVERS from the container's own /etc/resolv.conf,
+        # but only because the Dockerfile opts in to it.
         resolver ${NGINX_LOCAL_RESOLVERS} valid=30s ipv6=off;
         set $api_upstream ${API_UPSTREAM};
         proxy_pass $api_upstream;

@@ -55,6 +55,19 @@ ENV API_UPSTREAM=http://server:4000
 # the configuration.
 ENV NGINX_ENVSUBST_FILTER='^(API_UPSTREAM|NGINX_LOCAL_RESOLVERS)$'
 
+# The entrypoint reads the container's nameservers into NGINX_LOCAL_RESOLVERS
+# for the template's resolver directive, but only when this is set: its script
+# returns immediately otherwise, leaving the placeholder unsubstituted and nginx
+# refusing to start on a resolver it cannot resolve. Removing this breaks the
+# image.
+ENV NGINX_ENTRYPOINT_LOCAL_RESOLVERS=1
+
+# Fallback for the same variable, used only if the entrypoint script that
+# normally overwrites it is ever absent. It keeps a missing value from reaching
+# nginx as an unsubstituted placeholder; 127.0.0.11 is the embedded DNS server
+# that resolves service names on a Compose network.
+ENV NGINX_LOCAL_RESOLVERS=127.0.0.11
+
 COPY --from=build /app/dist /usr/share/nginx/html
 
 # nginx needs to write its pid and caches, so those paths are handed to the
