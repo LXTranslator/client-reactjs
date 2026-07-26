@@ -4,36 +4,51 @@ import { EmptyState, ErrorMessage } from '../ui/Feedback.jsx';
 /**
  * The conversations pane.
  *
- * Two ways in, because they answer different questions. The list is what this
- * browser has open, which covers "the thing I was just doing". Search covers
- * "the thing we decided last month", including conversations started on another
- * machine, which the list cannot know about.
+ * The list comes from the server, so it is the same list on every machine a
+ * person signs in from. It used to be kept in this browser's local storage,
+ * which meant a conversation started at a desk was invisible from a laptop and
+ * findable only by searching for something said inside it.
  *
- * Search results say which method the server used. When no embedding model is
- * configured it matches text, and a person searching by meaning and finding
- * nothing deserves to know that is why.
+ * Search still sits above the list, because the two answer different questions.
+ * The list covers "the thing I was just doing"; search covers "the thing we
+ * decided last month". Search results say which method the server used: with no
+ * embedding model configured it matches text, and a person searching by meaning
+ * and finding nothing deserves to know that is why.
+ *
+ * A conversation arrives already named, after the question that opened it.
+ * Renaming replaces that; deleting removes the conversation and its turns from
+ * the server, which is a different act from the old "forget this locally" and
+ * is asked about before it happens.
  *
  * @param {object} props Component props.
- * @param {Array<object>} props.sessions Remembered conversations.
+ * @param {Array<object>} props.sessions Conversations, most recent first.
  * @param {string|null} props.activeSessionId Conversation being read.
+ * @param {boolean} [props.isLoading] Whether the list is still arriving.
  * @param {Function} props.onSelect Called with a session identifier.
  * @param {Function} props.onNew Starts a new conversation.
- * @param {Function} props.onForget Removes one from this browser.
+ * @param {Function} props.onRename Called with an identifier and a new title.
+ * @param {Function} props.onDelete Called with an identifier.
  * @param {Function} props.onSearch Runs a search, resolving to the result payload.
  * @returns {JSX.Element} The pane.
  */
 export function ChatSessionList({
   sessions,
   activeSessionId,
+  isLoading = false,
   onSelect,
   onNew,
-  onForget,
+  onRename,
+  onDelete,
   onSearch,
 }) {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState(null);
   const [isSearching, setIsSearching] = useState(false);
   const [error, setError] = useState(null);
+
+  /* Which conversation is being renamed, and to what. */
+  const [editingId, setEditingId] = useState(null);
+  const [draftTitle, setDraftTitle] = useState('');
 
   /**
    * Runs a search against past conversations.
@@ -54,6 +69,57 @@ export function ChatSessionList({
       setResults(null);
     } finally {
       setIsSearching(false);
+    }
+  }
+
+  /**
+   * Opens the rename field on one conversation.
+   *
+   * @param {object} session The conversation.
+   * @returns {void}
+   */
+  function startRenaming(session) {
+    setEditingId(session.id);
+    setDraftTitle(session.title ?? '');
+    setError(null);
+  }
+
+  /**
+   * Saves a new name.
+   *
+   * @param {React.FormEvent} event Submit event.
+   * @returns {Promise<void>}
+   */
+  async function handleRename(event) {
+    event.preventDefault();
+    const id = editingId;
+
+    setEditingId(null);
+    try {
+      await onRename(id, draftTitle);
+    } catch (caught) {
+      setError(caught);
+    }
+  }
+
+  /**
+   * Deletes a conversation, after asking.
+   *
+   * This removes the conversation and every turn in it from the server, unlike
+   * the local "forget" it replaces, so it is worth one confirmation.
+   *
+   * @param {object} session The conversation.
+   * @returns {Promise<void>}
+   */
+  async function handleDelete(session) {
+    const name = session.title || 'this conversation';
+    if (!window.confirm(`Delete ${name}? Every message in it goes too.`)) return;
+
+    setError(null);
+    try {
+      await onDelete(session.id);
+    } catch (caught) {
+      setError(caught);
     }
   }
 
@@ -90,37 +156,77 @@ export function ChatSessionList({
 
       {results === null ? (
         sessions.length === 0 ? (
-          <EmptyState title="No conversations yet.">
-            <p className="muted">Ask something to start one.</p>
+          <EmptyState title={isLoading ? 'Loading conversations.' : 'No conversations yet.'}>
+            {isLoading ? null : <p className="muted">Ask something to start one.</p>}
           </EmptyState>
         ) : (
           <ul className="chat__sessions">
-            {sessions.map((session) => (
-              <li key={session.session_id}>
-                <button
-                  type="button"
-                  className={`chat__session${
-                    session.session_id === activeSessionId ? ' chat__session--active' : ''
-                  }`}
-                  onClick={() => onSelect(session.session_id)}
-                  aria-current={session.session_id === activeSessionId ? 'true' : undefined}
-                >
-                  <span className="chat__session-title">{session.title}</span>
-                  <span className="chat__session-meta">
-                    {new Date(session.updated_at).toLocaleDateString()}
-                  </span>
-                </button>
-                <button
-                  type="button"
-                  className="chat__session-forget"
-                  onClick={() => onForget(session.session_id)}
-                  aria-label={`Remove ${session.title} from this browser`}
-                  title="Removes it from this browser. The server keeps the log."
-                >
-                  ×
-                </button>
-              </li>
-            ))}
+            {sessions.map((session) =>
+              session.id === editingId ? (
+                <li key={session.id}>
+                  <form className="chat__rename" onSubmit={handleRename} noValidate>
+                    <label className="visually-hidden" htmlFor={`rename_${session.id}`}>
+                      Conversation name
+                    </label>
+                    <input
+                      id={`rename_${session.id}`}
+                      className="field__control"
+                      value={draftTitle}
+                      maxLength={120}
+                      autoFocus
+                      placeholder="Name this conversation"
+                      onChange={(event) => setDraftTitle(event.target.value)}
+                      onKeyDown={(event) => {
+                        if (event.key === 'Escape') setEditingId(null);
+                      }}
+                    />
+                    <button type="submit" className="btn btn--small btn--primary">
+                      Save
+                    </button>
+                  </form>
+                </li>
+              ) : (
+                <li key={session.id}>
+                  <button
+                    type="button"
+                    className={`chat__session${
+                      session.id === activeSessionId ? ' chat__session--active' : ''
+                    }`}
+                    onClick={() => onSelect(session.id)}
+                    aria-current={session.id === activeSessionId ? 'true' : undefined}
+                  >
+                    <span className="chat__session-title">
+                      {session.title || 'Untitled conversation'}
+                    </span>
+                    <span className="chat__session-meta">
+                      {session.last_message_at
+                        ? new Date(session.last_message_at).toLocaleDateString()
+                        : new Date(session.created_at).toLocaleDateString()}
+                      {session.turn_count > 0 ? ` · ${session.turn_count} turns` : ''}
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    className="chat__session-action"
+                    onClick={() => startRenaming(session)}
+                    aria-label={`Rename ${session.title || 'this conversation'}`}
+                    title="Rename this conversation"
+                  >
+                    ✎
+                  </button>
+                  <button
+                    type="button"
+                    className="chat__session-forget"
+                    onClick={() => handleDelete(session)}
+                    aria-label={`Delete ${session.title || 'this conversation'}`}
+                    title="Deletes the conversation and every message in it."
+                  >
+                    ×
+                  </button>
+                </li>
+              ),
+            )}
           </ul>
         )
       ) : (

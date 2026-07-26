@@ -10,6 +10,11 @@ import { validateTranslationFile } from '../../lib/validation.js';
  * page: an assistant answer can quote a project name, a locale string or an
  * earlier message, all of which are written by users.
  *
+ * A file can be dropped anywhere on the pane as well as chosen through the
+ * button. Dropping is how people arrive at a chat holding a file, and it goes
+ * through exactly the same check the button does, because a dropped file is no
+ * more trustworthy than a chosen one.
+ *
  * @param {object} props Component props.
  * @param {Array<object>} props.turns Exchanges, oldest first.
  * @param {boolean} props.isLoading Whether the history is still arriving.
@@ -23,8 +28,16 @@ export function ChatConversation({ turns, isLoading, isSending, error, pending, 
   const [message, setMessage] = useState('');
   const [file, setFile] = useState(null);
   const [fileError, setFileError] = useState(null);
+  const [isDropTarget, setIsDropTarget] = useState(false);
   const endRef = useRef(null);
   const fileInputRef = useRef(null);
+
+  /*
+   * Drag events fire on every child the pointer crosses, so a plain
+   * enter/leave pair flickers the whole way across the pane. Counting them
+   * makes leaving the pane the only thing that clears the highlight.
+   */
+  const dragDepth = useRef(0);
 
   /*
    * Keep the newest exchange in view as the conversation grows.
@@ -41,14 +54,14 @@ export function ChatConversation({ turns, isLoading, isSending, error, pending, 
    * Attaches a file after the same checks an upload gets.
    *
    * The server verifies the bytes regardless; this is here so an obvious
-   * mistake is caught before a request rather than after one.
+   * mistake is caught before a request rather than after one. Both the button
+   * and the drop target come through here, so neither can be the lenient one.
    *
-   * @param {React.ChangeEvent} event Change event.
+   * @param {File|null} selected The file, or null to clear.
    * @returns {void}
    */
-  function handleFileChange(event) {
-    const selected = event.target.files?.[0] ?? null;
-    if (selected === null) {
+  function attach(selected) {
+    if (selected === null || selected === undefined) {
       setFile(null);
       setFileError(null);
       return;
@@ -63,6 +76,76 @@ export function ChatConversation({ turns, isLoading, isSending, error, pending, 
 
     setFile(selected);
     setFileError(null);
+  }
+
+  /**
+   * Attaches the file chosen through the button.
+   *
+   * @param {React.ChangeEvent} event Change event.
+   * @returns {void}
+   */
+  function handleFileChange(event) {
+    attach(event.target.files?.[0] ?? null);
+  }
+
+  /**
+   * Keeps the browser from navigating away to the dropped file.
+   *
+   * Without this, dropping a JSON file on a page replaces the page with it,
+   * which is the browser default and is never what somebody meant.
+   *
+   * @param {React.DragEvent} event Drag event.
+   * @returns {void}
+   */
+  function handleDragOver(event) {
+    event.preventDefault();
+  }
+
+  /**
+   * Lights up the pane while a file is over it.
+   *
+   * @param {React.DragEvent} event Drag event.
+   * @returns {void}
+   */
+  function handleDragEnter(event) {
+    event.preventDefault();
+    dragDepth.current += 1;
+    setIsDropTarget(true);
+  }
+
+  /**
+   * Clears the highlight once the pointer has actually left the pane.
+   *
+   * @returns {void}
+   */
+  function handleDragLeave() {
+    dragDepth.current = Math.max(0, dragDepth.current - 1);
+    if (dragDepth.current === 0) setIsDropTarget(false);
+  }
+
+  /**
+   * Attaches a dropped file.
+   *
+   * One file, because the assistant takes one attachment per turn. Dropping
+   * several attaches the first and says so, rather than silently ignoring the
+   * rest or refusing the lot.
+   *
+   * @param {React.DragEvent} event Drop event.
+   * @returns {void}
+   */
+  function handleDrop(event) {
+    event.preventDefault();
+    dragDepth.current = 0;
+    setIsDropTarget(false);
+
+    const dropped = Array.from(event.dataTransfer?.files ?? []);
+    if (dropped.length === 0) return;
+
+    attach(dropped[0]);
+
+    if (dropped.length > 1) {
+      setFileError('One file per message. The first one was attached.');
+    }
   }
 
   /**
@@ -100,7 +183,22 @@ export function ChatConversation({ turns, isLoading, isSending, error, pending, 
   }
 
   return (
-    <section className="chat__pane chat__pane--conversation" aria-label="Conversation">
+    <section
+      className={`chat__pane chat__pane--conversation${
+        isDropTarget ? ' chat__pane--dropping' : ''
+      }`}
+      aria-label="Conversation"
+      onDragEnter={handleDragEnter}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+    >
+      {isDropTarget ? (
+        <div className="chat__dropzone" aria-hidden="true">
+          Drop a JSON locale file to attach it
+        </div>
+      ) : null}
+
       <div className="chat__messages">
         {isLoading ? (
           <LoadingState label="Loading conversation" />
@@ -176,7 +274,7 @@ export function ChatConversation({ turns, isLoading, isSending, error, pending, 
                   type="button"
                   className="chat__session-forget"
                   onClick={() => {
-                    setFile(null);
+                    attach(null);
                     if (fileInputRef.current) fileInputRef.current.value = '';
                   }}
                   aria-label={`Remove ${file.name}`}
@@ -202,8 +300,9 @@ export function ChatConversation({ turns, isLoading, isSending, error, pending, 
           </span>
         ) : (
           <span className="field__hint">
-            Enter sends, Shift and Enter start a new line. A JSON locale file lets the
-            assistant create a project from it.
+            Enter sends, Shift and Enter start a new line. Attach a JSON locale file, or
+            drop one anywhere on this pane, and the assistant can put it into a new project
+            or one you already have.
           </span>
         )}
       </form>

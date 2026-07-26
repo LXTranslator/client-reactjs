@@ -165,11 +165,19 @@ Three rules follow:
 3. **Never present a tool result as though the interface performed it.** The
    server did, or refused to.
 
-The conversations pane keeps what this browser has open in local storage,
-because the server offers no way to list a person's sessions, and finds anything
-else through search. Search says whether it matched by meaning or by text, since
-an account with no embedding model configured gets the second and deserves to
-know why a search found less than expected.
+The conversations pane lists what the server holds, so the same conversations
+appear wherever somebody signs in. A conversation arrives already named, after
+the question that opened it, and can be renamed or deleted; deleting removes
+every turn in it, so it is asked about first.
+
+Search sits alongside the list rather than replacing it, and says whether it
+matched by meaning or by text, since an account with no embedding model
+configured gets the second and deserves to know why a search found less than
+expected.
+
+A locale file can be dropped anywhere on the conversation pane as well as chosen
+through the button. Both paths run the same `validateTranslationFile` check: a
+dropped file is no more trustworthy than a chosen one.
 
 ## Interface conventions
 
