@@ -164,6 +164,37 @@ the server surfaces in the interface with no client change.
 | `api.downloadArchive(fileId, exportFormat)` | `GET /files/:fileId/download?format=zip` |
 | `api.listFileExportFormats(fileId)` | `GET /files/:fileId/export_formats` |
 
+## Namespace AI credentials
+
+| Helper | Endpoint |
+|---|---|
+| `api.listAccountKeys(namespace)` | `GET /namespaces/:namespace/settings/ai_keys` |
+| `api.addAccountKey(namespace, body)` | `POST /namespaces/:namespace/settings/ai_keys` |
+| `api.updateAccountKey(namespace, keyId, body)` | `PATCH /namespaces/:namespace/settings/ai_keys/:keyId` |
+| `api.removeAccountKey(namespace, keyId)` | `DELETE /namespaces/:namespace/settings/ai_keys/:keyId` |
+| `api.reorderAccountKeys(namespace, orderedKeyIds)` | `POST /namespaces/:namespace/settings/ai_keys/reorder` |
+
+These pay for what a namespace does outside a single project, which today means
+the assistant. A project keeps its own keys for translating.
+
+Inside an organization every one of these needs `ADMIN`, **reading included**,
+because the list is a statement about the organization's spending. A member
+receives **403** rather than an empty list, and the page explains that rather
+than rendering as though nothing is configured.
+
+Unlike a project credential, each row names its own platform and models, since
+an account has no record to take them from. Order is meaningful: it is the order
+the server's fallback chain walks, and inside an organization the caller's own
+personal credentials follow the organization's.
+
+`embedding_model` is optional and omitting it is the ordinary case. With none
+configured the assistant works exactly as it otherwise would and conversation
+search matches text rather than meaning. A platform that serves no embeddings,
+such as Anthropic, reports an empty `embedding_models` list and the field is
+disabled with an explanation.
+
+No endpoint returns a stored key, and no view renders one.
+
 ## Export formats
 
 | Helper | Endpoint |

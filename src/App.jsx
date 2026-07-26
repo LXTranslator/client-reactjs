@@ -12,6 +12,7 @@ import { OrganizationCreatePage } from './pages/OrganizationCreatePage.jsx';
 import { NamespaceSettingsPage } from './pages/NamespaceSettingsPage.jsx';
 import { NamespaceMembersPage } from './pages/NamespaceMembersPage.jsx';
 import { NamespaceExportFormatsPage } from './pages/NamespaceExportFormatsPage.jsx';
+import { NamespaceAiSettingsPage } from './pages/NamespaceAiSettingsPage.jsx';
 import { ProjectsPage } from './pages/ProjectsPage.jsx';
 import { ProjectDetailPage } from './pages/ProjectDetailPage.jsx';
 import { ProjectUploadsPage } from './pages/ProjectUploadsPage.jsx';
@@ -77,6 +78,7 @@ export function App() {
             <Route path="settings" element={<NamespaceSettingsPage />} />
             <Route path="settings/members" element={<NamespaceMembersPage />} />
             <Route path="settings/export_formats" element={<NamespaceExportFormatsPage />} />
+            <Route path="settings/ai" element={<NamespaceAiSettingsPage />} />
             <Route path="project/:projectId" element={<ProjectDetailPage />} />
             <Route path="project/:projectId/uploads" element={<ProjectUploadsPage />} />
             <Route path="project/:projectId/settings" element={<ProjectSettingsPage />} />
