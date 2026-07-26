@@ -1,0 +1,26 @@
+# Keep the build context small and free of anything sensitive.
+node_modules/
+npm-debug.log*
+
+# Secrets must never enter an image layer, and never a browser bundle.
+.env
+.env.*
+*.pem
+*.key
+
+# Build output; the image builds its own.
+dist/
+coverage/
+
+# Development only material.
+tests/
+.git/
+.gitignore
+.gitattributes
+.github/
+.agents/
+wiki/
+*.md
+.vscode/
+.idea/
+.DS_Store
