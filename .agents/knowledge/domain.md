@@ -81,6 +81,28 @@ Project identifiers are integers from one shared table, so they are unique on
 their own; the namespace in the path is context for the reader, and the server
 authorises the project by its identifier regardless.
 
+## Growing a file
+
+A locale set is not written once. The editor can add languages and add keys to a
+file that already exists, and both are additive by design:
+
+* **Adding a language** translates the existing keys into the new language only.
+  A language already on the file is never retranslated.
+* **Merging a dropped document** adds only the key names the file lacks. A key
+  it already holds is skipped whole, master text and translations included, even
+  when the dropped document carries a different value for it.
+
+Say so in the interface rather than leaving it to be discovered. The question a
+person has before dropping a file is whether it will overwrite their reviewed
+translations, and the answer is no.
+
+Both return **202**: the work finishes on a worker thread, so the page polls the
+file's status afterwards exactly as it does after an upload.
+
+**Downloading** offers the whole locale set as `langs.zip`, one entry per
+language. Prefer it to looping over the locales and saving each one, which a
+browser blocks after the first few downloads anyway.
+
 ## Interface conventions
 
 **Forms.** Validate on submit with helpers from `src/lib/validation.js`. Clear a
