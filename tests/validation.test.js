@@ -39,6 +39,22 @@ describe('validation', () => {
       expect(validateUserId('jetsada!')).toMatch(/lowercase letters, digits/);
     });
 
+    it.each(['api', 'assets', 'login', 'namespaces', 'organizations', 'register', 'settings'])(
+      'rejects %s, which the router already claims',
+      (reserved) => {
+        // A namespace sits at the first path segment, so one of these would be
+        // shadowed by a fixed route and never render. The server refuses them
+        // too; this mirrors that so the form says so before submitting.
+        expect(validateUserId(reserved)).toMatch(/reserved/);
+      },
+    );
+
+    it('leaves an ordinary name alone', () => {
+      // The list covers real route collisions only, not vanity reservations.
+      expect(validateUserId('admin')).toBeNull();
+      expect(validateUserId('project')).toBeNull();
+    });
+
     it('rejects an empty value', () => {
       expect(validateUserId('')).toMatch(/Enter a user id/);
     });
