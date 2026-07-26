@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 import { api } from '../../lib/apiClient.js';
-import { COMMON_LOCALES, MAX_UPLOAD_BYTES, validateLocaleCode } from '../../lib/locales.js';
+import { MAX_UPLOAD_BYTES, localeLabel, validateLocaleCode } from '../../lib/locales.js';
+import { LocalePicker } from '../ui/LocalePicker.jsx';
 import { validateTranslationFile } from '../../lib/validation.js';
 import { Callout, ErrorMessage } from '../ui/Feedback.jsx';
 
@@ -171,51 +172,13 @@ export function FileGrowthPanel({ fileId, existingLocales, onStarted }) {
       {notice ? <Callout tone="ok">{notice}</Callout> : null}
 
       <div className="field">
-        <span className="field__label">Languages</span>
-        <p className="muted" style={{ marginTop: 0 }}>
-          Existing keys are translated into the new languages only. Languages already here
-          are never retranslated, so reviewed work is left alone.
-        </p>
-
-        <div className="chip-row">
-          {COMMON_LOCALES.filter((locale) => !held.has(locale.code)).map((locale) => {
-            const isSelected = selected.includes(locale.code);
-            return (
-              <button
-                key={locale.code}
-                type="button"
-                className={`chip${isSelected ? ' is-selected' : ''}`}
-                aria-pressed={isSelected}
-                onClick={() => toggleLocale(locale.code)}
-              >
-                {locale.label}
-                <span className="mono" style={{ fontSize: '0.75em' }}>
-                  {locale.code}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Anything outside the shortlist. */}
-        {selected.filter((code) => !COMMON_LOCALES.some((locale) => locale.code === code))
-          .length > 0 ? (
-          <div className="chip-row" style={{ marginTop: '0.5rem' }}>
-            {selected
-              .filter((code) => !COMMON_LOCALES.some((locale) => locale.code === code))
-              .map((code) => (
-                <button
-                  key={code}
-                  type="button"
-                  className="chip is-selected"
-                  aria-pressed="true"
-                  onClick={() => toggleLocale(code)}
-                >
-                  <span className="mono">{code}</span> ✕
-                </button>
-              ))}
-          </div>
-        ) : null}
+        <LocalePicker
+          selected={selected}
+          exclude={existingLocales}
+          onToggle={toggleLocale}
+          label="Languages"
+          hint="Existing keys are translated into the new languages only. Languages already here are never retranslated, so reviewed work is left alone."
+        />
 
         <div className="field-row" style={{ marginTop: '0.75rem' }}>
           <div className="field">

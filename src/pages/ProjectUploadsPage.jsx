@@ -2,7 +2,8 @@ import { useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
 import { useNamespace } from '../components/routing/NamespaceRoute.jsx';
 import { paths } from '../lib/paths.js';
-import { COMMON_LOCALES, MAX_UPLOAD_BYTES } from '../lib/locales.js';
+import { LOCALES, MAX_UPLOAD_BYTES } from '../lib/locales.js';
+import { LocalePicker } from '../components/ui/LocalePicker.jsx';
 import { api } from '../lib/apiClient.js';
 import { SelectField, TextField } from '../components/ui/FormField.jsx';
 import { Callout, ErrorMessage } from '../components/ui/Feedback.jsx';
@@ -224,7 +225,7 @@ export function ProjectUploadsPage() {
             name="source_lang"
             value={sourceLang}
             onChange={(event) => setSourceLang(event.target.value)}
-            options={COMMON_LOCALES.map((locale) => ({
+            options={LOCALES.map((locale) => ({
               value: locale.code,
               label: `${locale.label} (${locale.code})`,
             }))}
@@ -239,46 +240,13 @@ export function ProjectUploadsPage() {
               </span>
             </legend>
 
-            <div className="chip-row">
-              {COMMON_LOCALES.filter((locale) => locale.code !== sourceLang).map((locale) => {
-                const isSelected = targetLangs.includes(locale.code);
-                return (
-                  <button
-                    key={locale.code}
-                    type="button"
-                    className={`chip${isSelected ? ' is-selected' : ''}`}
-                    aria-pressed={isSelected}
-                    onClick={() => toggleTarget(locale.code)}
-                  >
-                    {locale.label}
-                    <span className="mono" style={{ fontSize: '0.75em' }}>
-                      {locale.code}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* Any locale outside the shortlist. */}
-            {effectiveTargets.filter(
-              (code) => !COMMON_LOCALES.some((locale) => locale.code === code),
-            ).length > 0 ? (
-              <div className="chip-row" style={{ marginTop: '0.5rem' }}>
-                {effectiveTargets
-                  .filter((code) => !COMMON_LOCALES.some((locale) => locale.code === code))
-                  .map((code) => (
-                    <button
-                      key={code}
-                      type="button"
-                      className="chip is-selected"
-                      aria-pressed="true"
-                      onClick={() => toggleTarget(code)}
-                    >
-                      <span className="mono">{code}</span> ✕
-                    </button>
-                  ))}
-              </div>
-            ) : null}
+            <LocalePicker
+              selected={effectiveTargets}
+              exclude={[sourceLang]}
+              onToggle={toggleTarget}
+              label="Choose from the catalogue"
+              hint="Search by name or code, or pick a letter. Any language not listed can be typed below."
+            />
 
             {errors.target_langs ? (
               <span className="field__error" role="alert" style={{ marginTop: '0.5rem' }}>
