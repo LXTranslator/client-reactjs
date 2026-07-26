@@ -21,7 +21,7 @@ The browser interface for LXTranslator. It consumes the API provided by
 | FR-8 | `/{namespace}/project/{project_id}` lists the project's files. | Done |
 | FR-9 | `/{namespace}/project/{project_id}/uploads` uploads a file. | Done |
 | FR-10 | `/{namespace}/project/{project_id}/file/{file_id}` edits and downloads translations. | Done |
-| FR-11 | `/{namespace}/project/{project_id}/settings` manages provider, model and API keys. | Done |
+| FR-11 | `/{namespace}/project/{project_id}/settings` manages provider and model, and reports whether the account holds a key for that platform. | Done |
 | FR-12 | `/settings` manages user id, email and password. | Done |
 | FR-13 | `/organizations/new` creates an organization. | Done |
 | FR-14 | An unknown path renders a not found page. | Done |

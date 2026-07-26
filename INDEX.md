@@ -104,7 +104,7 @@ One file per route.
 | [`src/pages/ProjectsPage.jsx`](src/pages/ProjectsPage.jsx) | A namespace's project list and creation, at `/:namespace`. |
 | [`src/pages/ProjectDetailPage.jsx`](src/pages/ProjectDetailPage.jsx) | File list with processing status polling. |
 | [`src/pages/ProjectUploadsPage.jsx`](src/pages/ProjectUploadsPage.jsx) | File upload with multi select target languages. |
-| [`src/pages/ProjectSettingsPage.jsx`](src/pages/ProjectSettingsPage.jsx) | Provider, model and the API key fallback chain. |
+| [`src/pages/ProjectSettingsPage.jsx`](src/pages/ProjectSettingsPage.jsx) | Platform and model. A project holds no credentials; the page links to the account chain that pays for it. |
 | [`src/pages/TranslationEditorPage.jsx`](src/pages/TranslationEditorPage.jsx) | Translation editor and locale download. |
 | [`src/pages/AccountSettingsPage.jsx`](src/pages/AccountSettingsPage.jsx) | User id, email and password changes behind a confirmation token. |
 | [`src/pages/NotFoundPage.jsx`](src/pages/NotFoundPage.jsx) | Fallback for an unmatched route. |
@@ -139,6 +139,7 @@ Layered exactly as the design system specifies, imported in order by `main.jsx`.
 | [`tests/consistency.test.jsx`](tests/consistency.test.jsx) | Per key updates, the refresh control and the consistency report. |
 | [`tests/accountAi.test.jsx`](tests/accountAi.test.jsx) | Namespace AI credentials, the fallback chain and the optional embedding model. |
 | [`tests/chat.test.jsx`](tests/chat.test.jsx) | The three panes, attachments, tool reporting, search and embedding backfill. |
+| [`tests/projectCredentials.test.jsx`](tests/projectCredentials.test.jsx) | That project settings enters no key, and reports the account chain covering its platform. |
 
 ## Agent Configuration
 

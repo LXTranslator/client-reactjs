@@ -11,7 +11,7 @@ the network tab. An API key, a database password or a signing secret placed in a
 `VITE_` variable is a published secret, not a configured one.
 
 Every setting below is a public value. Credentials belong to the server, and
-provider API keys are entered per project through the interface and stored
+provider API keys are entered per account through the interface and stored
 encrypted there.
 
 ## Running with no configuration

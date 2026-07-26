@@ -317,7 +317,7 @@ export function TranslationEditorPage() {
           >
             Try again
           </button>
-          <Link className="btn" to={paths.projectSettings(ns, projectId)}>
+          <Link className="btn" to={paths.namespaceAiSettings(ns)}>
             Check API keys
           </Link>
         </div>

@@ -11,7 +11,7 @@ description: Concepts, routing model and conventions an agent must understand be
 |---|---|
 | **Namespace** | An account that owns projects. Either a person (`USER`) or an organization (`ORG`). There is no separate users concept. |
 | **Active namespace** | Which namespace the namespace scoped pages act on. Held in `AuthContext`, switched from the header. |
-| **Project** | A collection of translation files sharing one AI provider, model and set of API keys. |
+| **Project** | A collection of translation files sharing one AI platform and model. It holds no keys: those belong to the account that owns it. |
 | **File** | One uploaded locale document, for example `en_us.json`. |
 | **Master** | The English (`en_us`) text. Every other language is derived from it. |
 | **Text hash** | A 36 character fingerprint of the master text, exported beside every translation. |
