@@ -183,3 +183,31 @@
     grid-template-columns: 1fr;
   }
 }
+
+/*
+ * Comparison control.
+ *
+ * The locale list outgrew a row of chips once the catalogue reached a hundred
+ * and forty languages, so the editor selects one from a dropdown instead.
+ */
+.editor__compare-label {
+  margin: 0;
+  white-space: nowrap;
+}
+
+.editor__compare {
+  width: auto;
+  min-width: 14rem;
+  max-width: 100%;
+  padding-top: 0.4rem;
+  padding-bottom: 0.4rem;
+  font-size: 0.9rem;
+}
+
+/*
+ * Selecting the master means comparing it against itself, so the read only
+ * column is dropped and the editable one spans the row.
+ */
+.editor__row--single {
+  grid-template-columns: minmax(0, 1fr);
+}

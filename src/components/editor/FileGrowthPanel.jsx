@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 import { api } from '../../lib/apiClient.js';
-import { COMMON_LOCALES, MAX_UPLOAD_BYTES, validateLocaleCode } from '../../lib/locales.js';
+import { MAX_UPLOAD_BYTES } from '../../lib/locales.js';
+import { LocalePicker } from '../ui/LocalePicker.jsx';
 import { validateTranslationFile } from '../../lib/validation.js';
 import { Callout, ErrorMessage } from '../ui/Feedback.jsx';
 
@@ -30,8 +31,6 @@ function addLabel(count) {
  */
 export function FileGrowthPanel({ fileId, existingLocales, onStarted }) {
   const [selected, setSelected] = useState([]);
-  const [customLocale, setCustomLocale] = useState('');
-  const [customError, setCustomError] = useState(null);
   const [languageError, setLanguageError] = useState(null);
   const [isAdding, setIsAdding] = useState(false);
 
@@ -55,28 +54,6 @@ export function FileGrowthPanel({ fileId, existingLocales, onStarted }) {
     setSelected((current) =>
       current.includes(code) ? current.filter((entry) => entry !== code) : [...current, code],
     );
-  }
-
-  /**
-   * Adds a locale that is not on the shortlist.
-   *
-   * @returns {void}
-   */
-  function addCustomLocale() {
-    const code = customLocale.trim().toLowerCase();
-    const message = validateLocaleCode(code);
-    if (message !== null) {
-      setCustomError(message);
-      return;
-    }
-    if (held.has(code)) {
-      setCustomError('This file already has that language.');
-      return;
-    }
-
-    setCustomError(null);
-    setCustomLocale('');
-    setSelected((current) => (current.includes(code) ? current : [...current, code]));
   }
 
   /**
@@ -171,88 +148,13 @@ export function FileGrowthPanel({ fileId, existingLocales, onStarted }) {
       {notice ? <Callout tone="ok">{notice}</Callout> : null}
 
       <div className="field">
-        <span className="field__label">Languages</span>
-        <p className="muted" style={{ marginTop: 0 }}>
-          Existing keys are translated into the new languages only. Languages already here
-          are never retranslated, so reviewed work is left alone.
-        </p>
-
-        <div className="chip-row">
-          {COMMON_LOCALES.filter((locale) => !held.has(locale.code)).map((locale) => {
-            const isSelected = selected.includes(locale.code);
-            return (
-              <button
-                key={locale.code}
-                type="button"
-                className={`chip${isSelected ? ' is-selected' : ''}`}
-                aria-pressed={isSelected}
-                onClick={() => toggleLocale(locale.code)}
-              >
-                {locale.label}
-                <span className="mono" style={{ fontSize: '0.75em' }}>
-                  {locale.code}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Anything outside the shortlist. */}
-        {selected.filter((code) => !COMMON_LOCALES.some((locale) => locale.code === code))
-          .length > 0 ? (
-          <div className="chip-row" style={{ marginTop: '0.5rem' }}>
-            {selected
-              .filter((code) => !COMMON_LOCALES.some((locale) => locale.code === code))
-              .map((code) => (
-                <button
-                  key={code}
-                  type="button"
-                  className="chip is-selected"
-                  aria-pressed="true"
-                  onClick={() => toggleLocale(code)}
-                >
-                  <span className="mono">{code}</span> ✕
-                </button>
-              ))}
-          </div>
-        ) : null}
-
-        <div className="field-row" style={{ marginTop: '0.75rem' }}>
-          <div className="field">
-            <label className="field__label" htmlFor="custom_locale">
-              Another locale
-            </label>
-            <input
-              id="custom_locale"
-              className="field__control"
-              value={customLocale}
-              placeholder="pl_pl"
-              onChange={(event) => {
-                setCustomLocale(event.target.value);
-                setCustomError(null);
-              }}
-              onKeyDown={(event) => {
-                if (event.key === 'Enter') {
-                  event.preventDefault();
-                  addCustomLocale();
-                }
-              }}
-            />
-            {customError ? (
-              <span className="field__error" role="alert">
-                {customError}
-              </span>
-            ) : null}
-          </div>
-          <button
-            type="button"
-            className="btn"
-            style={{ alignSelf: 'end' }}
-            onClick={addCustomLocale}
-          >
-            Add locale
-          </button>
-        </div>
+        <LocalePicker
+          selected={selected}
+          exclude={existingLocales}
+          onToggle={toggleLocale}
+          label="Languages"
+          hint="Existing keys are translated into the new languages only. Languages already here are never retranslated, so reviewed work is left alone."
+        />
 
         <ErrorMessage error={languageError} />
 

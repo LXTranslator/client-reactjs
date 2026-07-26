@@ -5,6 +5,7 @@ import { paths } from '../lib/paths.js';
 import { api } from '../lib/apiClient.js';
 import { downloadJson, triggerDownload } from '../lib/download.js';
 import { FileGrowthPanel } from '../components/editor/FileGrowthPanel.jsx';
+import { localeLabel } from '../lib/locales.js';
 
 /** The name the server always serves the archive under. */
 const ARCHIVE_FILENAME = 'langs.zip';
@@ -305,20 +306,23 @@ export function TranslationEditorPage() {
         <div className="panel__header">
           <h2>Language</h2>
           <div className="editor__locales">
-            {data.available_locales.map((code) => (
-              <button
-                key={code}
-                type="button"
-                className={`chip${code === activeLocale ? ' is-selected' : ''}`}
-                aria-pressed={code === activeLocale}
-                onClick={() => setActiveLocale(code)}
-              >
-                <span className="mono">{code}</span>
-                {code === data.master_lang_code ? (
-                  <span className="badge badge--accent">master</span>
-                ) : null}
-              </button>
-            ))}
+            <label className="field__label editor__compare-label" htmlFor="compare_locale">
+              Compare with
+            </label>
+            <select
+              id="compare_locale"
+              className="field__control editor__compare"
+              value={activeLocale ?? ''}
+              onChange={(event) => setActiveLocale(event.target.value)}
+            >
+              {data.available_locales.map((code) => (
+                <option key={code} value={code}>
+                  {code === data.master_lang_code
+                    ? `${localeLabel(code)} (${code}) — master`
+                    : `${localeLabel(code)} (${code})`}
+                </option>
+              ))}
+            </select>
           </div>
         </div>
 
@@ -386,7 +390,7 @@ function EditorRow({
     : draft !== (translation?.translated_text ?? '');
 
   return (
-    <div className="editor__row">
+    <div className={`editor__row${isMasterView ? ' editor__row--single' : ''}`}>
       <div className="editor__key">
         <span className="editor__key-name">{entry.key_name}</span>
         {translation?.is_manual ? <span className="badge badge--ok">manual</span> : null}
@@ -396,21 +400,33 @@ function EditorRow({
         </span>
       </div>
 
-      <div>
-        <span className="editor__cell-label">
-          Source ({masterLocale})
-          {entry.source_text ? ' — translated from upload' : ''}
-        </span>
-        <div className="editor__source">{entry.original_text}</div>
-        {entry.source_text ? (
-          <span className="field__hint">Original upload: {entry.source_text}</span>
-        ) : null}
-      </div>
+      {/*
+        The master and en_us are one and the same text, so comparing the master
+        against itself would print every string twice. Selecting it drops the
+        read only column and leaves the master editable on its own.
+      */}
+      {isMasterView ? null : (
+        <div>
+          <span className="editor__cell-label">
+            Source ({masterLocale})
+            {entry.source_text ? ' — translated from upload' : ''}
+          </span>
+          <div className="editor__source">{entry.original_text}</div>
+          {entry.source_text ? (
+            <span className="field__hint">Original upload: {entry.source_text}</span>
+          ) : null}
+        </div>
+      )}
 
       <div>
         <span className="editor__cell-label">
-          {isMasterView ? `Edit master (${locale})` : `Translation (${locale})`}
+          {isMasterView
+            ? `Master (${locale})${entry.source_text ? ' — translated from upload' : ''}`
+            : `Translation (${locale})`}
         </span>
+        {isMasterView && entry.source_text ? (
+          <span className="field__hint">Original upload: {entry.source_text}</span>
+        ) : null}
 
         {isMasterView || translation ? (
           <>

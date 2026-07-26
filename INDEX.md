@@ -49,7 +49,7 @@ Framework free helpers usable from anywhere in the tree.
 | [`src/lib/validation.js`](src/lib/validation.js) | Field validators, password scoring and placeholder examples. |
 | [`src/lib/download.js`](src/lib/download.js) | Saves exported locale documents to disk. |
 | [`src/lib/paths.js`](src/lib/paths.js) | Client route builders and the reserved first segments. |
-| [`src/lib/locales.js`](src/lib/locales.js) | Locale shortlist, upload ceiling and locale code validation. |
+| [`src/lib/locales.js`](src/lib/locales.js) | The 143 locale catalogue, A to Z indexing, search and locale code validation. |
 
 ### State
 
@@ -75,6 +75,7 @@ Framework free helpers usable from anywhere in the tree.
 | [`src/components/ui/Feedback.jsx`](src/components/ui/Feedback.jsx) | Callouts, loading, empty, error and status displays. |
 | [`src/components/ui/Modal.jsx`](src/components/ui/Modal.jsx) | Accessible modal dialog with focus management. |
 | [`src/components/ui/AvailabilityHint.jsx`](src/components/ui/AvailabilityHint.jsx) | Inline identifier availability indicator. |
+| [`src/components/ui/LocalePicker.jsx`](src/components/ui/LocalePicker.jsx) | Language picker with an A to Z index and search over the catalogue. |
 
 ### Pages
 
@@ -123,7 +124,8 @@ Layered exactly as the design system specifies, imported in order by `main.jsx`.
 | [`tests/validation.test.js`](tests/validation.test.js) | Field validator and password scoring tests. |
 | [`tests/routing.test.jsx`](tests/routing.test.jsx) | Route guard and redirect tests. |
 | [`tests/organization.test.jsx`](tests/organization.test.jsx) | Organization creation, availability, contact email and deletion tests. |
-| [`tests/editor.test.jsx`](tests/editor.test.jsx) | Archive download, adding languages and merging keys. |
+| [`tests/editor.test.jsx`](tests/editor.test.jsx) | Archive download, adding languages, merging keys and the compare dropdown. |
+| [`tests/locales.test.js`](tests/locales.test.js) | Locale catalogue, A to Z indexing, search and code validation. |
 
 ## Agent Configuration
 

@@ -2,12 +2,13 @@ import { useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
 import { useNamespace } from '../components/routing/NamespaceRoute.jsx';
 import { paths } from '../lib/paths.js';
-import { COMMON_LOCALES, MAX_UPLOAD_BYTES } from '../lib/locales.js';
+import { LOCALES, MAX_UPLOAD_BYTES } from '../lib/locales.js';
+import { LocalePicker } from '../components/ui/LocalePicker.jsx';
 import { api } from '../lib/apiClient.js';
 import { SelectField, TextField } from '../components/ui/FormField.jsx';
 import { Callout, ErrorMessage } from '../components/ui/Feedback.jsx';
 import { Breadcrumbs } from '../components/layout/AppLayout.jsx';
-import { validateLangCode, validateTranslationFile } from '../lib/validation.js';
+import { validateTranslationFile } from '../lib/validation.js';
 
 /**
  * Locales offered as chips.
@@ -36,7 +37,6 @@ export function ProjectUploadsPage() {
   const [file, setFile] = useState(null);
   const [sourceLang, setSourceLang] = useState('en_us');
   const [targetLangs, setTargetLangs] = useState(['th_th']);
-  const [customLang, setCustomLang] = useState('');
   const [errors, setErrors] = useState({});
   const [submitError, setSubmitError] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -65,29 +65,6 @@ export function ProjectUploadsPage() {
     setTargetLangs((current) =>
       current.includes(code) ? current.filter((entry) => entry !== code) : [...current, code],
     );
-  }
-
-  /**
-   * Adds a locale that is not in the shortlist.
-   *
-   * @returns {void}
-   */
-  function addCustomLang() {
-    const candidate = customLang.trim().toLowerCase();
-    const message = validateLangCode(candidate);
-
-    if (message !== null) {
-      setErrors((current) => ({ ...current, custom_lang: message }));
-      return;
-    }
-    if (targetLangs.includes(candidate)) {
-      setErrors((current) => ({ ...current, custom_lang: 'That language is already selected.' }));
-      return;
-    }
-
-    setTargetLangs((current) => [...current, candidate]);
-    setCustomLang('');
-    setErrors((current) => ({ ...current, custom_lang: undefined, target_langs: undefined }));
   }
 
   /**
@@ -224,7 +201,7 @@ export function ProjectUploadsPage() {
             name="source_lang"
             value={sourceLang}
             onChange={(event) => setSourceLang(event.target.value)}
-            options={COMMON_LOCALES.map((locale) => ({
+            options={LOCALES.map((locale) => ({
               value: locale.code,
               label: `${locale.label} (${locale.code})`,
             }))}
@@ -239,46 +216,13 @@ export function ProjectUploadsPage() {
               </span>
             </legend>
 
-            <div className="chip-row">
-              {COMMON_LOCALES.filter((locale) => locale.code !== sourceLang).map((locale) => {
-                const isSelected = targetLangs.includes(locale.code);
-                return (
-                  <button
-                    key={locale.code}
-                    type="button"
-                    className={`chip${isSelected ? ' is-selected' : ''}`}
-                    aria-pressed={isSelected}
-                    onClick={() => toggleTarget(locale.code)}
-                  >
-                    {locale.label}
-                    <span className="mono" style={{ fontSize: '0.75em' }}>
-                      {locale.code}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* Any locale outside the shortlist. */}
-            {effectiveTargets.filter(
-              (code) => !COMMON_LOCALES.some((locale) => locale.code === code),
-            ).length > 0 ? (
-              <div className="chip-row" style={{ marginTop: '0.5rem' }}>
-                {effectiveTargets
-                  .filter((code) => !COMMON_LOCALES.some((locale) => locale.code === code))
-                  .map((code) => (
-                    <button
-                      key={code}
-                      type="button"
-                      className="chip is-selected"
-                      aria-pressed="true"
-                      onClick={() => toggleTarget(code)}
-                    >
-                      <span className="mono">{code}</span> ✕
-                    </button>
-                  ))}
-              </div>
-            ) : null}
+            <LocalePicker
+              selected={effectiveTargets}
+              exclude={[sourceLang]}
+              onToggle={toggleTarget}
+              label="Choose from the catalogue"
+              hint="Search by name or code, or pick a letter."
+            />
 
             {errors.target_langs ? (
               <span className="field__error" role="alert" style={{ marginTop: '0.5rem' }}>
@@ -287,30 +231,7 @@ export function ProjectUploadsPage() {
             ) : null}
           </fieldset>
 
-          <div style={{ display: 'flex', gap: '0.6rem', alignItems: 'flex-start' }}>
-            <div style={{ flex: 1 }}>
-              <TextField
-                label="Add another language"
-                name="custom_lang"
-                value={customLang}
-                onChange={(event) => {
-                  setCustomLang(event.target.value);
-                  setErrors((current) => ({ ...current, custom_lang: undefined }));
-                }}
-                placeholder="id_id"
-                hint="A locale code such as id_id or nl_nl."
-                error={errors.custom_lang}
-              />
-            </div>
-            <button
-              type="button"
-              className="btn"
-              style={{ marginTop: '1.85rem' }}
-              onClick={addCustomLang}
-            >
-              Add
-            </button>
-          </div>
+
 
           <p className="muted" style={{ marginBottom: 0 }}>
             Selected: {effectiveTargets.length === 0 ? 'none' : effectiveTargets.join(', ')}
