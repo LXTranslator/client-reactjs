@@ -5,13 +5,9 @@ import { paths } from '../lib/paths.js';
 import { api } from '../lib/apiClient.js';
 import { downloadJson, triggerDownload } from '../lib/download.js';
 import { FileGrowthPanel } from '../components/editor/FileGrowthPanel.jsx';
+import { ConsistencyPanel } from '../components/editor/ConsistencyPanel.jsx';
 import { localeLabel } from '../lib/locales.js';
 
-/** The name the server always serves the archive under, whatever the format. */
-const ARCHIVE_FILENAME = 'langs.zip';
-
-/** The format used when none is chosen, matching the server's own default. */
-const DEFAULT_FORMAT_ID = 'default';
 import {
   Callout,
   EmptyState,
@@ -20,6 +16,12 @@ import {
   StatusBadge,
 } from '../components/ui/Feedback.jsx';
 import { Breadcrumbs } from '../components/layout/AppLayout.jsx';
+
+/** The name the server always serves the archive under, whatever the format. */
+const ARCHIVE_FILENAME = 'langs.zip';
+
+/** The format used when none is chosen, matching the server's own default. */
+const DEFAULT_FORMAT_ID = 'default';
 
 /** How often to re-check a file that is still being processed. */
 const POLL_INTERVAL_MS = 2000;
@@ -50,6 +52,8 @@ export function TranslationEditorPage() {
   const [isArchiving, setIsArchiving] = useState(false);
   const [exportFormats, setExportFormats] = useState([]);
   const [exportFormat, setExportFormat] = useState(DEFAULT_FORMAT_ID);
+  const [retranslatingIds, setRetranslatingIds] = useState(new Set());
+  const [notice, setNotice] = useState(null);
 
   const isProcessing = file?.status === 'PENDING' || file?.status === 'PROCESSING';
 
@@ -160,12 +164,58 @@ export function TranslationEditorPage() {
     setActionError(null);
     setSavingId(keyId);
     try {
-      await api.updateMasterText(fileId, keyId, { original_text: text });
+      const result = await api.updateMasterText(fileId, keyId, { original_text: text });
+
+      /*
+       * The server reports whether the text actually moved. Saying "saved" for
+       * a write that changed nothing is a small lie that costs a person their
+       * trust in the rest of the page, so the two cases read differently.
+       */
+      setNotice(
+        result.changed
+          ? result.stale_lang_codes.length > 0
+            ? `Master updated. ${result.stale_lang_codes.length} translation${
+                result.stale_lang_codes.length === 1 ? '' : 's'
+              } are now behind it.`
+            : 'Master updated.'
+          : 'That text was already saved, so nothing changed.',
+      );
+
       await load(true);
     } catch (error) {
       setActionError(error);
     } finally {
       setSavingId(null);
+    }
+  }
+
+  /**
+   * Refreshes the translations of specific keys, and nothing else.
+   *
+   * The whole file rerun exists and is the wrong price for a corrected string:
+   * it would send every key to a provider to update one of them.
+   *
+   * @param {string[]} keyIds Keys to refresh.
+   * @returns {Promise<void>}
+   */
+  async function handleRetranslate(keyIds) {
+    if (keyIds.length === 0) return;
+
+    setActionError(null);
+    setRetranslatingIds(new Set(keyIds));
+    try {
+      await api.retranslateKeys(fileId, { key_ids: keyIds });
+      setNotice(
+        keyIds.length === 1
+          ? 'Refreshing that key in the background.'
+          : `Refreshing ${keyIds.length} keys in the background.`,
+      );
+      // 202: the work continues on a worker, so the page returns to polling.
+      await load(true);
+    } catch (error) {
+      setActionError(error);
+    } finally {
+      setRetranslatingIds(new Set());
     }
   }
 
@@ -300,6 +350,16 @@ export function TranslationEditorPage() {
     ]),
   );
 
+  /*
+   * Which keys have fallen behind, by identifier rather than by name, because
+   * that is what the refresh endpoint takes. A key is behind when any of its
+   * languages is, so the whole key is refreshed rather than one language of it.
+   */
+  const staleKeyNames = new Set((data.stale_translations ?? []).map((entry) => entry.key_name));
+  const staleKeyIds = data.keys
+    .filter((key) => staleKeyNames.has(key.key_name))
+    .map((key) => key.id);
+
   return (
     <div className="container">
       {breadcrumbs}
@@ -360,14 +420,33 @@ export function TranslationEditorPage() {
       ) : null}
 
       <ErrorMessage error={actionError} />
+      {notice ? <Callout tone="ok">{notice}</Callout> : null}
 
       {data.stale_translations?.length > 0 ? (
         <Callout tone="warn" title="Some translations are out of date">
-          {data.stale_translations.length} translation
-          {data.stale_translations.length === 1 ? '' : 's'} were produced from an older
-          version of the English text. Their tracking hash no longer matches the source.
+          <p style={{ margin: '0 0 0.6rem' }}>
+            {data.stale_translations.length} translation
+            {data.stale_translations.length === 1 ? '' : 's'} were produced from an older
+            version of the English text. Their tracking hash no longer matches the source.
+          </p>
+          <button
+            type="button"
+            className="btn btn--small btn--primary"
+            disabled={retranslatingIds.size > 0}
+            onClick={() => handleRetranslate(staleKeyIds)}
+          >
+            {retranslatingIds.size > 0
+              ? 'Refreshing'
+              : `Update ${staleKeyIds.length} key${staleKeyIds.length === 1 ? '' : 's'}`}
+          </button>
+          <span className="field__hint" style={{ marginTop: '0.4rem' }}>
+            Only these keys are sent to the provider. Everything else is left alone, and a
+            translation you corrected by hand survives unless its English source moved.
+          </span>
         </Callout>
       ) : null}
+
+      <ConsistencyPanel fileId={fileId} locales={data.available_locales} />
 
       <section className="panel">
         <div className="panel__header">
@@ -403,10 +482,13 @@ export function TranslationEditorPage() {
               locale={activeLocale}
               masterLocale={data.master_lang_code}
               stale={staleByKey.get(`${key.key_name}_${activeLocale}`) ?? null}
+              isBehind={staleKeyNames.has(key.key_name)}
+              isRetranslating={retranslatingIds.has(key.id)}
               savingId={savingId}
               savedIds={savedIds}
               onSaveTranslation={handleSaveTranslation}
               onSaveMaster={handleSaveMaster}
+              onRetranslate={handleRetranslate}
             />
           ))
         )}
@@ -432,10 +514,13 @@ function EditorRow({
   locale,
   masterLocale,
   stale,
+  isBehind,
+  isRetranslating,
   savingId,
   savedIds,
   onSaveTranslation,
   onSaveMaster,
+  onRetranslate,
 }) {
   const translation = entry.translations?.find((item) => item.lang_code === locale) ?? null;
   const isMasterView = locale === masterLocale;
@@ -522,6 +607,24 @@ function EditorRow({
                 {isSaving ? 'Saving' : 'Save'}
               </button>
               {isSaved ? <span className="editor__saved">Saved</span> : null}
+
+              {/*
+                The update button is the answer to "I changed the English, now
+                what". It is offered only when the key is actually behind its
+                master, so it is never a button that would spend provider quota
+                to produce the translation that is already there.
+              */}
+              {isBehind ? (
+                <button
+                  type="button"
+                  className="btn btn--small"
+                  disabled={isRetranslating}
+                  onClick={() => onRetranslate([entry.id])}
+                >
+                  {isRetranslating ? 'Updating' : 'Update translations'}
+                </button>
+              ) : null}
+
               {isMasterView && isDirty ? (
                 <span className="field__hint" style={{ marginTop: 0 }}>
                   Saving restamps the hash and marks translations stale.

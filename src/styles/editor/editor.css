@@ -281,3 +281,36 @@
   line-height: 1.5;
   overflow-x: auto;
 }
+
+/* Key consistency ---------------------------------------------------------- */
+
+/*
+ * The report groups by kind rather than listing every issue flat, because a
+ * file with one missing placeholder in forty languages has one problem, not
+ * forty, and a flat list hides that.
+ */
+.consistency__group + .consistency__group {
+  margin-top: 1rem;
+}
+
+.consistency__kind {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0 0 0.4rem;
+  font-size: 0.95rem;
+}
+
+.consistency__list {
+  margin: 0;
+  padding-left: 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.consistency__detail {
+  display: block;
+  font-size: 0.85rem;
+  color: var(--ink-400);
+}

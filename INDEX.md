@@ -71,6 +71,7 @@ Framework free helpers usable from anywhere in the tree.
 | [`src/components/routing/ProtectedRoute.jsx`](src/components/routing/ProtectedRoute.jsx) | Guards for signed in and signed out routes. |
 | [`src/components/routing/NamespaceRoute.jsx`](src/components/routing/NamespaceRoute.jsx) | Resolves the namespace in the path once for every route beneath it. |
 | [`src/components/editor/FileGrowthPanel.jsx`](src/components/editor/FileGrowthPanel.jsx) | Adds languages and merges new keys into an existing file. |
+| [`src/components/editor/ConsistencyPanel.jsx`](src/components/editor/ConsistencyPanel.jsx) | On demand placeholder and coverage check against the master. |
 | [`src/components/ui/FormField.jsx`](src/components/ui/FormField.jsx) | Accessible text, textarea, select and password fields. |
 | [`src/components/ui/Feedback.jsx`](src/components/ui/Feedback.jsx) | Callouts, loading, empty, error and status displays. |
 | [`src/components/ui/Modal.jsx`](src/components/ui/Modal.jsx) | Accessible modal dialog with focus management. |
@@ -128,6 +129,7 @@ Layered exactly as the design system specifies, imported in order by `main.jsx`.
 | [`tests/editor.test.jsx`](tests/editor.test.jsx) | Archive download, adding languages, merging keys and the compare dropdown. |
 | [`tests/locales.test.js`](tests/locales.test.js) | Locale catalogue, A to Z indexing, search and code validation. |
 | [`tests/exportFormat.test.jsx`](tests/exportFormat.test.jsx) | Format selection on the editor download and the format management page. |
+| [`tests/consistency.test.jsx`](tests/consistency.test.jsx) | Per key updates, the refresh control and the consistency report. |
 
 ## Agent Configuration
 

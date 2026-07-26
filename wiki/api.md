@@ -157,6 +157,8 @@ the server surfaces in the interface with no client change.
 | `api.getTranslations(fileId)` | `GET /files/:fileId/translations` |
 | `api.updateTranslation(fileId, translationId, body)` | `PATCH /files/:fileId/translations/:translationId` |
 | `api.updateMasterText(fileId, keyId, body)` | `PATCH /files/:fileId/keys/:keyId` |
+| `api.retranslateKeys(fileId, body)` | `POST /files/:fileId/keys/retranslate` |
+| `api.checkConsistency(fileId, lang)` | `GET /files/:fileId/consistency` |
 | `api.downloadLocale(fileId, lang, exportFormat)` | `GET /files/:fileId/download?lang=` |
 | `api.downloadAll(fileId, exportFormat)` | `GET /files/:fileId/download` |
 | `api.downloadArchive(fileId, exportFormat)` | `GET /files/:fileId/download?format=zip` |
@@ -208,7 +210,39 @@ matches the key's current `text_hash`. That is how the editor knows which
 translations have fallen behind their source.
 
 Editing a master string through `updateMasterText` restamps its hash, which is
-exactly what marks its translations stale.
+exactly what marks its translations stale. The response says whether the text
+really moved and which languages fell behind:
+
+```json
+{
+  "key": { "id": "...", "text_hash": "new_hash_value" },
+  "changed": true,
+  "stale_lang_codes": ["th_th"]
+}
+```
+
+`changed` is `false` when the submitted text equals the stored text, and the
+editor says so rather than claiming a save that did not happen.
+
+### Refreshing keys
+
+`retranslateKeys` refreshes the keys named and nothing else, which is what the
+per key update control uses. The rerun endpoint would send every key in the file
+to a provider to update one of them.
+
+Returns **202**, so the editor returns to polling exactly as it does after an
+upload. A translation flagged `is_manual` survives unless its English source
+moved.
+
+### Key consistency
+
+`checkConsistency` compares the placeholders and tags of every language against
+the master and reports missing tokens, invented tokens, missing rows, empty rows
+and stale rows.
+
+It runs when a person asks and never on a keystroke: the server reads every key
+and every translation of the file to answer it. `issue_count` is exact; `issues`
+stops at 500 entries and sets `truncated`, which the panel says out loud.
 
 ### Download
 
