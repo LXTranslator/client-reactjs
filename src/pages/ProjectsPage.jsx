@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router';
 import { useAuth } from '../context/AuthContext.jsx';
 import { api } from '../lib/apiClient.js';
-import { SelectField, TextField, TextAreaField } from '../components/ui/FormField.jsx';
+import { SelectField, TextField } from '../components/ui/FormField.jsx';
 import {
   Callout,
   EmptyState,
