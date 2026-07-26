@@ -332,6 +332,22 @@ export const api = {
       method: 'PATCH',
       body,
     }),
+  /** Refreshes the named keys only. Everything else is left untouched. */
+  retranslateKeys: (fileId, body) =>
+    apiRequest(`/files/${encodeURIComponent(fileId)}/keys/retranslate`, {
+      method: 'POST',
+      body,
+    }),
+  /**
+   * Validates that every language still matches the English master.
+   *
+   * On demand only. The server reads every key and every translation to answer
+   * it, which is why nothing calls this on a keystroke.
+   */
+  checkConsistency: (fileId, lang) =>
+    apiRequest(
+      `/files/${encodeURIComponent(fileId)}/consistency${lang ? `?lang=${encodeURIComponent(lang)}` : ''}`,
+    ),
   /*
    * Downloads.
    *
