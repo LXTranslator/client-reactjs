@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router';
-import { useAuth } from '../context/AuthContext.jsx';
+import { useNamespace } from '../components/routing/NamespaceRoute.jsx';
+import { paths } from '../lib/paths.js';
 import { api } from '../lib/apiClient.js';
 import { SelectField, TextField } from '../components/ui/FormField.jsx';
 import {
@@ -22,7 +23,7 @@ import { PLACEHOLDERS, runValidators, validateProjectName } from '../lib/validat
  * @returns {JSX.Element} The page.
  */
 export function ProjectsPage() {
-  const { activeNamespace } = useAuth();
+  const namespace = useNamespace();
 
   const [projects, setProjects] = useState([]);
   const [providers, setProviders] = useState([]);
@@ -42,16 +43,14 @@ export function ProjectsPage() {
   const selectedProvider = providers.find((entry) => entry.name === values.ai_provider) ?? null;
 
   /**
-   * Loads projects for the active namespace.
+   * Loads projects for the namespace in the URL.
    *
    * @returns {Promise<void>}
    */
   const loadProjects = useCallback(async () => {
-    if (!activeNamespace) return;
-
     setIsLoading(true);
     try {
-      const result = await api.listProjects(activeNamespace.user_id);
+      const result = await api.listProjects(namespace.user_id);
       setProjects(result.projects ?? []);
       setLoadError(null);
     } catch (error) {
@@ -59,7 +58,7 @@ export function ProjectsPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [activeNamespace]);
+  }, [namespace]);
 
   useEffect(() => {
     loadProjects();
@@ -143,7 +142,7 @@ export function ProjectsPage() {
 
     setIsSubmitting(true);
     try {
-      await api.createProject(activeNamespace.user_id, {
+      await api.createProject(namespace.user_id, {
         name: values.name.trim(),
         ...(values.description.trim() ? { description: values.description.trim() } : {}),
         ...(values.ai_provider ? { ai_provider: values.ai_provider } : {}),
@@ -162,27 +161,18 @@ export function ProjectsPage() {
     }
   }
 
-  if (!activeNamespace) {
-    return (
-      <div className="container">
-        <LoadingState label="Loading namespace" />
-      </div>
-    );
-  }
-
   return (
     <div className="container">
       <Breadcrumbs
         items={[
-          { label: 'Namespaces', to: '/namespaces' },
-          { label: activeNamespace.user_id },
-          { label: 'Projects' },
+          { label: 'Namespaces', to: paths.namespaces() },
+          { label: namespace.user_id },
         ]}
       />
 
       <h1>Projects</h1>
       <p className="lead">
-        Projects in <span className="mono">{activeNamespace.user_id}</span>. Each one holds
+        Projects in <span className="mono">{namespace.user_id}</span>. Each one holds
         its own AI provider settings and credentials.
       </p>
 
@@ -274,7 +264,7 @@ export function ProjectsPage() {
               <Link
                 key={project.id}
                 className="card"
-                to={`/namespaces/project/${project.id}`}
+                to={paths.project(namespace.user_id, project.id)}
               >
                 <span className="card__icon" aria-hidden="true">
                   {project.name.slice(0, 2).toUpperCase()}

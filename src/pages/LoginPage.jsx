@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router';
+import { paths } from '../lib/paths.js';
 import { useAuth } from '../context/AuthContext.jsx';
 import { TextField } from '../components/ui/FormField.jsx';
 import { ErrorMessage } from '../components/ui/Feedback.jsx';
@@ -57,12 +58,13 @@ export function LoginPage() {
 
     setIsSubmitting(true);
     try {
-      await login({
+      const account = await login({
         identifier: values.identifier.trim(),
         password: values.password,
       });
-      // Return to whatever the visitor was trying to reach before signing in.
-      navigate(location.state?.from ?? '/namespaces', { replace: true });
+      // Return to whatever the visitor was trying to reach before signing in,
+      // otherwise their own namespace.
+      navigate(location.state?.from ?? paths.namespace(account.user_id), { replace: true });
     } catch (error) {
       setSubmitError(error);
     } finally {

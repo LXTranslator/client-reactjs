@@ -1,4 +1,6 @@
 import { Link } from 'react-router';
+import { useAuth } from '../context/AuthContext.jsx';
+import { paths } from '../lib/paths.js';
 
 /**
  * Fallback for an unmatched route.
@@ -6,6 +8,8 @@ import { Link } from 'react-router';
  * @returns {JSX.Element} The page.
  */
 export function NotFoundPage() {
+  const { account } = useAuth();
+
   return (
     <div className="container narrow">
       <section className="hero">
@@ -15,12 +19,14 @@ export function NotFoundPage() {
           The address may be mistyped, or the resource may have been removed.
         </p>
         <div className="btn-row">
-          <Link className="btn btn--primary" to="/namespaces">
+          <Link className="btn btn--primary" to={paths.namespaces()}>
             Go to your dashboard
           </Link>
-          <Link className="btn" to="/namespaces/projects">
-            Browse projects
-          </Link>
+          {account?.user_id ? (
+            <Link className="btn" to={paths.namespace(account.user_id)}>
+              Your namespace
+            </Link>
+          ) : null}
         </div>
       </section>
     </div>

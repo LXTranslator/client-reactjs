@@ -42,7 +42,7 @@ describe('routing', () => {
     });
 
     it('redirects a protected route to sign in', async () => {
-      renderWithProviders(<App />, { initialEntries: ['/namespaces/projects'] });
+      renderWithProviders(<App />, { initialEntries: ['/jetsada'] });
 
       await waitFor(() => {
         expect(screen.getByRole('heading', { name: /welcome back/i })).toBeInTheDocument();
@@ -96,11 +96,11 @@ describe('routing', () => {
       api.listNamespaces.mockResolvedValue({ namespaces: [makeNamespace()] });
     });
 
-    it('redirects the root path to the dashboard', async () => {
+    it('redirects the root path into the visitor own namespace', async () => {
       renderWithProviders(<App />, { initialEntries: ['/'] });
 
       await waitFor(() => {
-        expect(screen.getByRole('heading', { name: /hello, jetsada/i })).toBeInTheDocument();
+        expect(screen.getByRole('heading', { name: /^projects$/i })).toBeInTheDocument();
       });
     });
 
@@ -108,12 +108,20 @@ describe('routing', () => {
       renderWithProviders(<App />, { initialEntries: ['/login'] });
 
       await waitFor(() => {
+        expect(screen.getByRole('heading', { name: /^projects$/i })).toBeInTheDocument();
+      });
+    });
+
+    it('lists the namespaces at the reserved path', async () => {
+      renderWithProviders(<App />, { initialEntries: ['/namespaces'] });
+
+      await waitFor(() => {
         expect(screen.getByRole('heading', { name: /hello, jetsada/i })).toBeInTheDocument();
       });
     });
 
-    it('renders a protected route', async () => {
-      renderWithProviders(<App />, { initialEntries: ['/namespaces/projects'] });
+    it('renders a namespace named in the path', async () => {
+      renderWithProviders(<App />, { initialEntries: ['/jetsada'] });
 
       await waitFor(() => {
         expect(screen.getByRole('heading', { name: /^projects$/i })).toBeInTheDocument();
@@ -130,8 +138,20 @@ describe('routing', () => {
       });
     });
 
+    it('reports a namespace the visitor cannot act in', async () => {
+      // Presentation only. The list holds what the server said is reachable, so
+      // anything else renders as missing rather than being requested.
+      renderWithProviders(<App />, { initialEntries: ['/someone_else'] });
+
+      await waitFor(() => {
+        expect(
+          screen.getByRole('heading', { name: /namespace not found/i }),
+        ).toBeInTheDocument();
+      });
+    });
+
     it('points a personal namespace away from organization settings', async () => {
-      renderWithProviders(<App />, { initialEntries: ['/namespaces/settings'] });
+      renderWithProviders(<App />, { initialEntries: ['/jetsada/settings'] });
 
       // Exact string, because the explanatory sentence below the heading also
       // contains the phrase and a regex would match both.

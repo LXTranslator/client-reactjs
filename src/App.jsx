@@ -1,6 +1,7 @@
 import { Route, Routes } from 'react-router';
 import { AppLayout } from './components/layout/AppLayout.jsx';
 import { ProtectedRoute, PublicOnlyRoute } from './components/routing/ProtectedRoute.jsx';
+import { NamespaceRoute } from './components/routing/NamespaceRoute.jsx';
 import { HomePage } from './pages/HomePage.jsx';
 import { LoginPage } from './pages/LoginPage.jsx';
 import { RegisterPage } from './pages/RegisterPage.jsx';
@@ -28,9 +29,14 @@ import { NotFoundPage } from './pages/NotFoundPage.jsx';
  *   - Protected: everything behind `ProtectedRoute`.
  *   - Always available: the root redirect and the not found fallback.
  *
- * The protected paths carry no namespace segment, matching the agreed route
- * structure. Which namespace they act on comes from the active namespace held
- * in `AuthContext` and switched from the header.
+ * A namespace occupies the first path segment, so `/orgA` is the organization
+ * `orgA` and `/jetsada` is that person's namespace. Which namespace a page acts
+ * on is therefore in the URL rather than in context, which makes every page
+ * linkable and every link unambiguous.
+ *
+ * Order matters below. The fixed segments are declared before `/:namespace` so
+ * they win; the server refuses to register an identifier matching one of them,
+ * so no account can be shadowed by this.
  *
  * @returns {JSX.Element} The routes.
  */
@@ -55,25 +61,25 @@ export function App() {
 
         {/* Signed in only. */}
         <Route element={<ProtectedRoute />}>
+          {/* Fixed segments, which belong to no single namespace. */}
           <Route path="/namespaces" element={<NamespacesPage />} />
-          <Route path="/namespaces/organizations/new" element={<OrganizationCreatePage />} />
-          <Route path="/namespaces/settings" element={<NamespaceSettingsPage />} />
-          <Route path="/namespaces/settings/members" element={<NamespaceMembersPage />} />
-          <Route path="/namespaces/projects" element={<ProjectsPage />} />
-          <Route path="/namespaces/project/:projectId" element={<ProjectDetailPage />} />
-          <Route
-            path="/namespaces/project/:projectId/uploads"
-            element={<ProjectUploadsPage />}
-          />
-          <Route
-            path="/namespaces/project/:projectId/settings"
-            element={<ProjectSettingsPage />}
-          />
-          <Route
-            path="/namespaces/project/:projectId/file/:fileId"
-            element={<TranslationEditorPage />}
-          />
+          <Route path="/organizations/new" element={<OrganizationCreatePage />} />
           <Route path="/settings" element={<AccountSettingsPage />} />
+
+          {/*
+            Everything below acts inside the namespace named in the path.
+            NamespaceRoute resolves it once for all of them, so no page repeats
+            the lookup.
+          */}
+          <Route path="/:namespace" element={<NamespaceRoute />}>
+            <Route index element={<ProjectsPage />} />
+            <Route path="settings" element={<NamespaceSettingsPage />} />
+            <Route path="settings/members" element={<NamespaceMembersPage />} />
+            <Route path="project/:projectId" element={<ProjectDetailPage />} />
+            <Route path="project/:projectId/uploads" element={<ProjectUploadsPage />} />
+            <Route path="project/:projectId/settings" element={<ProjectSettingsPage />} />
+            <Route path="project/:projectId/file/:fileId" element={<TranslationEditorPage />} />
+          </Route>
         </Route>
 
         <Route path="*" element={<NotFoundPage />} />

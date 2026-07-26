@@ -52,7 +52,7 @@ describe('organization creation', () => {
    */
   async function openCreatePage() {
     const user = userEvent.setup();
-    renderWithProviders(<App />, { initialEntries: ['/namespaces/organizations/new'] });
+    renderWithProviders(<App />, { initialEntries: ['/organizations/new'] });
 
     await waitFor(() => {
       expect(
@@ -201,6 +201,8 @@ describe('organization settings and deletion', () => {
         website_url: null,
       },
     });
+    // The namespace now comes from the path, so the URL below is what selects
+    // it. The stored value only decides where the root redirect lands.
     window.sessionStorage.setItem('lxtranslator_active_namespace', 'acme_corp');
   });
 
@@ -211,7 +213,7 @@ describe('organization settings and deletion', () => {
    */
   async function openSettings() {
     const user = userEvent.setup();
-    renderWithProviders(<App />, { initialEntries: ['/namespaces/settings'] });
+    renderWithProviders(<App />, { initialEntries: ['/acme_corp/settings'] });
 
     await waitFor(() => {
       expect(

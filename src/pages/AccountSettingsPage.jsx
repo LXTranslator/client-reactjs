@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext.jsx';
 import { api } from '../lib/apiClient.js';
+import { paths } from '../lib/paths.js';
 import { PasswordField, TextField, TextAreaField } from '../components/ui/FormField.jsx';
 import { Callout, ErrorMessage } from '../components/ui/Feedback.jsx';
 import { Breadcrumbs } from '../components/layout/AppLayout.jsx';
@@ -218,7 +219,7 @@ export function AccountSettingsPage() {
   return (
     <div className="container narrow">
       <Breadcrumbs
-        items={[{ label: 'Namespaces', to: '/namespaces' }, { label: 'Account settings' }]}
+        items={[{ label: 'Namespaces', to: paths.namespaces() }, { label: 'Account settings' }]}
       />
 
       <h1>Account settings</h1>

@@ -4,19 +4,19 @@ import { api, setAuthToken, getAuthToken, ApiError } from '../lib/apiClient.js';
 /**
  * Session and namespace state.
  *
- * Holds three things the whole application needs: who is signed in, which
- * namespaces they can act in, and which namespace is currently active.
+ * Holds who is signed in and which namespaces they can act in.
  *
- * The active namespace exists because the route structure
- * (`/namespaces/settings`, `/namespaces/projects`) carries no namespace segment.
- * Something has to decide which namespace those pages refer to, and that is this
- * context.
+ * It deliberately does not hold which namespace a page is acting on. That comes
+ * from the URL, where `/orgA` names the namespace outright, so a link always
+ * means the same thing to whoever opens it. What remains here is the landing
+ * namespace: the one `/` and the sign in redirect send a visitor to, remembered
+ * so the common case is not an extra choice on every visit.
  */
 
 const AuthContext = createContext(null);
 
-/** Remembers the active namespace across reloads within the same tab. */
-const ACTIVE_NAMESPACE_KEY = 'lxtranslator_active_namespace';
+/** Remembers the landing namespace across reloads within the same tab. */
+const LANDING_NAMESPACE_KEY = 'lxtranslator_active_namespace';
 
 /**
  * Reads a value from session storage, tolerating storage being unavailable.
@@ -57,8 +57,8 @@ function writeStored(key, value) {
 export function AuthProvider({ children }) {
   const [account, setAccount] = useState(null);
   const [namespaces, setNamespaces] = useState([]);
-  const [activeNamespaceId, setActiveNamespaceId] = useState(
-    () => readStored(ACTIVE_NAMESPACE_KEY),
+  const [landingNamespaceId, setLandingNamespaceId] = useState(
+    () => readStored(LANDING_NAMESPACE_KEY),
   );
   // Starts true so the router does not flash the login page while the stored
   // token is still being verified.
@@ -77,10 +77,10 @@ export function AuthProvider({ children }) {
 
     // Fall back to the personal namespace whenever the remembered one is no
     // longer reachable, for example after being removed from an organization.
-    setActiveNamespaceId((current) => {
+    setLandingNamespaceId((current) => {
       const stillValid = list.some((entry) => entry.user_id === current);
       const next = stillValid ? current : currentAccount.user_id;
-      writeStored(ACTIVE_NAMESPACE_KEY, next);
+      writeStored(LANDING_NAMESPACE_KEY, next);
       return next;
     });
 
@@ -159,19 +159,23 @@ export function AuthProvider({ children }) {
     setAuthToken(null);
     setAccount(null);
     setNamespaces([]);
-    setActiveNamespaceId(null);
-    writeStored(ACTIVE_NAMESPACE_KEY, null);
+    setLandingNamespaceId(null);
+    writeStored(LANDING_NAMESPACE_KEY, null);
   }, []);
 
   /**
-   * Switches the active namespace.
+   * Remembers which namespace to land in next time.
+   *
+   * Navigation is the caller's job: this records the choice, the URL carries
+   * it. Keeping the two separate is what stops a remembered value from
+   * disagreeing with the address bar.
    *
    * @param {string} namespaceUserId Routing identifier of the namespace.
    * @returns {void}
    */
   const selectNamespace = useCallback((namespaceUserId) => {
-    setActiveNamespaceId(namespaceUserId);
-    writeStored(ACTIVE_NAMESPACE_KEY, namespaceUserId);
+    setLandingNamespaceId(namespaceUserId);
+    writeStored(LANDING_NAMESPACE_KEY, namespaceUserId);
   }, []);
 
   /**
@@ -185,17 +189,11 @@ export function AuthProvider({ children }) {
     await loadNamespaces(result.account);
   }, [loadNamespaces]);
 
-  const activeNamespace = useMemo(
-    () => namespaces.find((entry) => entry.user_id === activeNamespaceId) ?? null,
-    [namespaces, activeNamespaceId],
-  );
-
   const value = useMemo(
     () => ({
       account,
       namespaces,
-      activeNamespace,
-      activeNamespaceId,
+      landingNamespaceId,
       isAuthenticated: account !== null,
       isLoading,
       login,
@@ -207,8 +205,7 @@ export function AuthProvider({ children }) {
     [
       account,
       namespaces,
-      activeNamespace,
-      activeNamespaceId,
+      landingNamespaceId,
       isLoading,
       login,
       register,

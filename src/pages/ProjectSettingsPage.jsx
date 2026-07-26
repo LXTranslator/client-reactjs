@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
+import { useNamespace } from '../components/routing/NamespaceRoute.jsx';
+import { paths } from '../lib/paths.js';
 import { api } from '../lib/apiClient.js';
 import { SelectField, TextField, TextAreaField } from '../components/ui/FormField.jsx';
 import {
@@ -31,6 +33,8 @@ import {
  */
 export function ProjectSettingsPage() {
   const { projectId } = useParams();
+  const namespace = useNamespace();
+  const ns = namespace.user_id;
   const navigate = useNavigate();
 
   const [project, setProject] = useState(null);
@@ -267,7 +271,7 @@ export function ProjectSettingsPage() {
     setActionError(null);
     try {
       await api.deleteProject(projectId);
-      navigate('/namespaces/projects', { replace: true });
+      navigate(paths.namespace(ns), { replace: true });
     } catch (error) {
       setActionError(error);
     }
@@ -296,9 +300,9 @@ export function ProjectSettingsPage() {
     <div className="container narrow">
       <Breadcrumbs
         items={[
-          { label: 'Namespaces', to: '/namespaces' },
-          { label: 'Projects', to: '/namespaces/projects' },
-          { label: project?.name ?? 'Project', to: `/namespaces/project/${projectId}` },
+          { label: 'Namespaces', to: paths.namespaces() },
+          { label: ns, to: paths.namespace(ns) },
+          { label: project?.name ?? 'Project', to: paths.project(ns, projectId) },
           { label: 'Settings' },
         ]}
       />

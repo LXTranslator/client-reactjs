@@ -1,4 +1,5 @@
 import { Link } from 'react-router';
+import { paths } from '../../lib/paths.js';
 
 /**
  * Site footer.
@@ -26,13 +27,13 @@ export function SiteFooter() {
             <h4>Workspace</h4>
             <ul>
               <li>
-                <Link to="/namespaces">Namespaces</Link>
+                <Link to={paths.namespaces()}>Namespaces</Link>
               </li>
               <li>
-                <Link to="/namespaces/projects">Projects</Link>
+                <Link to={paths.newOrganization()}>New organization</Link>
               </li>
               <li>
-                <Link to="/settings">Account settings</Link>
+                <Link to={paths.accountSettings()}>Account settings</Link>
               </li>
             </ul>
           </div>

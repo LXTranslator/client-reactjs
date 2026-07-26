@@ -1,5 +1,7 @@
 import { useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
+import { useNamespace } from '../components/routing/NamespaceRoute.jsx';
+import { paths } from '../lib/paths.js';
 import { api } from '../lib/apiClient.js';
 import { SelectField, TextField } from '../components/ui/FormField.jsx';
 import { Callout, ErrorMessage } from '../components/ui/Feedback.jsx';
@@ -40,6 +42,8 @@ const MAX_UPLOAD_BYTES = 2 * 1024 * 1024;
  */
 export function ProjectUploadsPage() {
   const { projectId } = useParams();
+  const namespace = useNamespace();
+  const ns = namespace.user_id;
   const navigate = useNavigate();
   const inputRef = useRef(null);
 
@@ -130,7 +134,7 @@ export function ProjectUploadsPage() {
       formData.append('target_langs', JSON.stringify(effectiveTargets));
 
       const result = await api.uploadFile(projectId, formData);
-      navigate(`/namespaces/project/${projectId}/file/${result.file.id}`);
+      navigate(paths.projectFile(ns, projectId, result.file.id));
     } catch (error) {
       setSubmitError(error);
     } finally {
@@ -144,9 +148,9 @@ export function ProjectUploadsPage() {
     <div className="container narrow">
       <Breadcrumbs
         items={[
-          { label: 'Namespaces', to: '/namespaces' },
-          { label: 'Projects', to: '/namespaces/projects' },
-          { label: 'Project', to: `/namespaces/project/${projectId}` },
+          { label: 'Namespaces', to: paths.namespaces() },
+          { label: ns, to: paths.namespace(ns) },
+          { label: 'Project', to: paths.project(ns, projectId) },
           { label: 'Upload' },
         ]}
       />
@@ -337,7 +341,7 @@ export function ProjectUploadsPage() {
               'Upload and translate'
             )}
           </button>
-          <Link className="btn btn--ghost" to={`/namespaces/project/${projectId}`}>
+          <Link className="btn btn--ghost" to={paths.project(ns, projectId)}>
             Cancel
           </Link>
         </div>
