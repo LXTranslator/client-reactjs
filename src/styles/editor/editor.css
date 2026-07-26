@@ -1,0 +1,185 @@
+/*
+ * Section styles for the translation editor and the upload page.
+ *
+ * The editor is the one screen with a genuinely bespoke layout: a two column
+ * reading view pairing each English master string with its translation.
+ */
+
+/* Editor ------------------------------------------------------------------ */
+
+.editor__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+
+.editor__locales {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.editor__row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 1rem;
+  padding: 1rem 0;
+  border-bottom: 1px solid var(--hairline);
+}
+
+.editor__row:last-child {
+  border-bottom: 0;
+}
+
+.editor__key {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.15rem;
+}
+
+.editor__key-name {
+  font-family: var(--mono);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--accent-strong);
+  word-break: break-all;
+}
+
+.editor__hash {
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  color: var(--ink-400);
+  word-break: break-all;
+}
+
+.editor__cell-label {
+  display: block;
+  margin-bottom: 0.3rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-400);
+}
+
+.editor__source {
+  padding: 0.65rem 0.85rem;
+  min-height: 92px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-sm);
+  background: var(--glass-faint);
+  color: var(--ink-700);
+  font-size: 0.95rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.editor__saved {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--ok);
+}
+
+/* Uploads ----------------------------------------------------------------- */
+
+.dropzone {
+  display: grid;
+  place-items: center;
+  gap: 0.5rem;
+  padding: 2.25rem 1.5rem;
+  text-align: center;
+  border: 2px dashed var(--silver-400);
+  border-radius: var(--radius);
+  background: var(--glass-faint);
+  color: var(--ink-500);
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.dropzone:hover,
+.dropzone.is-dragging {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.dropzone__title {
+  font-weight: 650;
+  color: var(--ink-900);
+}
+
+.dropzone__hint {
+  font-size: 0.85rem;
+  color: var(--ink-400);
+}
+
+.dropzone__file {
+  font-family: var(--mono);
+  font-size: 0.875rem;
+  color: var(--accent-strong);
+}
+
+/* API key priority list --------------------------------------------------- */
+
+.keylist {
+  display: grid;
+  gap: 0.6rem;
+}
+
+.keylist__item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-sm);
+  background: var(--glass-faint);
+}
+
+.keylist__order {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.keylist__body {
+  flex: 1;
+  min-width: 160px;
+}
+
+.keylist__label {
+  font-weight: 600;
+  color: var(--ink-900);
+}
+
+.keylist__meta {
+  font-size: 0.8rem;
+  color: var(--ink-400);
+}
+
+.keylist__actions {
+  display: flex;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 760px) {
+  .editor__row {
+    grid-template-columns: 1fr;
+  }
+}
