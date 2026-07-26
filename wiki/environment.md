@@ -62,6 +62,56 @@ That origin must then appear in the server's `CORS_ORIGINS` allowlist. Serving
 both from one origin, as the bundled nginx configuration does, avoids that
 entirely.
 
+## Which variable applies when
+
+The three variables belong to three different moments, and setting one in the
+wrong place does nothing at all. This is worth reading before configuring a
+deployment, because a variable that has no effect fails silently.
+
+| Moment | Variable | Read by |
+|---|---|---|
+| `npm run dev` | `VITE_API_PROXY_TARGET` | The Vite dev server, in `vite.config.js`. |
+| `npm run build` | `VITE_API_BASE_URL` | Vite, inlined into the bundle. |
+| Container start up | `API_UPSTREAM` | nginx, through the rendered template. |
+
+`VITE_API_PROXY_TARGET` has **no effect on a deployed container**. The production
+image serves a built bundle from nginx and never runs the Vite dev server, so
+the value is not read. Point the deployed proxy with `API_UPSTREAM` instead.
+
+`VITE_API_BASE_URL` is consumed while the bundle is being built, so it has to
+reach the build rather than the running container. In Docker that means the
+`--build-arg` shown under [Build](#build); setting it as a runtime variable
+leaves the built in default in place.
+
+`API_UPSTREAM` is the only one of the three a running container reads.
+
+## How the deployed proxy is configured
+
+The image ships `nginx.conf.template`, and the nginx entrypoint renders it into
+`/etc/nginx/conf.d/` at start up with `API_UPSTREAM` substituted. Nothing needs
+rebuilding to point the client at a different backend.
+
+```bash
+# Backend on the same Compose network, the default.
+API_UPSTREAM=http://server:4000
+
+# Backend on a separate host, reached over TLS.
+API_UPSTREAM=https://your_api_host
+```
+
+Scheme and host only. A trailing slash or a path turns the value into a
+replacement for the matched `/api/` prefix and rewrites every proxied request,
+so `https://your_api_host/` is not the same as `https://your_api_host`.
+
+The address is resolved per request rather than once at start up. An unreachable
+backend therefore returns 502 on `/api/` while the static site keeps serving,
+instead of stopping nginx from booting, and a backend that changes address is
+picked up without a restart.
+
+Requests leave with the `Host` header naming `API_UPSTREAM`, which is what lets
+a platform that routes by hostname deliver them, and with the browser's own host
+in `X-Forwarded-Host`.
+
 ## Variable reference
 
 `Required` answers whether the application fails without the variable. Every row
@@ -73,7 +123,7 @@ serving the API from another origin.
 |---|---|---|---|---|
 | `VITE_API_PROXY_TARGET` | no | dev server | `http://localhost:4000` | Backend the dev server proxies `/api` to. |
 | `VITE_API_BASE_URL` | no | build | `/api/v1` | Base path the built bundle calls. |
-| `API_UPSTREAM` | no | runtime | `http://server:4000` | Backend the nginx `/api/` block proxies to. Edit `nginx.conf` or template it at deploy time. |
+| `API_UPSTREAM` | no | runtime | `http://server:4000` | Backend the nginx `/api/` block proxies to. Scheme and host, no path and no trailing slash. |
 
 ## Docker
 
@@ -84,7 +134,15 @@ docker build -t lxtranslator_client .
 # network.
 docker run --rm -p 8080:8080 lxtranslator_client
 
-# Building against a separate API origin.
+# Proxying to a backend somewhere else. No rebuild: the bundle still calls
+# /api/v1 on its own origin, and nginx forwards from there.
+docker run --rm -p 8080:8080 \
+  -e API_UPSTREAM=https://your_api_host \
+  lxtranslator_client
+
+# Calling a separate API origin from the browser directly, bypassing the proxy.
+# This one is a build argument, and the API origin must then appear in the
+# server's CORS_ORIGINS allowlist.
 docker build -t lxtranslator_client \
   --build-arg VITE_API_BASE_URL=https://your_api_host/api/v1 .
 ```
@@ -137,6 +195,10 @@ services:
     build: .
     depends_on:
       - server
+    environment:
+      # The image default already points here; named for the sake of being
+      # explicit about where /api goes.
+      API_UPSTREAM: http://server:4000
     ports:
       - "8080:8080"
     restart: unless-stopped
