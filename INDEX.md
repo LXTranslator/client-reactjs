@@ -17,7 +17,7 @@ This file is the entry point for understanding the project structure. Agents MUS
 | [`vite.config.js`](vite.config.js) | Build, dev server proxy and test runner configuration. |
 | [`index.html`](index.html) | Application shell and document head. |
 | [`Dockerfile`](Dockerfile) | Multi stage image building the bundle and serving it. |
-| [`nginx.conf`](nginx.conf) | Static server configuration with security headers. |
+| [`nginx.conf.template`](nginx.conf.template) | Static server configuration with security headers, rendered at container start up. |
 | [`.dockerignore`](.dockerignore) | Paths excluded from the Docker build context. |
 | [`.gitignore`](.gitignore) | Git ignore configuration. |
 | [`.gitattributes`](.gitattributes) | Git attributes configuration. |

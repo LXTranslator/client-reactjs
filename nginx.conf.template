@@ -3,6 +3,13 @@
 # Two jobs: serve the single page application, and forward /api to the backend
 # so the browser sees one origin. A single origin means no cross origin
 # preflight and no need to relax the backend's origin allowlist.
+#
+# This is a template, not a finished configuration. The nginx entrypoint renders
+# every file in /etc/nginx/templates into /etc/nginx/conf.d at start up,
+# substituting API_UPSTREAM, so the backend address is a deploy time setting
+# rather than a value baked into the image. Only that variable and the
+# resolver the entrypoint discovers are substituted; every other `$name` below
+# is an nginx variable and survives untouched.
 
 server {
     # Port 8080 rather than 80, so the server can run as an unprivileged user.
@@ -53,15 +60,40 @@ server {
         expires 0;
     }
 
-    # Forward API calls to the backend. Set API_UPSTREAM at deploy time, for
-    # example to http://server:4000.
+    # Forward API calls to the backend named by API_UPSTREAM: scheme and host,
+    # no path and no trailing slash, for example http://server:4000 or
+    # https://your_api_host.
     location /api/ {
-        proxy_pass http://server:4000;
+        # The address is held in a variable so nginx resolves it per request
+        # instead of once at start up. Resolving at start up means an upstream
+        # that is unknown to DNS stops the whole server from booting, taking the
+        # static site down with it, and it pins the first address for the life
+        # of the process, which breaks whenever a hosting platform moves the
+        # backend. With a variable an unreachable backend is a 502 on /api/ and
+        # nothing more.
+        resolver ${NGINX_LOCAL_RESOLVERS} valid=30s ipv6=off;
+        set $api_upstream ${API_UPSTREAM};
+        proxy_pass $api_upstream;
+
         proxy_http_version 1.1;
-        proxy_set_header Host $host;
+
+        # $proxy_host is the host from API_UPSTREAM, which is what the backend
+        # must be addressed by. Sending this server's own host instead leaves a
+        # platform that routes by hostname unable to tell which service the
+        # request belongs to.
+        proxy_set_header Host $proxy_host;
+
+        # Send SNI on a TLS upstream, without which a shared edge cannot pick a
+        # certificate and the handshake fails. Ignored for a plain http
+        # upstream.
+        proxy_ssl_server_name on;
+
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
+        # The backend no longer sees the browser's host in the Host header, so
+        # it is carried here instead.
+        proxy_set_header X-Forwarded-Host $host;
 
         # Translation uploads can take a while to accept, so the read timeout is
         # generous. Processing itself is asynchronous and polled.

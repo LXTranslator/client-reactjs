@@ -7,7 +7,7 @@ description: Build output and serving configuration for the LXTranslator client.
 
 ## Serving headers
 
-`nginx.conf` sets these on every response:
+`nginx.conf.template` sets these on every response:
 
 | Header | Value | Purpose |
 |---|---|---|
