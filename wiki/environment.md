@@ -108,6 +108,12 @@ backend therefore returns 502 on `/api/` while the static site keeps serving,
 instead of stopping nginx from booting, and a backend that changes address is
 picked up without a restart.
 
+Resolving per request means nginx needs a nameserver named in the configuration.
+The image takes it from the container's own `/etc/resolv.conf`, which the
+entrypoint exposes only when `NGINX_ENTRYPOINT_LOCAL_RESOLVERS` is set. The
+Dockerfile sets it, and a deployment does not need to: it is noted here because
+unsetting it leaves nginx unable to start.
+
 Requests leave with the `Host` header naming `API_UPSTREAM`, which is what lets
 a platform that routes by hostname deliver them, and with the browser's own host
 in `X-Forwarded-Host`.
