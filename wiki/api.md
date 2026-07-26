@@ -163,7 +163,10 @@ the server surfaces in the interface with no client change.
 | Helper | Endpoint |
 |---|---|
 | `api.sendChat(namespace, payload)` | `POST /namespaces/:namespace/chat` |
+| `api.listChatSessions(namespace)` | `GET /namespaces/:namespace/chat/sessions` |
 | `api.getChatSession(namespace, sessionId)` | `GET /namespaces/:namespace/chat/sessions/:sessionId` |
+| `api.renameChatSession(namespace, sessionId, title)` | `PATCH /namespaces/:namespace/chat/sessions/:sessionId` |
+| `api.deleteChatSession(namespace, sessionId)` | `DELETE /namespaces/:namespace/chat/sessions/:sessionId` |
 | `api.searchChats(namespace, query, limit)` | `GET /namespaces/:namespace/chat/search` |
 | `api.backfillChatEmbeddings(namespace, body)` | `POST /namespaces/:namespace/chat/embeddings` |
 | `api.getChatLogBuffer(namespace)` | `GET /namespaces/:namespace/chat/log_buffer` |
@@ -198,11 +201,17 @@ The tools the assistant may call include `create_project` for a new project and
 `upload_file` for one that already exists, so an attached file reaches either
 without a project ever needing to be deleted or recreated.
 
-There is no endpoint that lists a person's sessions, so the conversations pane
-keeps the handful this browser has open in local storage and finds anything else
-through search. `searchChats` reports `method`, which is `EMBEDDING` or `TEXT`,
-and the pane says which: somebody searching by meaning and finding nothing
-deserves to know no embedding model is configured.
+The conversations pane lists what the server holds, so the same conversations
+appear on every machine somebody signs in from. Each arrives already named,
+after the question that opened it; `renameChatSession` replaces that, and an
+empty title clears it back to the derived one. `deleteChatSession` removes the
+conversation and every turn in it, which is why the pane asks first.
+
+Search sits above the list because the two answer different questions: the list
+covers what somebody was just doing, search covers what was decided last month.
+`searchChats` reports `method`, which is `EMBEDDING` or `TEXT`, and the pane says
+which: somebody searching by meaning and finding nothing deserves to know no
+embedding model is configured.
 
 ## Namespace AI credentials
 

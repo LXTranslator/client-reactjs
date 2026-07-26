@@ -25,6 +25,8 @@ The browser interface for LXTranslator. It consumes the API provided by
 | FR-12 | `/settings` manages user id, email and password. | Done |
 | FR-13 | `/organizations/new` creates an organization. | Done |
 | FR-14 | An unknown path renders a not found page. | Done |
+| FR-20 | `/{namespace}/chat` lists conversations from the server, and each can be renamed or deleted. | Done |
+| FR-21 | A locale file can be dropped onto the conversation pane as well as chosen through the button. | Done |
 
 ### Forms and validation
 

@@ -35,6 +35,40 @@
    * and the page itself does not scroll while the conversation does.
    */
   height: min(70vh, 40rem);
+
+  /* The drop overlay is positioned against this pane. */
+  position: relative;
+}
+
+.chat__pane--dropping {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+/*
+ * The drop overlay.
+ *
+ * Sits over the whole pane rather than over a strip of it, because the pane is
+ * the drop target and an overlay covering less than the target would be telling
+ * a lie about where a file may be let go.
+ */
+.chat__dropzone {
+  position: absolute;
+  inset: 0.5rem;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px dashed var(--accent);
+  border-radius: var(--radius);
+  background: var(--accent-soft);
+  color: var(--ink-900);
+  font-weight: 600;
+  text-align: center;
+  padding: 1rem;
+
+  /* Never intercept the drop it is announcing. */
+  pointer-events: none;
 }
 
 .chat__pane-header {
@@ -134,6 +168,36 @@
 .chat__session-forget:hover {
   color: var(--ink-900);
   background: var(--glass-faint);
+}
+
+.chat__session-action {
+  flex-shrink: 0;
+  border: 0;
+  background: transparent;
+  color: var(--ink-400);
+  font-size: 0.9rem;
+  line-height: 1;
+  padding: 0.3rem 0.35rem;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.chat__session-action:hover {
+  color: var(--ink-900);
+  background: var(--glass-faint);
+}
+
+/* Renaming, in place of the row it replaces so the list does not jump. */
+.chat__rename {
+  display: flex;
+  gap: 0.4rem;
+  align-items: center;
+}
+
+.chat__rename .field__control {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.9rem;
 }
 
 .chat__results-header {

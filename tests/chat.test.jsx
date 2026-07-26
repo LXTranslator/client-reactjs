@@ -1,5 +1,5 @@
-import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
-import { screen, waitFor, within } from '@testing-library/react';
+import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { renderWithProviders, makeAccount, makeNamespace } from './helpers/renderWithProviders.jsx';
 
@@ -21,7 +21,10 @@ vi.mock('../src/lib/apiClient.js', async (importOriginal) => {
       me: vi.fn(),
       listNamespaces: vi.fn(),
       sendChat: vi.fn(),
+      listChatSessions: vi.fn(),
       getChatSession: vi.fn(),
+      renameChatSession: vi.fn(),
+      deleteChatSession: vi.fn(),
       searchChats: vi.fn(),
       backfillChatEmbeddings: vi.fn(),
     },
@@ -78,18 +81,34 @@ function makeTurn(overrides = {}) {
   };
 }
 
+/**
+ * Builds a conversation as the list endpoint returns it.
+ *
+ * @param {object} [overrides] Field overrides.
+ * @returns {object} Session payload.
+ */
+function makeSession(overrides = {}) {
+  return {
+    id: '11111111-1111-4111-8111-111111111111',
+    account_id: 'namespace_1',
+    user_id: 'account_1',
+    title: 'How many projects do I have?',
+    turn_count: 1,
+    total_token_usage: 812,
+    last_message_at: '2026-01-01T00:00:00.000Z',
+    created_at: '2026-01-01T00:00:00.000Z',
+    ...overrides,
+  };
+}
+
 describe('the assistant', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    window.localStorage.clear();
     getAuthToken.mockReturnValue('a_valid_token');
     api.me.mockResolvedValue({ account: makeAccount() });
     api.listNamespaces.mockResolvedValue({ namespaces: [makeNamespace()] });
+    api.listChatSessions.mockResolvedValue({ sessions: [] });
     api.getChatSession.mockResolvedValue({ session_id: 'x', turn_count: 0, turns: [] });
-  });
-
-  afterEach(() => {
-    window.localStorage.clear();
   });
 
   /**
@@ -203,6 +222,74 @@ describe('the assistant', () => {
 
       expect(await screen.findByRole('alert')).toHaveTextContent(/that file is empty/i);
       expect(screen.queryByText('empty.json')).not.toBeInTheDocument();
+    });
+
+    it('attaches a file dropped anywhere on the conversation pane', async () => {
+      // People arrive at a chat holding a file. Making them find a button
+      // first is the kind of friction that sends them back to the project
+      // page to upload it there instead.
+      const user = await openChat();
+      api.sendChat.mockResolvedValue(makeAnswer({ answer: 'Created it.' }));
+
+      const file = new File([JSON.stringify({ hello: 'Hello' })], 'dropped.json', {
+        type: 'application/json',
+      });
+
+      const pane = screen.getByRole('region', { name: 'Conversation' });
+      fireEvent.drop(pane, { dataTransfer: { files: [file] } });
+
+      expect(await within(pane).findByText('dropped.json')).toBeInTheDocument();
+
+      await user.type(screen.getByLabelText('Message'), 'Use this one');
+      await user.click(screen.getByRole('button', { name: 'Send' }));
+
+      await waitFor(() => {
+        expect(api.sendChat).toHaveBeenCalledWith('jetsada', expect.any(FormData));
+      });
+      expect(api.sendChat.mock.calls[0][1].get('file')).toBe(file);
+    });
+
+    it('announces the drop target while a file is over the pane', async () => {
+      await openChat();
+      const pane = screen.getByRole('region', { name: 'Conversation' });
+
+      fireEvent.dragEnter(pane, { dataTransfer: { types: ['Files'] } });
+      expect(await screen.findByText(/drop a json locale file/i)).toBeInTheDocument();
+
+      fireEvent.dragLeave(pane);
+      await waitFor(() => {
+        expect(screen.queryByText(/drop a json locale file/i)).not.toBeInTheDocument();
+      });
+    });
+
+    it('checks a dropped file exactly as it checks a chosen one', async () => {
+      await openChat();
+      const pane = screen.getByRole('region', { name: 'Conversation' });
+      const file = new File([], 'empty.json', { type: 'application/json' });
+
+      fireEvent.drop(pane, { dataTransfer: { files: [file] } });
+
+      expect(await screen.findByRole('alert')).toHaveTextContent(/that file is empty/i);
+      expect(screen.queryByText('empty.json')).not.toBeInTheDocument();
+    });
+
+    it('takes the first of several dropped files and says so', async () => {
+      // One attachment per turn. Silently dropping the rest would be worse
+      // than saying which one was taken.
+      await openChat();
+      const pane = screen.getByRole('region', { name: 'Conversation' });
+
+      const first = new File([JSON.stringify({ a: 'A' })], 'first.json', {
+        type: 'application/json',
+      });
+      const second = new File([JSON.stringify({ b: 'B' })], 'second.json', {
+        type: 'application/json',
+      });
+
+      fireEvent.drop(pane, { dataTransfer: { files: [first, second] } });
+
+      expect(await within(pane).findByText('first.json')).toBeInTheDocument();
+      expect(screen.getByRole('alert')).toHaveTextContent(/one file per message/i);
     });
 
     it('will not send an empty message', async () => {
@@ -351,9 +438,31 @@ describe('the assistant', () => {
   });
 
   describe('conversations', () => {
-    it('remembers a conversation once it has one', async () => {
+    it('lists the conversations the server holds, not this browser', async () => {
+      // The list used to live in local storage, so a conversation started on
+      // another machine was invisible. It comes from the server now.
+      api.listChatSessions.mockResolvedValue({
+        sessions: [
+          makeSession({ title: 'Started on my laptop' }),
+          makeSession({ id: 'other', title: 'Started at my desk' }),
+        ],
+      });
+
+      await openChat();
+
+      const list = await screen.findByRole('complementary', { name: 'Conversations' });
+      expect(await within(list).findByText('Started on my laptop')).toBeInTheDocument();
+      expect(within(list).getByText('Started at my desk')).toBeInTheDocument();
+    });
+
+    it('shows a conversation named by the server after the first turn', async () => {
       const user = await openChat();
       api.sendChat.mockResolvedValue(makeAnswer());
+      // The turn creates the conversation, so the reload after it is what
+      // brings back the title the server derived.
+      api.listChatSessions.mockResolvedValue({
+        sessions: [makeSession({ title: 'Remember me' })],
+      });
 
       await user.type(screen.getByLabelText('Message'), 'Remember me');
       await user.click(screen.getByRole('button', { name: 'Send' }));
@@ -408,11 +517,11 @@ describe('the assistant', () => {
     });
 
     it('opens a conversation from the list', async () => {
-      const user = await openChat();
-      api.sendChat.mockResolvedValue(makeAnswer());
+      api.listChatSessions.mockResolvedValue({
+        sessions: [makeSession({ title: 'Open me later' })],
+      });
 
-      await user.type(screen.getByLabelText('Message'), 'Open me later');
-      await user.click(screen.getByRole('button', { name: 'Send' }));
+      const user = await openChat();
 
       const list = await screen.findByRole('complementary', { name: 'Conversations' });
       await user.click(await within(list).findByText('Open me later'));
@@ -425,21 +534,67 @@ describe('the assistant', () => {
       });
     });
 
-    it('forgets a conversation locally without deleting the log', async () => {
+    it('renames a conversation', async () => {
+      api.listChatSessions.mockResolvedValue({
+        sessions: [makeSession({ title: 'How many projects do I have?' })],
+      });
+      api.renameChatSession.mockResolvedValue({ session: makeSession({ title: 'Thai rollout' }) });
+
       const user = await openChat();
-      api.sendChat.mockResolvedValue(makeAnswer());
-
-      await user.type(screen.getByLabelText('Message'), 'Forget me');
-      await user.click(screen.getByRole('button', { name: 'Send' }));
-
       const list = await screen.findByRole('complementary', { name: 'Conversations' });
-      await within(list).findByText('Forget me');
-      await user.click(within(list).getByRole('button', { name: /remove forget me/i }));
+
+      await user.click(await within(list).findByRole('button', { name: /^rename /i }));
+
+      const field = within(list).getByLabelText('Conversation name');
+      await user.clear(field);
+      await user.type(field, 'Thai rollout');
+      await user.click(within(list).getByRole('button', { name: 'Save' }));
 
       await waitFor(() => {
-        expect(within(list).queryByText('Forget me')).not.toBeInTheDocument();
+        expect(api.renameChatSession).toHaveBeenCalledWith(
+          'jetsada',
+          '11111111-1111-4111-8111-111111111111',
+          'Thai rollout',
+        );
       });
-      expect(screen.getByText(/no conversations yet/i)).toBeInTheDocument();
+    });
+
+    it('deletes a conversation only after it is confirmed', async () => {
+      api.listChatSessions.mockResolvedValue({
+        sessions: [makeSession({ title: 'Delete me' })],
+      });
+      api.deleteChatSession.mockResolvedValue(undefined);
+
+      const user = await openChat();
+      const list = await screen.findByRole('complementary', { name: 'Conversations' });
+      await within(list).findByText('Delete me');
+
+      // Refused first. This removes the conversation and every message in it
+      // from the server, so a stray click must not be enough.
+      const confirm = vi.spyOn(window, 'confirm').mockReturnValue(false);
+      await user.click(within(list).getByRole('button', { name: /^delete delete me$/i }));
+      expect(api.deleteChatSession).not.toHaveBeenCalled();
+
+      confirm.mockReturnValue(true);
+      await user.click(within(list).getByRole('button', { name: /^delete delete me$/i }));
+
+      await waitFor(() => {
+        expect(api.deleteChatSession).toHaveBeenCalledWith(
+          'jetsada',
+          '11111111-1111-4111-8111-111111111111',
+        );
+      });
+
+      confirm.mockRestore();
+    });
+
+    it('names an unnamed conversation in the list rather than showing a blank', async () => {
+      api.listChatSessions.mockResolvedValue({ sessions: [makeSession({ title: null })] });
+
+      await openChat();
+
+      const list = await screen.findByRole('complementary', { name: 'Conversations' });
+      expect(await within(list).findByText('Untitled conversation')).toBeInTheDocument();
     });
   });
 });

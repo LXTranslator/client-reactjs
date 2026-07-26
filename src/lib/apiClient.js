@@ -329,9 +329,21 @@ export const api = {
       method: 'POST',
       ...(payload instanceof FormData ? { formData: payload } : { body: payload }),
     }),
+  listChatSessions: (namespace) =>
+    apiRequest(`/namespaces/${encodeURIComponent(namespace)}/chat/sessions`),
   getChatSession: (namespace, sessionId) =>
     apiRequest(
       `/namespaces/${encodeURIComponent(namespace)}/chat/sessions/${encodeURIComponent(sessionId)}`,
+    ),
+  renameChatSession: (namespace, sessionId, title) =>
+    apiRequest(
+      `/namespaces/${encodeURIComponent(namespace)}/chat/sessions/${encodeURIComponent(sessionId)}`,
+      { method: 'PATCH', body: { title } },
+    ),
+  deleteChatSession: (namespace, sessionId) =>
+    apiRequest(
+      `/namespaces/${encodeURIComponent(namespace)}/chat/sessions/${encodeURIComponent(sessionId)}`,
+      { method: 'DELETE' },
     ),
   searchChats: (namespace, query, limit) =>
     apiRequest(

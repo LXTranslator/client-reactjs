@@ -50,7 +50,6 @@ Framework free helpers usable from anywhere in the tree.
 | [`src/lib/download.js`](src/lib/download.js) | Saves exported locale documents to disk. |
 | [`src/lib/paths.js`](src/lib/paths.js) | Client route builders and the reserved first segments. |
 | [`src/lib/locales.js`](src/lib/locales.js) | The 143 locale catalogue, A to Z indexing, search and locale code validation. |
-| [`src/lib/chatSessions.js`](src/lib/chatSessions.js) | Conversations this browser remembers, per namespace. |
 
 ### State
 
@@ -73,8 +72,8 @@ Framework free helpers usable from anywhere in the tree.
 | [`src/components/routing/NamespaceRoute.jsx`](src/components/routing/NamespaceRoute.jsx) | Resolves the namespace in the path once for every route beneath it. |
 | [`src/components/editor/FileGrowthPanel.jsx`](src/components/editor/FileGrowthPanel.jsx) | Adds languages and merges new keys into an existing file. |
 | [`src/components/editor/ConsistencyPanel.jsx`](src/components/editor/ConsistencyPanel.jsx) | On demand placeholder and coverage check against the master. |
-| [`src/components/chat/ChatSessionList.jsx`](src/components/chat/ChatSessionList.jsx) | Conversations pane, with search over past exchanges. |
-| [`src/components/chat/ChatConversation.jsx`](src/components/chat/ChatConversation.jsx) | Conversation pane and the composer, including attachments. |
+| [`src/components/chat/ChatSessionList.jsx`](src/components/chat/ChatSessionList.jsx) | Conversations pane: the server's list, renaming, deleting and search. |
+| [`src/components/chat/ChatConversation.jsx`](src/components/chat/ChatConversation.jsx) | Conversation pane and the composer, including attachments chosen or dropped. |
 | [`src/components/chat/ChatContextPane.jsx`](src/components/chat/ChatContextPane.jsx) | What the assistant did, what it cost, and embedding backfill. |
 | [`src/components/ui/FormField.jsx`](src/components/ui/FormField.jsx) | Accessible text, textarea, select and password fields. |
 | [`src/components/ui/Feedback.jsx`](src/components/ui/Feedback.jsx) | Callouts, loading, empty, error and status displays. |

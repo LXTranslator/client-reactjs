@@ -6,7 +6,6 @@ import { Breadcrumbs } from '../components/layout/AppLayout.jsx';
 import { ChatSessionList } from '../components/chat/ChatSessionList.jsx';
 import { ChatConversation } from '../components/chat/ChatConversation.jsx';
 import { ChatContextPane } from '../components/chat/ChatContextPane.jsx';
-import { forgetSession, readSessions, rememberSession } from '../lib/chatSessions.js';
 
 /**
  * The assistant.
@@ -22,6 +21,11 @@ import { forgetSession, readSessions, rememberSession } from '../lib/chatSession
  * checks permission itself on every call and the answer may well be describing
  * a refusal.
  *
+ * The conversation list comes from the server. It used to be kept in this
+ * browser's local storage, which meant a conversation started at a desk was
+ * invisible from a laptop; now signing in anywhere shows the same list, and a
+ * conversation can be named and deleted rather than only hidden locally.
+ *
  * @returns {JSX.Element} The page.
  */
 export function ChatPage() {
@@ -34,18 +38,41 @@ export function ChatPage() {
   const [lastTurn, setLastTurn] = useState(null);
   const [pending, setPending] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingSessions, setIsLoadingSessions] = useState(true);
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState(null);
 
-  /* The remembered list is per namespace, so switching namespace resets it. */
+  /**
+   * Reloads the conversation list.
+   *
+   * Failing to load it is not worth failing the page over: somebody can still
+   * ask a question, and the list arrives on the next turn.
+   *
+   * @returns {Promise<Array<object>>} The conversations.
+   */
+  const loadSessions = useCallback(async () => {
+    try {
+      const result = await api.listChatSessions(ns);
+      const listed = result.sessions ?? [];
+      setSessions(listed);
+      return listed;
+    } catch {
+      return [];
+    } finally {
+      setIsLoadingSessions(false);
+    }
+  }, [ns]);
+
+  /* Conversations are per namespace, so switching namespace reloads them. */
   useEffect(() => {
-    setSessions(readSessions(ns));
     setSessionId(null);
     setTurns([]);
     setLastTurn(null);
     setPending(null);
     setError(null);
-  }, [ns]);
+    setIsLoadingSessions(true);
+    loadSessions();
+  }, [ns, loadSessions]);
 
   /**
    * Loads a conversation.
@@ -106,11 +133,15 @@ export function ChatPage() {
       setSessionId(result.session_id);
       setLastTurn(result);
       setPending(null);
-      setSessions(rememberSession(ns, { session_id: result.session_id, title: message }));
 
       // The answer is already here; re-reading the conversation is what picks
-      // up the identifiers and the running total the server assigned.
-      const history = await api.getChatSession(ns, result.session_id);
+      // up the identifiers and the running total the server assigned. The list
+      // is refreshed alongside it, because this turn either created a
+      // conversation or moved one to the top.
+      const [history] = await Promise.all([
+        api.getChatSession(ns, result.session_id),
+        loadSessions(),
+      ]);
       setTurns(history.turns ?? []);
     } catch (caught) {
       setError(caught);
@@ -134,14 +165,27 @@ export function ChatPage() {
   }
 
   /**
-   * Removes a conversation from this browser.
+   * Renames a conversation.
    *
    * @param {string} id Session identifier.
-   * @returns {void}
+   * @param {string} title New name. Empty puts it back to its opening question.
+   * @returns {Promise<void>}
    */
-  function handleForget(id) {
-    setSessions(forgetSession(ns, id));
+  async function handleRename(id, title) {
+    await api.renameChatSession(ns, id, title);
+    await loadSessions();
+  }
+
+  /**
+   * Deletes a conversation and every turn in it.
+   *
+   * @param {string} id Session identifier.
+   * @returns {Promise<void>}
+   */
+  async function handleDelete(id) {
+    await api.deleteChatSession(ns, id);
     if (id === sessionId) handleNew();
+    await loadSessions();
   }
 
   const totalTokens =
@@ -169,9 +213,11 @@ export function ChatPage() {
         <ChatSessionList
           sessions={sessions}
           activeSessionId={sessionId}
+          isLoading={isLoadingSessions}
           onSelect={openSession}
           onNew={handleNew}
-          onForget={handleForget}
+          onRename={handleRename}
+          onDelete={handleDelete}
           onSearch={(query) => api.searchChats(ns, query)}
         />
 

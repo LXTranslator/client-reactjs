@@ -83,6 +83,9 @@ visitor arrives, never what a page acts on.
 | `/:namespace` | signed in | The namespace's project list and creation. |
 | `/:namespace/settings` | signed in | Organization profile and deletion. |
 | `/:namespace/settings/members` | signed in | Member management. |
+| `/:namespace/settings/export_formats` | signed in | Download shapes for every project underneath. |
+| `/:namespace/settings/ai` | signed in | Provider credentials, for translating and for the assistant. |
+| `/:namespace/chat` | signed in | The assistant: conversations, the conversation, and what it did. |
 | `/:namespace/project/:projectId` | signed in | File list. |
 | `/:namespace/project/:projectId/uploads` | signed in | Upload. |
 | `/:namespace/project/:projectId/settings` | signed in | Platform, model, and where the credential for it comes from. |
