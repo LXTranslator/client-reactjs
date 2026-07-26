@@ -328,6 +328,36 @@ export const api = {
       body: { ordered_key_ids: orderedKeyIds },
     }),
 
+  /*
+   * The assistant.
+   *
+   * A turn may carry an attachment, so `sendChat` takes either a JSON body or a
+   * FormData. The browser must set the multipart boundary itself, which is why
+   * the two are kept apart rather than always sending a form.
+   */
+  sendChat: (namespace, payload) =>
+    apiRequest(`/namespaces/${encodeURIComponent(namespace)}/chat`, {
+      method: 'POST',
+      ...(payload instanceof FormData ? { formData: payload } : { body: payload }),
+    }),
+  getChatSession: (namespace, sessionId) =>
+    apiRequest(
+      `/namespaces/${encodeURIComponent(namespace)}/chat/sessions/${encodeURIComponent(sessionId)}`,
+    ),
+  searchChats: (namespace, query, limit) =>
+    apiRequest(
+      `/namespaces/${encodeURIComponent(namespace)}/chat/search?q=${encodeURIComponent(query)}${
+        limit ? `&limit=${encodeURIComponent(limit)}` : ''
+      }`,
+    ),
+  backfillChatEmbeddings: (namespace, body = {}) =>
+    apiRequest(`/namespaces/${encodeURIComponent(namespace)}/chat/embeddings`, {
+      method: 'POST',
+      body,
+    }),
+  getChatLogBuffer: (namespace) =>
+    apiRequest(`/namespaces/${encodeURIComponent(namespace)}/chat/log_buffer`),
+
   /* Export formats. */
   listExportFormats: (namespace) =>
     apiRequest(`/namespaces/${encodeURIComponent(namespace)}/export_formats`),

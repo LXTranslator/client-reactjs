@@ -50,6 +50,7 @@ Framework free helpers usable from anywhere in the tree.
 | [`src/lib/download.js`](src/lib/download.js) | Saves exported locale documents to disk. |
 | [`src/lib/paths.js`](src/lib/paths.js) | Client route builders and the reserved first segments. |
 | [`src/lib/locales.js`](src/lib/locales.js) | The 143 locale catalogue, A to Z indexing, search and locale code validation. |
+| [`src/lib/chatSessions.js`](src/lib/chatSessions.js) | Conversations this browser remembers, per namespace. |
 
 ### State
 
@@ -72,6 +73,9 @@ Framework free helpers usable from anywhere in the tree.
 | [`src/components/routing/NamespaceRoute.jsx`](src/components/routing/NamespaceRoute.jsx) | Resolves the namespace in the path once for every route beneath it. |
 | [`src/components/editor/FileGrowthPanel.jsx`](src/components/editor/FileGrowthPanel.jsx) | Adds languages and merges new keys into an existing file. |
 | [`src/components/editor/ConsistencyPanel.jsx`](src/components/editor/ConsistencyPanel.jsx) | On demand placeholder and coverage check against the master. |
+| [`src/components/chat/ChatSessionList.jsx`](src/components/chat/ChatSessionList.jsx) | Conversations pane, with search over past exchanges. |
+| [`src/components/chat/ChatConversation.jsx`](src/components/chat/ChatConversation.jsx) | Conversation pane and the composer, including attachments. |
+| [`src/components/chat/ChatContextPane.jsx`](src/components/chat/ChatContextPane.jsx) | What the assistant did, what it cost, and embedding backfill. |
 | [`src/components/ui/FormField.jsx`](src/components/ui/FormField.jsx) | Accessible text, textarea, select and password fields. |
 | [`src/components/ui/Feedback.jsx`](src/components/ui/Feedback.jsx) | Callouts, loading, empty, error and status displays. |
 | [`src/components/ui/Modal.jsx`](src/components/ui/Modal.jsx) | Accessible modal dialog with focus management. |
@@ -96,6 +100,7 @@ One file per route.
 | [`src/pages/NamespaceMembersPage.jsx`](src/pages/NamespaceMembersPage.jsx) | Member invitation, role changes and removal. |
 | [`src/pages/NamespaceExportFormatsPage.jsx`](src/pages/NamespaceExportFormatsPage.jsx) | Export format catalogue and creation, with a live leaf preview. |
 | [`src/pages/NamespaceAiSettingsPage.jsx`](src/pages/NamespaceAiSettingsPage.jsx) | Namespace AI credential chain, with chat and embedding model choices. |
+| [`src/pages/ChatPage.jsx`](src/pages/ChatPage.jsx) | The assistant, in three panes. |
 | [`src/pages/ProjectsPage.jsx`](src/pages/ProjectsPage.jsx) | A namespace's project list and creation, at `/:namespace`. |
 | [`src/pages/ProjectDetailPage.jsx`](src/pages/ProjectDetailPage.jsx) | File list with processing status polling. |
 | [`src/pages/ProjectUploadsPage.jsx`](src/pages/ProjectUploadsPage.jsx) | File upload with multi select target languages. |
@@ -115,7 +120,8 @@ Layered exactly as the design system specifies, imported in order by `main.jsx`.
 | [`src/styles/shared/layout.css`](src/styles/shared/layout.css) | Header, navigation, footer, breadcrumbs and the responsive collapse. |
 | [`src/styles/shared/components.css`](src/styles/shared/components.css) | Panels, cards, tables, badges, buttons, callouts, forms and modals. |
 | [`src/styles/auth/auth.css`](src/styles/auth/auth.css) | Authentication page layout. |
-| [`src/styles/editor/editor.css`](src/styles/editor/editor.css) | Translation editor, upload dropzone and key priority list. |
+| [`src/styles/editor/editor.css`](src/styles/editor/editor.css) | Translation editor, upload dropzone, key priority list and export formats. |
+| [`src/styles/chat/chat.css`](src/styles/chat/chat.css) | The three pane assistant layout and its collapse. |
 
 ## Tests
 
@@ -132,6 +138,7 @@ Layered exactly as the design system specifies, imported in order by `main.jsx`.
 | [`tests/exportFormat.test.jsx`](tests/exportFormat.test.jsx) | Format selection on the editor download and the format management page. |
 | [`tests/consistency.test.jsx`](tests/consistency.test.jsx) | Per key updates, the refresh control and the consistency report. |
 | [`tests/accountAi.test.jsx`](tests/accountAi.test.jsx) | Namespace AI credentials, the fallback chain and the optional embedding model. |
+| [`tests/chat.test.jsx`](tests/chat.test.jsx) | The three panes, attachments, tool reporting, search and embedding backfill. |
 
 ## Agent Configuration
 

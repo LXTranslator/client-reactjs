@@ -164,6 +164,48 @@ the server surfaces in the interface with no client change.
 | `api.downloadArchive(fileId, exportFormat)` | `GET /files/:fileId/download?format=zip` |
 | `api.listFileExportFormats(fileId)` | `GET /files/:fileId/export_formats` |
 
+## The assistant
+
+| Helper | Endpoint |
+|---|---|
+| `api.sendChat(namespace, payload)` | `POST /namespaces/:namespace/chat` |
+| `api.getChatSession(namespace, sessionId)` | `GET /namespaces/:namespace/chat/sessions/:sessionId` |
+| `api.searchChats(namespace, query, limit)` | `GET /namespaces/:namespace/chat/search` |
+| `api.backfillChatEmbeddings(namespace, body)` | `POST /namespaces/:namespace/chat/embeddings` |
+| `api.getChatLogBuffer(namespace)` | `GET /namespaces/:namespace/chat/log_buffer` |
+
+`sendChat` takes either a JSON body or a `FormData`. Multipart is used only when
+a locale file is attached, since the browser must set the boundary itself and
+the common case is better off as JSON.
+
+The response describes what happened, not only what was said:
+
+```json
+{
+  "session_id": "...",
+  "answer": "You have two projects.",
+  "namespace": "acme_corp",
+  "tool_calls": [{ "name": "list_projects", "ok": true }],
+  "steps": 2,
+  "stopped_by_tool": false,
+  "token_usage": 812,
+  "total_token_usage": 3140
+}
+```
+
+The context pane renders that rather than leaving it implicit in the prose. A
+refused tool arrives as `ok: false` with an `error`, and is shown as refused,
+because the server checks permission on every call and the answer above may be
+describing a refusal. `namespace` can differ from the one in the path when the
+assistant switched context, which the pane says out loud since the URL no longer
+describes what it is acting on.
+
+There is no endpoint that lists a person's sessions, so the conversations pane
+keeps the handful this browser has open in local storage and finds anything else
+through search. `searchChats` reports `method`, which is `EMBEDDING` or `TEXT`,
+and the pane says which: somebody searching by meaning and finding nothing
+deserves to know no embedding model is configured.
+
 ## Namespace AI credentials
 
 | Helper | Endpoint |

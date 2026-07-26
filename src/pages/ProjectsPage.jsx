@@ -188,6 +188,9 @@ export function ProjectsPage() {
         <Link className="btn btn--ghost" to={paths.namespaceAiSettings(namespace.user_id)}>
           AI settings
         </Link>
+        <Link className="btn btn--primary" to={paths.namespaceChat(namespace.user_id)}>
+          Ask the assistant
+        </Link>
       </div>
 
       <ErrorMessage error={loadError} />
