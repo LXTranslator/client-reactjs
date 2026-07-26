@@ -2,6 +2,7 @@ import { useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
 import { useNamespace } from '../components/routing/NamespaceRoute.jsx';
 import { paths } from '../lib/paths.js';
+import { COMMON_LOCALES, MAX_UPLOAD_BYTES } from '../lib/locales.js';
 import { api } from '../lib/apiClient.js';
 import { SelectField, TextField } from '../components/ui/FormField.jsx';
 import { Callout, ErrorMessage } from '../components/ui/Feedback.jsx';
@@ -14,21 +15,6 @@ import { validateLangCode, validateTranslationFile } from '../lib/validation.js'
  * A shortlist rather than every possible locale, because a long list is harder
  * to use than a short one plus a free text field for anything missing.
  */
-const COMMON_LOCALES = [
-  { code: 'en_us', label: 'English (US)' },
-  { code: 'th_th', label: 'Thai' },
-  { code: 'ja_jp', label: 'Japanese' },
-  { code: 'ko_kr', label: 'Korean' },
-  { code: 'zh_cn', label: 'Chinese (Simplified)' },
-  { code: 'fr_fr', label: 'French' },
-  { code: 'de_de', label: 'German' },
-  { code: 'es_es', label: 'Spanish' },
-  { code: 'pt_br', label: 'Portuguese (Brazil)' },
-  { code: 'vi_vn', label: 'Vietnamese' },
-];
-
-/** Mirrors the server's default ceiling. */
-const MAX_UPLOAD_BYTES = 2 * 1024 * 1024;
 
 /**
  * File upload page.

@@ -108,7 +108,7 @@ export function getAuthToken() {
  * @throws {ApiError} When the request fails.
  */
 export async function apiRequest(path, options = {}) {
-  const { method = 'GET', body, formData, auth = true, signal } = options;
+  const { method = 'GET', body, formData, auth = true, signal, responseType } = options;
 
   const headers = {};
   if (auth) {
@@ -137,6 +137,15 @@ export async function apiRequest(path, options = {}) {
   }
 
   if (response.status === 204) return null;
+
+  /*
+   * A binary response carries no JSON to unwrap. The error path still parses
+   * one, because a failure returns the usual error envelope whatever the caller
+   * asked for.
+   */
+  if (responseType === 'blob' && response.ok) {
+    return response.blob();
+  }
 
   let payload = null;
   const contentType = response.headers.get('content-type') ?? '';
@@ -268,6 +277,10 @@ export const api = {
   deleteFile: (fileId) => apiRequest(`/files/${encodeURIComponent(fileId)}`, { method: 'DELETE' }),
   reprocessFile: (fileId) =>
     apiRequest(`/files/${encodeURIComponent(fileId)}/reprocess`, { method: 'POST' }),
+  addFileLanguages: (fileId, body) =>
+    apiRequest(`/files/${encodeURIComponent(fileId)}/languages`, { method: 'POST', body }),
+  mergeFileKeys: (fileId, formData) =>
+    apiRequest(`/files/${encodeURIComponent(fileId)}/keys`, { method: 'POST', formData }),
 
   /* Translations. */
   getTranslations: (fileId) => apiRequest(`/files/${encodeURIComponent(fileId)}/translations`),
@@ -282,6 +295,11 @@ export const api = {
       body,
     }),
   downloadAll: (fileId) => apiRequest(`/files/${encodeURIComponent(fileId)}/download`),
+  /** Every locale in one archive, returned as a Blob rather than JSON. */
+  downloadArchive: (fileId) =>
+    apiRequest(`/files/${encodeURIComponent(fileId)}/download?format=zip`, {
+      responseType: 'blob',
+    }),
   downloadLocale: (fileId, lang) =>
     apiRequest(`/files/${encodeURIComponent(fileId)}/download?lang=${encodeURIComponent(lang)}`),
 

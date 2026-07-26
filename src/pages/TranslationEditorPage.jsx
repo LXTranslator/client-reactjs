@@ -3,7 +3,11 @@ import { Link, useParams } from 'react-router';
 import { useNamespace } from '../components/routing/NamespaceRoute.jsx';
 import { paths } from '../lib/paths.js';
 import { api } from '../lib/apiClient.js';
-import { downloadJson } from '../lib/download.js';
+import { downloadJson, triggerDownload } from '../lib/download.js';
+import { FileGrowthPanel } from '../components/editor/FileGrowthPanel.jsx';
+
+/** The name the server always serves the archive under. */
+const ARCHIVE_FILENAME = 'langs.zip';
 import {
   Callout,
   EmptyState,
@@ -39,6 +43,7 @@ export function TranslationEditorPage() {
   const [savingId, setSavingId] = useState(null);
   const [savedIds, setSavedIds] = useState({});
   const [file, setFile] = useState(null);
+  const [isArchiving, setIsArchiving] = useState(false);
 
   const isProcessing = file?.status === 'PENDING' || file?.status === 'PROCESSING';
 
@@ -151,19 +156,23 @@ export function TranslationEditorPage() {
   }
 
   /**
-   * Downloads every locale as separate files.
+   * Downloads every locale as one archive.
+   *
+   * One file rather than one download per language, which a browser blocks
+   * after the first few anyway once it decides the page is spamming downloads.
    *
    * @returns {Promise<void>}
    */
-  async function handleDownloadAll() {
+  async function handleDownloadArchive() {
     setActionError(null);
+    setIsArchiving(true);
     try {
-      const result = await api.downloadAll(fileId);
-      for (const [filename, document] of Object.entries(result.files ?? {})) {
-        downloadJson(filename, document);
-      }
+      const archive = await api.downloadArchive(fileId);
+      triggerDownload(ARCHIVE_FILENAME, archive);
     } catch (error) {
       setActionError(error);
+    } finally {
+      setIsArchiving(false);
     }
   }
 
@@ -271,8 +280,13 @@ export function TranslationEditorPage() {
           <button type="button" className="btn" onClick={handleDownloadLocale}>
             Download {activeLocale}
           </button>
-          <button type="button" className="btn btn--primary" onClick={handleDownloadAll}>
-            Download all
+          <button
+            type="button"
+            className="btn btn--primary"
+            disabled={isArchiving}
+            onClick={handleDownloadArchive}
+          >
+            {isArchiving ? 'Preparing…' : `Download all (${ARCHIVE_FILENAME})`}
           </button>
         </div>
       </div>
@@ -326,6 +340,12 @@ export function TranslationEditorPage() {
           ))
         )}
       </section>
+
+      <FileGrowthPanel
+        fileId={fileId}
+        existingLocales={data.available_locales}
+        onStarted={load}
+      />
     </div>
   );
 }

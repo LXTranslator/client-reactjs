@@ -49,6 +49,7 @@ Framework free helpers usable from anywhere in the tree.
 | [`src/lib/validation.js`](src/lib/validation.js) | Field validators, password scoring and placeholder examples. |
 | [`src/lib/download.js`](src/lib/download.js) | Saves exported locale documents to disk. |
 | [`src/lib/paths.js`](src/lib/paths.js) | Client route builders and the reserved first segments. |
+| [`src/lib/locales.js`](src/lib/locales.js) | Locale shortlist, upload ceiling and locale code validation. |
 
 ### State
 
@@ -69,6 +70,7 @@ Framework free helpers usable from anywhere in the tree.
 | [`src/components/layout/SiteFooter.jsx`](src/components/layout/SiteFooter.jsx) | Footer with brand and link columns. |
 | [`src/components/routing/ProtectedRoute.jsx`](src/components/routing/ProtectedRoute.jsx) | Guards for signed in and signed out routes. |
 | [`src/components/routing/NamespaceRoute.jsx`](src/components/routing/NamespaceRoute.jsx) | Resolves the namespace in the path once for every route beneath it. |
+| [`src/components/editor/FileGrowthPanel.jsx`](src/components/editor/FileGrowthPanel.jsx) | Adds languages and merges new keys into an existing file. |
 | [`src/components/ui/FormField.jsx`](src/components/ui/FormField.jsx) | Accessible text, textarea, select and password fields. |
 | [`src/components/ui/Feedback.jsx`](src/components/ui/Feedback.jsx) | Callouts, loading, empty, error and status displays. |
 | [`src/components/ui/Modal.jsx`](src/components/ui/Modal.jsx) | Accessible modal dialog with focus management. |
@@ -121,6 +123,7 @@ Layered exactly as the design system specifies, imported in order by `main.jsx`.
 | [`tests/validation.test.js`](tests/validation.test.js) | Field validator and password scoring tests. |
 | [`tests/routing.test.jsx`](tests/routing.test.jsx) | Route guard and redirect tests. |
 | [`tests/organization.test.jsx`](tests/organization.test.jsx) | Organization creation, availability, contact email and deletion tests. |
+| [`tests/editor.test.jsx`](tests/editor.test.jsx) | Archive download, adding languages and merging keys. |
 
 ## Agent Configuration
 
