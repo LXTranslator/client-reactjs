@@ -16,9 +16,10 @@ import { PLACEHOLDERS, runValidators, validateApiKey } from '../lib/validation.j
 /**
  * Namespace level AI credentials.
  *
- * A project's credentials pay for that project's translation pipeline. These
- * pay for what the namespace does outside any one project, which today means
- * the assistant.
+ * The only place a credential is entered. These keys pay for everything the
+ * namespace sends to a vendor: translating files inside its projects and
+ * answering questions in the assistant alike. A project names a platform and a
+ * model and borrows the matching key from here.
  *
  * The list is a chain rather than a set, and the order is what the server walks
  * when a credential fails. Inside an organization the organization's keys are
@@ -26,9 +27,9 @@ import { PLACEHOLDERS, runValidators, validateApiKey } from '../lib/validation.j
  * request rather than the whole team. The interface says that plainly, because
  * it is the difference between "why is my key being used" and "of course it is".
  *
- * Each row names its own platform and models, which a project credential does
- * not have to: a project already records those, and an account has nothing to
- * take them from.
+ * Each row names its own platform, which is what lets one account hold keys for
+ * several vendors at once. Projects on different platforms then draw on
+ * different parts of the same chain.
  *
  * @returns {JSX.Element} The page.
  */
@@ -291,6 +292,17 @@ export function NamespaceAiSettingsPage() {
     (key) => key.is_active && typeof key.embedding_model === 'string',
   );
 
+  /*
+   * Which platforms this account can actually pay for.
+   *
+   * The chain reads as one list, but a project only ever draws on the part of
+   * it matching its own platform. Saying which are covered turns "I have three
+   * keys, why does this project fail" into something answerable at a glance.
+   */
+  const coveredProviders = providers.filter((provider) =>
+    keys.some((key) => key.is_active && key.provider === provider.name),
+  );
+
   return (
     <div className="container narrow">
       <Breadcrumbs
@@ -303,9 +315,9 @@ export function NamespaceAiSettingsPage() {
 
       <h1>AI settings</h1>
       <p className="lead">
-        Credentials for what <span className="mono">{ns}</span> does outside a single
-        project, which today means the assistant. A project keeps its own keys for
-        translating.
+        Every key <span className="mono">{ns}</span> uses, for translating files and for
+        the assistant alike. Add one per platform you want to use; each project picks a
+        platform in its own settings and draws on the keys that match.
       </p>
 
       <ErrorMessage error={actionError} />
@@ -336,11 +348,31 @@ export function NamespaceAiSettingsPage() {
           characters are shown.
         </Callout>
 
+        {keys.length > 0 ? (
+          <p className="muted">
+            Platforms covered:{' '}
+            {coveredProviders.length === 0 ? (
+              'none, every credential here is disabled.'
+            ) : (
+              <>
+                {coveredProviders.map((provider, index) => (
+                  <span key={provider.name}>
+                    {index === 0 ? '' : ', '}
+                    <span className="mono">{provider.label}</span>
+                  </span>
+                ))}
+                . A project on any other platform has nothing here to pay for it.
+              </>
+            )}
+          </p>
+        ) : null}
+
         {keys.length === 0 ? (
           <EmptyState title="No credentials configured.">
             <p className="muted">
-              The assistant falls back to the built in offline provider, which answers
-              without reaching a vendor. Add a credential to use a real model.
+              Translating and the assistant both fall back to the built in offline
+              provider, which answers without reaching a vendor. Add a credential to use
+              a real model.
             </p>
           </EmptyState>
         ) : (

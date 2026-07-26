@@ -19,10 +19,11 @@ A secret placed in a `VITE_` variable is not configured, it is published.
    signing secret, not a database password, not a webhook token.
 2. **Never hard code one in source either.** The same applies, only more
    visibly.
-3. **Provider API keys belong to the server.** They are entered per project
-   through the interface, sent once over TLS, encrypted server side, and never
-   returned. The client only ever sees `masked_key`, showing the last four
-   characters.
+3. **Provider API keys belong to the server.** They are entered per account, on
+   the namespace AI settings page, sent once over TLS, encrypted server side,
+   and never returned. The client only ever sees `masked_key`, showing the last
+   four characters. No project view enters or renders one: a project names a
+   platform and a model and borrows the key from its account.
 4. **The session token is not a configured secret.** It is issued per session,
    held in session storage, and cleared on sign out. See
    `authentication-failures.md`.

@@ -49,5 +49,6 @@ an empty list identically to a failed fetch is actively misleading.
 
 A file whose translation failed carries `status: 'FAILED'` and a client safe
 `error_message` from the server. The editor renders it with two actions: retry,
-and check the project's API keys, because an exhausted or revoked credential is
-the most common cause.
+and check the account's AI settings, because an exhausted or revoked credential
+is the most common cause. The keys live on the account, so that is where the
+link goes, not to the project.

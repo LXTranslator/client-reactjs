@@ -240,7 +240,7 @@ export function ProjectsPage() {
                 hint={
                   selectedProvider?.requires_network === false
                     ? 'Runs offline. No API key needed.'
-                    : 'Needs at least one API key, added in project settings.'
+                    : "Paid for by this account's keys for the platform, in AI settings."
                 }
               />
 

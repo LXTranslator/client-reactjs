@@ -263,24 +263,11 @@ export const api = {
   deleteProject: (projectId) =>
     apiRequest(`/projects/${encodeURIComponent(projectId)}`, { method: 'DELETE' }),
 
-  /* Project credentials. */
-  listApiKeys: (projectId) => apiRequest(`/projects/${encodeURIComponent(projectId)}/keys`),
-  addApiKey: (projectId, body) =>
-    apiRequest(`/projects/${encodeURIComponent(projectId)}/keys`, { method: 'POST', body }),
-  updateApiKey: (projectId, keyId, body) =>
-    apiRequest(`/projects/${encodeURIComponent(projectId)}/keys/${encodeURIComponent(keyId)}`, {
-      method: 'PATCH',
-      body,
-    }),
-  removeApiKey: (projectId, keyId) =>
-    apiRequest(`/projects/${encodeURIComponent(projectId)}/keys/${encodeURIComponent(keyId)}`, {
-      method: 'DELETE',
-    }),
-  reorderApiKeys: (projectId, orderedKeyIds) =>
-    apiRequest(`/projects/${encodeURIComponent(projectId)}/keys/reorder`, {
-      method: 'POST',
-      body: { ordered_key_ids: orderedKeyIds },
-    }),
+  /*
+   * A project has no credentials of its own. It names a platform and a model,
+   * and the key that pays for it comes from the account that owns it. See the
+   * namespace credential methods below.
+   */
 
   /* Files. */
   listFiles: (projectId) => apiRequest(`/projects/${encodeURIComponent(projectId)}/files`),
@@ -301,9 +288,11 @@ export const api = {
   /*
    * Namespace AI credentials.
    *
-   * These pay for what the namespace does outside a single project. Inside an
-   * organization every one of them needs ADMIN, reading included, because the
-   * list is a statement about the organization's spending.
+   * The only credentials there are. They pay for everything the namespace sends
+   * to a vendor: translating files inside its projects and answering questions
+   * in the assistant alike. Inside an organization every one of them needs
+   * ADMIN, reading included, because the list is a statement about the
+   * organization's spending.
    */
   listAccountKeys: (namespace) =>
     apiRequest(`/namespaces/${encodeURIComponent(namespace)}/settings/ai_keys`),

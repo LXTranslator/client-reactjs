@@ -85,7 +85,7 @@ visitor arrives, never what a page acts on.
 | `/:namespace/settings/members` | signed in | Member management. |
 | `/:namespace/project/:projectId` | signed in | File list. |
 | `/:namespace/project/:projectId/uploads` | signed in | Upload. |
-| `/:namespace/project/:projectId/settings` | signed in | Provider, model and API keys. |
+| `/:namespace/project/:projectId/settings` | signed in | Platform, model, and where the credential for it comes from. |
 | `/:namespace/project/:projectId/file/:fileId` | signed in | Translation editor. |
 | `*` | any | Not found. |
 

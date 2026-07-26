@@ -119,7 +119,7 @@ matches, and the namespace is an organization rather than a personal one. The
 interface adds a two step confirmation on top: retype the identifier, then
 confirm.
 
-## Projects and credentials
+## Projects
 
 | Helper | Endpoint |
 |---|---|
@@ -128,19 +128,13 @@ confirm.
 | `api.getProject(projectId)` | `GET /projects/:projectId` |
 | `api.updateProject(projectId, body)` | `PATCH /projects/:projectId/settings` |
 | `api.deleteProject(projectId)` | `DELETE /projects/:projectId` |
-| `api.listApiKeys(projectId)` | `GET /projects/:projectId/keys` |
-| `api.addApiKey(projectId, body)` | `POST /projects/:projectId/keys` |
-| `api.updateApiKey(projectId, keyId, body)` | `PATCH /projects/:projectId/keys/:keyId` |
-| `api.removeApiKey(projectId, keyId)` | `DELETE /projects/:projectId/keys/:keyId` |
-| `api.reorderApiKeys(projectId, ids)` | `POST /projects/:projectId/keys/reorder` |
 | `api.listProviders()` | `GET /providers` |
 
-**No endpoint returns a stored key.** A credential is identified by its label and
-`masked_key`, which shows only the last four characters. The interface never has
-a key to display, so it cannot leak one.
-
-`reorderApiKeys` must list every key on the project exactly once. The order is
-the order the server's fallback chain walks.
+**A project holds no credentials.** It names a platform and a model, and the key
+that pays for a translation comes from the account that owns it. There is no
+`api.listApiKeys` or `api.addApiKey`; use the account credential helpers below.
+The settings page reads the account chain to say whether the platform it names
+can actually be paid for, and links to the page that manages it.
 
 `listProviders` drives the provider and model selects, so adding a provider on
 the server surfaces in the interface with no client change.
@@ -228,8 +222,9 @@ because the list is a statement about the organization's spending. A member
 receives **403** rather than an empty list, and the page explains that rather
 than rendering as though nothing is configured.
 
-Unlike a project credential, each row names its own platform and models, since
-an account has no record to take them from. Order is meaningful: it is the order
+Each row names its own platform and models, which is what lets one account hold
+credentials for several vendors at once: a project on OpenAI and a project on
+Anthropic draw on different parts of the same chain. Order is meaningful: it is the order
 the server's fallback chain walks, and inside an organization the caller's own
 personal credentials follow the organization's.
 

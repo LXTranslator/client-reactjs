@@ -181,6 +181,33 @@ describe('namespace AI settings', () => {
       });
     });
 
+    it('names the platforms the account can actually pay for', async () => {
+      // One chain, but a project only ever draws on the part of it matching its
+      // own platform. Which platforms are covered is the question a person
+      // arrives with, so it is answered without reading every row.
+      api.listAccountKeys.mockResolvedValue({
+        keys: [
+          makeKey(),
+          makeKey({ id: 'key_2', provider: 'anthropic', chat_model: 'claude-opus-5' }),
+        ],
+      });
+
+      await openPage();
+
+      const covered = screen.getByText(/platforms covered/i);
+      expect(within(covered).getByText('OpenRouter')).toBeInTheDocument();
+      expect(within(covered).getByText('Anthropic Claude')).toBeInTheDocument();
+      expect(within(covered).queryByText('Built in Mock (offline)')).not.toBeInTheDocument();
+    });
+
+    it('counts a disabled credential as covering nothing', async () => {
+      api.listAccountKeys.mockResolvedValue({ keys: [makeKey({ is_active: false })] });
+
+      await openPage();
+
+      expect(screen.getByText(/every credential here is disabled/i)).toBeInTheDocument();
+    });
+
     it('disables a credential without removing it', async () => {
       api.listAccountKeys.mockResolvedValue({ keys: [makeKey()] });
 
