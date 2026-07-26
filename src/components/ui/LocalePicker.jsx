@@ -115,7 +115,7 @@ export function LocalePicker({ selected, onToggle, exclude = [], label = 'Langua
 
         {visible.length === 0 ? (
           <p className="muted locale-picker__note">
-            No language matches that. Any well formed code still works in the field below.
+            No language matches that. Try another letter, or clear the search.
           </p>
         ) : null}
       </div>

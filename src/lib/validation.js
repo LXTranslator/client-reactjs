@@ -1,4 +1,5 @@
 import { isReservedSegment } from './paths.js';
+import { LOCALE_CODE_PATTERN, validateLocaleCode } from './locales.js';
 
 /**
  * Client side form validation.
@@ -18,8 +19,14 @@ export const USER_ID_PATTERN = /^[a-z0-9_]{3,32}$/;
 /** Pragmatic email shape check; deliverability is proven by the email itself. */
 export const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
-/** Locale codes such as `en_us` or `th_th`. */
-export const LANG_CODE_PATTERN = /^[a-z]{2}(_[a-z0-9]{2,8})?$/;
+/**
+ * Locale codes such as `en_us`, `th_th` or `nds_de`.
+ *
+ * Re-exported from `locales.js` rather than written twice. Two copies of one
+ * rule is how a form comes to accept what the server refuses, or refuse what it
+ * accepts: this pattern was narrower than the server's for exactly that reason.
+ */
+export const LANG_CODE_PATTERN = LOCALE_CODE_PATTERN;
 
 /** Project names: letters, digits, spaces, dots, underscores and hyphens. */
 export const PROJECT_NAME_PATTERN = /^[A-Za-z0-9 ._-]+$/;
@@ -243,12 +250,7 @@ export function validateWebsiteUrl(value) {
  * @returns {string|null} An error message, or null when valid.
  */
 export function validateLangCode(value) {
-  const trimmed = String(value ?? '').trim().toLowerCase();
-  if (trimmed.length === 0) return 'Enter a locale code.';
-  if (!LANG_CODE_PATTERN.test(trimmed)) {
-    return 'Use a locale code such as en_us or th_th.';
-  }
-  return null;
+  return validateLocaleCode(value);
 }
 
 /**

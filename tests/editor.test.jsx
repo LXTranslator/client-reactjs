@@ -175,27 +175,6 @@ describe('translation editor', () => {
       expect(within(panel).getByRole('button', { name: /add language/i })).toBeDisabled();
     });
 
-    it('rejects a malformed custom locale before sending it', async () => {
-      const user = await openEditor();
-      const panel = screen.getByRole('heading', { name: /add to this file/i }).closest('section');
-
-      await user.type(within(panel).getByLabelText(/another locale/i), 'not a locale');
-      await user.click(within(panel).getByRole('button', { name: /add locale/i }));
-
-      expect(await within(panel).findByRole('alert')).toHaveTextContent(/locale code/i);
-      expect(api.addFileLanguages).not.toHaveBeenCalled();
-    });
-
-    it('refuses a custom locale the file already has', async () => {
-      const user = await openEditor();
-      const panel = screen.getByRole('heading', { name: /add to this file/i }).closest('section');
-
-      await user.type(within(panel).getByLabelText(/another locale/i), 'th_th');
-      await user.click(within(panel).getByRole('button', { name: /add locale/i }));
-
-      expect(await within(panel).findByRole('alert')).toHaveTextContent(/already has/i);
-    });
-
     it('surfaces a server rejection', async () => {
       const { ApiError } = await import('../src/lib/apiClient.js');
       api.addFileLanguages.mockRejectedValue(
