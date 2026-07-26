@@ -185,6 +185,9 @@ export function ProjectsPage() {
         <Link className="btn btn--ghost" to={paths.namespaceExportFormats(namespace.user_id)}>
           Export formats
         </Link>
+        <Link className="btn btn--ghost" to={paths.namespaceAiSettings(namespace.user_id)}>
+          AI settings
+        </Link>
       </div>
 
       <ErrorMessage error={loadError} />

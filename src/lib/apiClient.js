@@ -298,6 +298,36 @@ export const api = {
   mergeFileKeys: (fileId, formData) =>
     apiRequest(`/files/${encodeURIComponent(fileId)}/keys`, { method: 'POST', formData }),
 
+  /*
+   * Namespace AI credentials.
+   *
+   * These pay for what the namespace does outside a single project. Inside an
+   * organization every one of them needs ADMIN, reading included, because the
+   * list is a statement about the organization's spending.
+   */
+  listAccountKeys: (namespace) =>
+    apiRequest(`/namespaces/${encodeURIComponent(namespace)}/settings/ai_keys`),
+  addAccountKey: (namespace, body) =>
+    apiRequest(`/namespaces/${encodeURIComponent(namespace)}/settings/ai_keys`, {
+      method: 'POST',
+      body,
+    }),
+  updateAccountKey: (namespace, keyId, body) =>
+    apiRequest(
+      `/namespaces/${encodeURIComponent(namespace)}/settings/ai_keys/${encodeURIComponent(keyId)}`,
+      { method: 'PATCH', body },
+    ),
+  removeAccountKey: (namespace, keyId) =>
+    apiRequest(
+      `/namespaces/${encodeURIComponent(namespace)}/settings/ai_keys/${encodeURIComponent(keyId)}`,
+      { method: 'DELETE' },
+    ),
+  reorderAccountKeys: (namespace, orderedKeyIds) =>
+    apiRequest(`/namespaces/${encodeURIComponent(namespace)}/settings/ai_keys/reorder`, {
+      method: 'POST',
+      body: { ordered_key_ids: orderedKeyIds },
+    }),
+
   /* Export formats. */
   listExportFormats: (namespace) =>
     apiRequest(`/namespaces/${encodeURIComponent(namespace)}/export_formats`),
