@@ -693,3 +693,121 @@ textarea.field__control {
   justify-content: flex-end;
   margin-top: 1.25rem;
 }
+
+/*
+ * Select control.
+ *
+ * A native select is used rather than a custom widget: it is keyboard and
+ * screen reader correct for free, and on a phone it opens the platform picker,
+ * which beats any list this application could draw. Only the chrome is
+ * restyled, and the arrow is drawn as an inline background so no image request
+ * is needed and the mark inherits the ink colour.
+ */
+select.field__control {
+  appearance: none;
+  padding-right: 2.2rem;
+  background-image: linear-gradient(45deg, transparent 50%, var(--ink-500) 50%),
+    linear-gradient(135deg, var(--ink-500) 50%, transparent 50%);
+  background-position: calc(100% - 1.05rem) 55%, calc(100% - 0.75rem) 55%;
+  background-size: 0.36rem 0.36rem, 0.36rem 0.36rem;
+  background-repeat: no-repeat;
+  cursor: pointer;
+}
+
+select.field__control:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+/* Keeps the arrow from colliding with a long option on a narrow control. */
+select.field__control option {
+  color: var(--ink-900);
+  background: var(--surface-solid);
+}
+
+/*
+ * Language picker.
+ *
+ * The catalogue is far too long to render at once, so the layout assumes a
+ * filtered subset and gives the result area a ceiling: a broad letter still
+ * scrolls inside the panel rather than pushing the page down.
+ */
+.locale-picker {
+  display: block;
+}
+
+.locale-picker__hint,
+.locale-picker__note {
+  margin: 0.15rem 0 0.6rem;
+  font-size: 0.85rem;
+}
+
+.locale-picker__controls {
+  margin-bottom: 0.6rem;
+}
+
+.locale-picker__search .field__control {
+  max-width: 32rem;
+}
+
+.locale-picker__results {
+  max-height: 15rem;
+  overflow-y: auto;
+  padding: 0.15rem;
+  margin-top: 0.35rem;
+}
+
+.locale-picker__code {
+  font-size: 0.75em;
+  color: var(--ink-400);
+}
+
+.chip.is-selected .locale-picker__code {
+  color: inherit;
+  opacity: 0.85;
+}
+
+/*
+ * A to Z index.
+ *
+ * Fixed width cells so the row reads as an alphabet rather than as a ragged
+ * list of buttons of different widths.
+ */
+.alpha-index {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.2rem;
+  margin-bottom: 0.4rem;
+}
+
+.alpha-index__letter {
+  min-width: 1.85rem;
+  padding: 0.2rem 0.35rem;
+  font-family: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--ink-500);
+  text-align: center;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.alpha-index__letter:hover {
+  color: var(--ink-900);
+  background: var(--silver-100);
+}
+
+.alpha-index__letter:focus-visible {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.alpha-index__letter.is-selected {
+  color: var(--white);
+  background: var(--accent);
+  border-color: var(--accent-strong);
+}

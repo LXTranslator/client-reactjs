@@ -214,6 +214,125 @@ describe('translation editor', () => {
     });
   });
 
+  describe('choosing a language to compare', () => {
+    it('offers a dropdown rather than a row of chips', async () => {
+      await openEditor();
+
+      const select = screen.getByLabelText(/compare with/i);
+      expect(select.tagName).toBe('SELECT');
+    });
+
+    it('names each language rather than showing only its code', async () => {
+      await openEditor();
+
+      const select = screen.getByLabelText(/compare with/i);
+      expect(within(select).getByRole('option', { name: /thai \(th_th\)/i })).toBeInTheDocument();
+    });
+
+    it('marks the master option, since en_us and the master are one thing', async () => {
+      await openEditor();
+
+      const select = screen.getByLabelText(/compare with/i);
+      const master = within(select).getByRole('option', { name: /en_us.*master/i });
+      expect(master).toBeInTheDocument();
+      // Exactly one entry for it, not a separate master and en_us.
+      expect(within(select).getAllByRole('option')).toHaveLength(2);
+    });
+
+    it('shows the master once when it is the selected language', async () => {
+      const user = await openEditor();
+
+      // Against a translation there are two cells: the read only master and the
+      // editable translation.
+      expect(screen.getByText(/^source \(en_us\)$/i)).toBeInTheDocument();
+
+      await user.selectOptions(screen.getByLabelText(/compare with/i), 'en_us');
+
+      // Comparing the master with itself would print every string twice, so the
+      // read only column goes and the master stays editable on its own.
+      await waitFor(() => {
+        expect(screen.queryByText(/^source \(en_us\)$/i)).not.toBeInTheDocument();
+      });
+      expect(screen.getByText(/^master \(en_us\)$/i)).toBeInTheDocument();
+    });
+  });
+
+  describe('finding a language among many', () => {
+    it('opens on a suggested set rather than all 143', async () => {
+      await openEditor();
+      const panel = screen.getByRole('heading', { name: /add to this file/i }).closest('section');
+
+      expect(within(panel).getByText(/showing widely used languages/i)).toBeInTheDocument();
+      // Bavarian is in the catalogue but not the suggested set.
+      expect(within(panel).queryByRole('button', { name: /bavarian/i })).not.toBeInTheDocument();
+    });
+
+    it('reaches the rest through the A to Z index', async () => {
+      const user = await openEditor();
+      const panel = screen.getByRole('heading', { name: /add to this file/i }).closest('section');
+      const index = within(panel).getByRole('group', { name: /first letter/i });
+
+      await user.click(within(index).getByRole('button', { name: 'B' }));
+
+      expect(await within(panel).findByRole('button', { name: /bavarian/i })).toBeInTheDocument();
+      // Japanese is suggested but does not begin with B.
+      expect(within(panel).queryByRole('button', { name: /japanese/i })).not.toBeInTheDocument();
+    });
+
+    it('files an accented name under the letter it is looked for', async () => {
+      const user = await openEditor();
+      const panel = screen.getByRole('heading', { name: /add to this file/i }).closest('section');
+      const index = within(panel).getByRole('group', { name: /first letter/i });
+
+      await user.click(within(index).getByRole('button', { name: 'K' }));
+
+      // Kölsch, folded to K rather than sorted past Z.
+      expect(
+        await within(panel).findByRole('button', { name: /kölsch/i }),
+      ).toBeInTheDocument();
+    });
+
+    it('searches by name or by code', async () => {
+      const user = await openEditor();
+      const panel = screen.getByRole('heading', { name: /add to this file/i }).closest('section');
+      const search = within(panel).getByLabelText(/search languages/i);
+
+      await user.type(search, 'nds_de');
+      expect(await within(panel).findByRole('button', { name: /low german/i })).toBeInTheDocument();
+
+      await user.clear(search);
+      await user.type(search, 'bavarian');
+      expect(await within(panel).findByRole('button', { name: /bavarian/i })).toBeInTheDocument();
+    });
+
+    it('never offers a language the file already has', async () => {
+      const user = await openEditor();
+      const panel = screen.getByRole('heading', { name: /add to this file/i }).closest('section');
+      const search = within(panel).getByLabelText(/search languages/i);
+
+      await user.type(search, 'thai');
+
+      await waitFor(() => {
+        expect(within(panel).getByText(/no language matches that/i)).toBeInTheDocument();
+      });
+    });
+
+    it('keeps a chosen language on screen when the filter would hide it', async () => {
+      const user = await openEditor();
+      const panel = screen.getByRole('heading', { name: /add to this file/i }).closest('section');
+
+      await user.click(within(panel).getByRole('button', { name: /japanese/i }));
+
+      const index = within(panel).getByRole('group', { name: /first letter/i });
+      await user.click(within(index).getByRole('button', { name: 'B' }));
+
+      // Out of the filter but still selected, so it cannot be lost or chosen
+      // twice.
+      expect(within(panel).getByText(/chosen, hidden by the current filter/i)).toBeInTheDocument();
+      expect(within(panel).getByRole('button', { name: /japanese/i })).toBeInTheDocument();
+    });
+  });
+
   describe('merging keys', () => {
     /**
      * A JSON locale document as a File, the way a drop provides one.
