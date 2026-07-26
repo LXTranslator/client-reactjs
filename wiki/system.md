@@ -9,7 +9,7 @@ client.
 ```
 main.jsx
   └── BrowserRouter
-        └── AuthProvider          session, namespaces, active namespace
+        └── AuthProvider          session, namespaces, landing namespace
               └── App             route table
                     └── AppLayout header, <main>, footer
                           └── page components
@@ -22,33 +22,51 @@ No component calls `fetch` directly. Routing token attachment, envelope
 unwrapping and error shaping through one module is what keeps those concerns
 from drifting page by page.
 
-## The active namespace
+## The namespace in the path
 
-The agreed routes carry no namespace segment:
-
-```
-/namespaces/settings
-/namespaces/settings/members
-/namespaces/projects
-```
-
-So something has to decide which namespace those pages act on. That is the
-**active namespace**, held in `AuthContext` and switched from the header.
-
-It is remembered in session storage so a reload stays in the same namespace, and
-it is re-validated whenever the namespace list is loaded. If the remembered
-namespace is no longer reachable, for example after being removed from an
-organization, it falls back to the personal namespace rather than leaving the
-interface pointed at something that will only return 404.
-
-Project and file routes do carry identifiers, because those are global:
+A namespace occupies the first path segment. `/orgA` is the organization `orgA`,
+`/jetsada` is that person's namespace, and both are that namespace's project
+list.
 
 ```
-/namespaces/project/:projectId
-/namespaces/project/:projectId/uploads
-/namespaces/project/:projectId/settings
-/namespaces/project/:projectId/file/:fileId
+/:namespace
+/:namespace/settings
+/:namespace/settings/members
+/:namespace/project/:projectId
 ```
+
+Which namespace a page acts on is therefore a property of the URL, not of the
+session. Two people opening the same link see the same thing, a bookmark keeps
+working, and the back button moves between namespaces the way it moves between
+anything else.
+
+`components/routing/NamespaceRoute.jsx` resolves the segment once and supplies
+it to every nested route through `useNamespace()`, mirroring how the server
+resolves namespace access once in middleware rather than in each handler. A
+namespace absent from the accessible list renders as missing, which spares the
+pages a round of requests they would be refused. That is presentation: the
+server still authorises every request.
+
+Links are built by `src/lib/paths.js` rather than assembled inline, because a
+namespace now appears in nearly every URL and one wrong segment points a visitor
+at somebody else's.
+
+### Reserved first segments
+
+`api`, `assets`, `login`, `namespaces`, `organizations`, `register` and
+`settings` are matched before any namespace, so an account named after one would
+never render. The server refuses to register them, and `paths.js` holds the same
+list for the client's own validation. **The two lists are one list and must be
+changed together.** `api` and `assets` are not application routes at all: nginx
+answers them before the bundle loads, which is exactly why they are reserved.
+
+### The landing namespace
+
+`AuthContext` keeps one namespace related value: which namespace `/` and the
+sign in redirect send a visitor to. It is remembered in session storage and
+re-validated whenever the namespace list loads, falling back to the personal
+namespace when the remembered one is no longer reachable. It decides where a
+visitor arrives, never what a page acts on.
 
 ## Route table
 
@@ -59,16 +77,16 @@ Project and file routes do carry identifiers, because those are global:
 | `/register` | signed out | Registration. |
 | `/forgot-password` | any | Requests a reset link. |
 | `/reset-password` | any | Completes a reset. |
-| `/namespaces` | signed in | Dashboard. |
-| `/namespaces/organizations/new` | signed in | Organization creation. |
-| `/namespaces/settings` | signed in | Organization profile and deletion. |
-| `/namespaces/settings/members` | signed in | Member management. |
-| `/namespaces/projects` | signed in | Project list and creation. |
-| `/namespaces/project/:projectId` | signed in | File list. |
-| `/namespaces/project/:projectId/uploads` | signed in | Upload. |
-| `/namespaces/project/:projectId/settings` | signed in | Provider, model and API keys. |
-| `/namespaces/project/:projectId/file/:fileId` | signed in | Translation editor. |
+| `/namespaces` | signed in | Every namespace the visitor can act in. |
+| `/organizations/new` | signed in | Organization creation. |
 | `/settings` | signed in | Account settings. |
+| `/:namespace` | signed in | The namespace's project list and creation. |
+| `/:namespace/settings` | signed in | Organization profile and deletion. |
+| `/:namespace/settings/members` | signed in | Member management. |
+| `/:namespace/project/:projectId` | signed in | File list. |
+| `/:namespace/project/:projectId/uploads` | signed in | Upload. |
+| `/:namespace/project/:projectId/settings` | signed in | Provider, model and API keys. |
+| `/:namespace/project/:projectId/file/:fileId` | signed in | Translation editor. |
 | `*` | any | Not found. |
 
 Password recovery stays reachable in both states, because a signed in visitor may

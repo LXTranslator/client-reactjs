@@ -37,24 +37,49 @@ description: Concepts, routing model and conventions an agent must understand be
 
 ## Routing model
 
-The namespace scoped routes carry no namespace segment:
+**A namespace is the first path segment.** `/orgA` is the organization `orgA`
+and `/jetsada` is that person's namespace, which is also their project list.
 
 ```
-/namespaces/settings
-/namespaces/settings/members
-/namespaces/projects
+/:namespace
+/:namespace/settings
+/:namespace/settings/members
+/:namespace/project/:projectId
+/:namespace/project/:projectId/uploads
+/:namespace/project/:projectId/settings
+/:namespace/project/:projectId/file/:fileId
 ```
 
-They act on the **active namespace**. Project and file routes do carry
-identifiers, because those are globally unique:
+Which namespace a page acts on therefore comes from the URL, never from
+context. That is what makes every page linkable: two people opening the same
+address see the same thing.
+
+A handful of paths belong to no namespace and are matched before it:
 
 ```
-/namespaces/project/:projectId
-/namespaces/project/:projectId/file/:fileId
+/                       redirects by session state
+/login  /register  /forgot-password  /reset-password
+/namespaces             every namespace the visitor can act in
+/organizations/new      organization creation
+/settings               the signed in account's own credentials
 ```
 
-Do not add a namespace segment to the first group. The route shape is agreed with
-the backend and matches the product specification.
+Three rules follow, and breaking any of them is a defect:
+
+1. **Build links with `src/lib/paths.js`.** Never assemble a path inline. A
+   namespace now appears in nearly every URL, and one wrong segment sends a
+   visitor into a namespace that is not theirs.
+2. **Read the namespace with `useNamespace()`**, from
+   `components/routing/NamespaceRoute.jsx`. It resolves once for every nested
+   route, so a page never repeats the lookup and the result is never null.
+3. **A new fixed first segment must be reserved.** Add it to
+   `RESERVED_SEGMENTS` in `paths.js` *and* to the server's
+   `core/reservedIdentifiers.js`, or an account with that name becomes
+   unreachable. The two lists are the same list.
+
+Project identifiers are integers from one shared table, so they are unique on
+their own; the namespace in the path is context for the reader, and the server
+authorises the project by its identifier regardless.
 
 ## Interface conventions
 
