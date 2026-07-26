@@ -7,8 +7,11 @@ import { downloadJson, triggerDownload } from '../lib/download.js';
 import { FileGrowthPanel } from '../components/editor/FileGrowthPanel.jsx';
 import { localeLabel } from '../lib/locales.js';
 
-/** The name the server always serves the archive under. */
+/** The name the server always serves the archive under, whatever the format. */
 const ARCHIVE_FILENAME = 'langs.zip';
+
+/** The format used when none is chosen, matching the server's own default. */
+const DEFAULT_FORMAT_ID = 'default';
 import {
   Callout,
   EmptyState,
@@ -45,6 +48,8 @@ export function TranslationEditorPage() {
   const [savedIds, setSavedIds] = useState({});
   const [file, setFile] = useState(null);
   const [isArchiving, setIsArchiving] = useState(false);
+  const [exportFormats, setExportFormats] = useState([]);
+  const [exportFormat, setExportFormat] = useState(DEFAULT_FORMAT_ID);
 
   const isProcessing = file?.status === 'PENDING' || file?.status === 'PROCESSING';
 
@@ -87,6 +92,29 @@ export function TranslationEditorPage() {
   useEffect(() => {
     load();
   }, [load]);
+
+  /*
+   * The format catalogue is loaded once and separately. It belongs to the
+   * namespace rather than to the file, so it does not change while the pipeline
+   * runs and has no business being re-fetched by the poll below. A failure here
+   * leaves the built in default selected rather than blocking the editor.
+   */
+  useEffect(() => {
+    let cancelled = false;
+
+    api
+      .listFileExportFormats(fileId)
+      .then((result) => {
+        if (!cancelled) setExportFormats(result.export_formats ?? []);
+      })
+      .catch(() => {
+        if (!cancelled) setExportFormats([]);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [fileId]);
 
   /* Poll only while the pipeline is still running. */
   useEffect(() => {
@@ -149,7 +177,7 @@ export function TranslationEditorPage() {
   async function handleDownloadLocale() {
     setActionError(null);
     try {
-      const document = await api.downloadLocale(fileId, activeLocale);
+      const document = await api.downloadLocale(fileId, activeLocale, exportFormat);
       downloadJson(`${activeLocale}.json`, document);
     } catch (error) {
       setActionError(error);
@@ -168,7 +196,7 @@ export function TranslationEditorPage() {
     setActionError(null);
     setIsArchiving(true);
     try {
-      const archive = await api.downloadArchive(fileId);
+      const archive = await api.downloadArchive(fileId, exportFormat);
       triggerDownload(ARCHIVE_FILENAME, archive);
     } catch (error) {
       setActionError(error);
@@ -256,6 +284,15 @@ export function TranslationEditorPage() {
     );
   }
 
+  /*
+   * A format with no hash field cannot carry staleness into the downloaded
+   * file, which is a real trade rather than a detail: `key_value` is chosen
+   * precisely because it drops straight into an application, and the cost is
+   * that the file stops describing whether it is current.
+   */
+  const selectedFormat =
+    exportFormats.find((format) => format.format_id === exportFormat) ?? null;
+
   const staleByKey = new Map(
     (data.stale_translations ?? []).map((entry) => [
       `${entry.key_name}_${entry.lang_code}`,
@@ -277,20 +314,50 @@ export function TranslationEditorPage() {
           </p>
         </div>
 
-        <div className="btn-row">
-          <button type="button" className="btn" onClick={handleDownloadLocale}>
-            Download {activeLocale}
-          </button>
-          <button
-            type="button"
-            className="btn btn--primary"
-            disabled={isArchiving}
-            onClick={handleDownloadArchive}
-          >
-            {isArchiving ? 'Preparing…' : `Download all (${ARCHIVE_FILENAME})`}
-          </button>
+        <div className="editor__download">
+          {exportFormats.length > 1 ? (
+            <div className="editor__locales">
+              <label className="field__label editor__compare-label" htmlFor="export_format">
+                Format
+              </label>
+              <select
+                id="export_format"
+                className="field__control editor__compare"
+                value={exportFormat}
+                onChange={(event) => setExportFormat(event.target.value)}
+              >
+                {exportFormats.map((format) => (
+                  <option key={format.format_id} value={format.format_id}>
+                    {format.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          ) : null}
+
+          <div className="btn-row">
+            <button type="button" className="btn" onClick={handleDownloadLocale}>
+              Download {activeLocale}
+            </button>
+            <button
+              type="button"
+              className="btn btn--primary"
+              disabled={isArchiving}
+              onClick={handleDownloadArchive}
+            >
+              {isArchiving ? 'Preparing…' : `Download all (${ARCHIVE_FILENAME})`}
+            </button>
+          </div>
         </div>
       </div>
+
+      {selectedFormat !== null && selectedFormat.hash_field === null ? (
+        <Callout tone="info" title={`Downloads use the ${selectedFormat.name} format`}>
+          This format carries no fingerprint, so a consumer cannot tell from the file alone
+          that an English source string changed. The stale markers on this page still show
+          it.
+        </Callout>
+      ) : null}
 
       <ErrorMessage error={actionError} />
 

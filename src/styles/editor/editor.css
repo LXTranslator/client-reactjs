@@ -211,3 +211,73 @@
 .editor__row--single {
   grid-template-columns: minmax(0, 1fr);
 }
+
+/* Export formats ----------------------------------------------------------- */
+
+/*
+ * The download controls became two decisions rather than one: which locale, and
+ * which shape. The format select sits beside the buttons rather than above
+ * them, so the toolbar still reads as a single row on a wide screen and wraps
+ * as a unit on a narrow one.
+ */
+.editor__download {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.75rem;
+}
+
+.formatlist {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.formatlist__item {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.75rem 0.9rem;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-sm);
+  background: var(--glass-faint);
+}
+
+.formatlist__body {
+  min-width: 0;
+}
+
+.formatlist__title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.4rem;
+  font-weight: 600;
+}
+
+.formatlist__meta {
+  margin-top: 0.25rem;
+  font-size: 0.85rem;
+  color: var(--ink-400);
+}
+
+.formatlist__actions {
+  flex-shrink: 0;
+}
+
+/*
+ * A format is far easier to get right when its effect is visible while it is
+ * being written, rather than after a download comes back in the wrong shape.
+ */
+.formatlist__preview {
+  margin: 0;
+  padding: 0.75rem 0.9rem;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-sm);
+  background: var(--silver-050);
+  font-family: var(--mono);
+  font-size: 0.85rem;
+  line-height: 1.5;
+  overflow-x: auto;
+}

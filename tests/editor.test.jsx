@@ -16,6 +16,7 @@ vi.mock('../src/lib/apiClient.js', async (importOriginal) => {
       mergeFileKeys: vi.fn(),
       downloadArchive: vi.fn(),
       downloadLocale: vi.fn(),
+      listFileExportFormats: vi.fn(),
     },
     getAuthToken: vi.fn(),
     setAuthToken: vi.fn(),
@@ -71,6 +72,32 @@ const EDITOR_DATA = {
 
 const EDITOR_PATH = '/jetsada/project/7/file/file_1';
 
+/** The formats the server ships, present in every namespace. */
+const BUILT_IN_FORMATS = [
+  {
+    format_id: 'default',
+    name: 'Value and hash',
+    description: 'Every leaf carries the translated string and the fingerprint.',
+    leaf_shape: 'OBJECT',
+    value_field: 'value',
+    hash_field: 'hash',
+    nested: true,
+    built_in: true,
+    created_at: null,
+  },
+  {
+    format_id: 'key_value',
+    name: 'Key and value',
+    description: 'Plain JSON key and value pairs, ready to use as it is.',
+    leaf_shape: 'STRING',
+    value_field: null,
+    hash_field: null,
+    nested: true,
+    built_in: true,
+    created_at: null,
+  },
+];
+
 describe('translation editor', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -79,6 +106,8 @@ describe('translation editor', () => {
     api.listNamespaces.mockResolvedValue({ namespaces: [makeNamespace()] });
     api.getFile.mockResolvedValue({ file: READY_FILE });
     api.getTranslations.mockResolvedValue(EDITOR_DATA);
+    // The two built in formats, which every namespace has without creating one.
+    api.listFileExportFormats.mockResolvedValue({ export_formats: BUILT_IN_FORMATS });
   });
 
   /**
@@ -114,7 +143,9 @@ describe('translation editor', () => {
       await user.click(screen.getByRole('button', { name: /download all/i }));
 
       await waitFor(() => {
-        expect(api.downloadArchive).toHaveBeenCalledWith('file_1');
+        // The default format is named explicitly here; the API client is what
+        // decides to leave it out of the URL.
+        expect(api.downloadArchive).toHaveBeenCalledWith('file_1', 'default');
       });
       expect(triggerDownload).toHaveBeenCalledWith('langs.zip', blob);
     });

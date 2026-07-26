@@ -103,6 +103,26 @@ file's status afterwards exactly as it does after an upload.
 language. Prefer it to looping over the locales and saving each one, which a
 browser blocks after the first few downloads anyway.
 
+## Export formats
+
+A download makes two independent choices: how it is packaged, and what shape the
+documents inside it take. `format` is the first and `export_format` is the
+second, and they stay separate for that reason.
+
+Two formats ship with the server and exist in every namespace. `default` gives
+each leaf the translated string beside the fingerprint of the English master;
+`key_value` gives the bare string. Neither can be edited or removed, so the
+interface renders no control that would fail.
+
+A namespace may describe formats of its own, and every project underneath can
+then be downloaded in them. A format is a description rather than a template: a
+leaf shape, the field names an object leaf carries, and whether a dotted path
+expands into a tree.
+
+Choosing a format with no hash field is a real trade rather than a detail. Such a
+document is ready to use as it is and can no longer tell a consumer that its
+English source changed, so the editor says so when one is selected.
+
 ## Languages
 
 The catalogue in `src/lib/locales.js` holds 143 locales, and codes are not all

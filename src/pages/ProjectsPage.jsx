@@ -176,6 +176,17 @@ export function ProjectsPage() {
         its own AI provider settings and credentials.
       </p>
 
+      {/*
+        Namespace wide settings are reached from here rather than only from the
+        organization settings page, because a personal namespace has no such
+        page and would otherwise have no way to reach them at all.
+      */}
+      <div className="btn-row" style={{ marginBottom: '1.25rem' }}>
+        <Link className="btn btn--ghost" to={paths.namespaceExportFormats(namespace.user_id)}>
+          Export formats
+        </Link>
+      </div>
+
       <ErrorMessage error={loadError} />
       {notice ? <Callout tone="ok">{notice}</Callout> : null}
 
