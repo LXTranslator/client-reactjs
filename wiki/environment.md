@@ -64,11 +64,16 @@ entirely.
 
 ## Variable reference
 
-| Variable | Stage | Default | Purpose |
-|---|---|---|---|
-| `VITE_API_PROXY_TARGET` | dev server | `http://localhost:4000` | Backend the dev server proxies `/api` to. |
-| `VITE_API_BASE_URL` | build | `/api/v1` | Base path the built bundle calls. |
-| `API_UPSTREAM` | runtime | `http://server:4000` | Backend the nginx `/api/` block proxies to. Edit `nginx.conf` or template it at deploy time. |
+`Required` answers whether the application fails without the variable. Every row
+is `no`, which is the point of the defaults: the client runs, builds and tests
+unconfigured. A `no` still leaves a value that must be correct for a deployment
+serving the API from another origin.
+
+| Variable | Required | Stage | Default | Purpose |
+|---|---|---|---|---|
+| `VITE_API_PROXY_TARGET` | no | dev server | `http://localhost:4000` | Backend the dev server proxies `/api` to. |
+| `VITE_API_BASE_URL` | no | build | `/api/v1` | Base path the built bundle calls. |
+| `API_UPSTREAM` | no | runtime | `http://server:4000` | Backend the nginx `/api/` block proxies to. Edit `nginx.conf` or template it at deploy time. |
 
 ## Docker
 
