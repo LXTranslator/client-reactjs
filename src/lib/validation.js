@@ -1,3 +1,5 @@
+import { isReservedSegment } from './paths.js';
+
 /**
  * Client side form validation.
  *
@@ -62,6 +64,12 @@ export function validateUserId(value) {
   if (/[A-Z]/.test(trimmed)) return 'The user id must be lowercase.';
   if (!USER_ID_PATTERN.test(trimmed)) {
     return 'Use only lowercase letters, digits and underscores.';
+  }
+  // A namespace occupies the first path segment, so an identifier matching a
+  // fixed route would be unreachable. The server refuses these outright; saying
+  // so here means the form does not offer a name it would then reject.
+  if (isReservedSegment(trimmed)) {
+    return 'That user id is reserved. Choose another.';
   }
   return null;
 }

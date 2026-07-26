@@ -48,6 +48,7 @@ Framework free helpers usable from anywhere in the tree.
 | [`src/lib/apiClient.js`](src/lib/apiClient.js) | HTTP client, token storage, typed errors and every endpoint helper. |
 | [`src/lib/validation.js`](src/lib/validation.js) | Field validators, password scoring and placeholder examples. |
 | [`src/lib/download.js`](src/lib/download.js) | Saves exported locale documents to disk. |
+| [`src/lib/paths.js`](src/lib/paths.js) | Client route builders and the reserved first segments. |
 
 ### State
 
@@ -67,6 +68,7 @@ Framework free helpers usable from anywhere in the tree.
 | [`src/components/layout/SiteHeader.jsx`](src/components/layout/SiteHeader.jsx) | Sticky glass header, navigation and namespace switcher. |
 | [`src/components/layout/SiteFooter.jsx`](src/components/layout/SiteFooter.jsx) | Footer with brand and link columns. |
 | [`src/components/routing/ProtectedRoute.jsx`](src/components/routing/ProtectedRoute.jsx) | Guards for signed in and signed out routes. |
+| [`src/components/routing/NamespaceRoute.jsx`](src/components/routing/NamespaceRoute.jsx) | Resolves the namespace in the path once for every route beneath it. |
 | [`src/components/ui/FormField.jsx`](src/components/ui/FormField.jsx) | Accessible text, textarea, select and password fields. |
 | [`src/components/ui/Feedback.jsx`](src/components/ui/Feedback.jsx) | Callouts, loading, empty, error and status displays. |
 | [`src/components/ui/Modal.jsx`](src/components/ui/Modal.jsx) | Accessible modal dialog with focus management. |
@@ -84,11 +86,11 @@ One file per route.
 | [`src/pages/RegisterPage.jsx`](src/pages/RegisterPage.jsx) | Registration with live availability checking. |
 | [`src/pages/ForgotPasswordPage.jsx`](src/pages/ForgotPasswordPage.jsx) | Requests a ten minute reset link. |
 | [`src/pages/ResetPasswordPage.jsx`](src/pages/ResetPasswordPage.jsx) | Completes a reset using a single use token. |
-| [`src/pages/NamespacesPage.jsx`](src/pages/NamespacesPage.jsx) | Dashboard listing every reachable namespace. |
+| [`src/pages/NamespacesPage.jsx`](src/pages/NamespacesPage.jsx) | Lists every reachable namespace, each linking to its own path. |
 | [`src/pages/OrganizationCreatePage.jsx`](src/pages/OrganizationCreatePage.jsx) | Creates an organization, checking identifier and email availability. |
 | [`src/pages/NamespaceSettingsPage.jsx`](src/pages/NamespaceSettingsPage.jsx) | Organization profile, contact email and two step deletion. |
 | [`src/pages/NamespaceMembersPage.jsx`](src/pages/NamespaceMembersPage.jsx) | Member invitation, role changes and removal. |
-| [`src/pages/ProjectsPage.jsx`](src/pages/ProjectsPage.jsx) | Project list and creation. |
+| [`src/pages/ProjectsPage.jsx`](src/pages/ProjectsPage.jsx) | A namespace's project list and creation, at `/:namespace`. |
 | [`src/pages/ProjectDetailPage.jsx`](src/pages/ProjectDetailPage.jsx) | File list with processing status polling. |
 | [`src/pages/ProjectUploadsPage.jsx`](src/pages/ProjectUploadsPage.jsx) | File upload with multi select target languages. |
 | [`src/pages/ProjectSettingsPage.jsx`](src/pages/ProjectSettingsPage.jsx) | Provider, model and the API key fallback chain. |

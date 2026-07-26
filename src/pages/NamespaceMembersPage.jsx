@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router';
 import { useAuth } from '../context/AuthContext.jsx';
+import { useNamespace } from '../components/routing/NamespaceRoute.jsx';
+import { paths } from '../lib/paths.js';
 import { api } from '../lib/apiClient.js';
 import { SelectField, TextField } from '../components/ui/FormField.jsx';
 import {
@@ -30,7 +32,8 @@ const ROLE_OPTIONS = [
  * @returns {JSX.Element} The page.
  */
 export function NamespaceMembersPage() {
-  const { activeNamespace, account } = useAuth();
+  const { account } = useAuth();
+  const namespace = useNamespace();
 
   const [members, setMembers] = useState([]);
   const [identifier, setIdentifier] = useState('');
@@ -41,7 +44,7 @@ export function NamespaceMembersPage() {
   const [notice, setNotice] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const isOrganization = activeNamespace?.type === 'ORG';
+  const isOrganization = namespace.type === 'ORG';
 
   /**
    * Loads the membership list.
@@ -49,14 +52,14 @@ export function NamespaceMembersPage() {
    * @returns {Promise<void>}
    */
   const loadMembers = useCallback(async () => {
-    if (!activeNamespace || !isOrganization) {
+    if (!isOrganization) {
       setIsLoading(false);
       return;
     }
 
     setIsLoading(true);
     try {
-      const result = await api.listMembers(activeNamespace.user_id);
+      const result = await api.listMembers(namespace.user_id);
       setMembers(result.members ?? []);
       setLoadError(null);
     } catch (error) {
@@ -64,7 +67,7 @@ export function NamespaceMembersPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [activeNamespace, isOrganization]);
+  }, [namespace, isOrganization]);
 
   useEffect(() => {
     loadMembers();
@@ -88,7 +91,7 @@ export function NamespaceMembersPage() {
 
     setIsSubmitting(true);
     try {
-      await api.addMember(activeNamespace.user_id, {
+      await api.addMember(namespace.user_id, {
         identifier: identifier.trim().toLowerCase(),
         role,
       });
@@ -114,7 +117,7 @@ export function NamespaceMembersPage() {
     setActionError(null);
     setNotice(null);
     try {
-      await api.updateMember(activeNamespace.user_id, memberId, { role: nextRole });
+      await api.updateMember(namespace.user_id, memberId, { role: nextRole });
       setNotice('Role updated.');
       await loadMembers();
     } catch (error) {
@@ -138,7 +141,7 @@ export function NamespaceMembersPage() {
     setActionError(null);
     setNotice(null);
     try {
-      await api.removeMember(activeNamespace.user_id, member.id);
+      await api.removeMember(namespace.user_id, member.id);
       setNotice('Member removed.');
       await loadMembers();
     } catch (error) {
@@ -146,23 +149,15 @@ export function NamespaceMembersPage() {
     }
   }
 
-  if (!activeNamespace) {
-    return (
-      <div className="container">
-        <LoadingState label="Loading namespace" />
-      </div>
-    );
-  }
-
   if (!isOrganization) {
     return (
       <div className="container narrow">
         <Breadcrumbs
-          items={[{ label: 'Namespaces', to: '/namespaces' }, { label: 'Members' }]}
+          items={[{ label: 'Namespaces', to: paths.namespaces() }, { label: 'Members' }]}
         />
         <Callout tone="info" title="Personal namespace">
           Only organization namespaces have members. Create an organization from the{' '}
-          <Link to="/namespaces">dashboard</Link> to collaborate with other people.
+          <Link to={paths.namespaces()}>dashboard</Link> to collaborate with other people.
         </Callout>
       </div>
     );
@@ -172,15 +167,15 @@ export function NamespaceMembersPage() {
     <div className="container">
       <Breadcrumbs
         items={[
-          { label: 'Namespaces', to: '/namespaces' },
-          { label: activeNamespace.user_id },
+          { label: 'Namespaces', to: paths.namespaces() },
+          { label: namespace.user_id, to: paths.namespace(namespace.user_id) },
           { label: 'Members' },
         ]}
       />
 
       <h1>Members</h1>
       <p className="lead">
-        People who can act inside <span className="mono">{activeNamespace.user_id}</span>.
+        People who can act inside <span className="mono">{namespace.user_id}</span>.
       </p>
 
       <ErrorMessage error={loadError} />

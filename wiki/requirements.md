@@ -15,15 +15,15 @@ The browser interface for LXTranslator. It consumes the API provided by
 | FR-2 | `/login` offers sign in, a link to `/register` and a forgot password link. | Done |
 | FR-3 | `/register` captures user id, email, password and confirmation. | Done |
 | FR-4 | `/namespaces` shows the dashboard for the signed in account. | Done |
-| FR-5 | `/namespaces/settings` shows organization settings, and only for an organization. | Done |
-| FR-6 | `/namespaces/settings/members` manages organization membership. | Done |
-| FR-7 | `/namespaces/projects` lists and creates projects. | Done |
-| FR-8 | `/namespaces/project/{project_id}` lists the project's files. | Done |
-| FR-9 | `/namespaces/project/{project_id}/uploads` uploads a file. | Done |
-| FR-10 | `/namespaces/project/{project_id}/file/{file_id}` edits and downloads translations. | Done |
-| FR-11 | `/namespaces/project/{project_id}/settings` manages provider, model and API keys. | Done |
+| FR-5 | `/{namespace}/settings` shows organization settings, and only for an organization. | Done |
+| FR-6 | `/{namespace}/settings/members` manages organization membership. | Done |
+| FR-7 | `/{namespace}` lists and creates the namespace's projects. | Done |
+| FR-8 | `/{namespace}/project/{project_id}` lists the project's files. | Done |
+| FR-9 | `/{namespace}/project/{project_id}/uploads` uploads a file. | Done |
+| FR-10 | `/{namespace}/project/{project_id}/file/{file_id}` edits and downloads translations. | Done |
+| FR-11 | `/{namespace}/project/{project_id}/settings` manages provider, model and API keys. | Done |
 | FR-12 | `/settings` manages user id, email and password. | Done |
-| FR-13 | `/namespaces/organizations/new` creates an organization. | Done |
+| FR-13 | `/organizations/new` creates an organization. | Done |
 | FR-14 | An unknown path renders a not found page. | Done |
 
 ### Forms and validation

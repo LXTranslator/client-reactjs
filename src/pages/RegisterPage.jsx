@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react';
 import { Link, useNavigate } from 'react-router';
+import { paths } from '../lib/paths.js';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useAvailability } from '../hooks/useAvailability.js';
 import { TextField, PasswordField } from '../components/ui/FormField.jsx';
@@ -95,13 +96,13 @@ export function RegisterPage() {
 
     setIsSubmitting(true);
     try {
-      await register({
+      const account = await register({
         user_id: values.user_id.trim(),
         email: values.email.trim().toLowerCase(),
         password: values.password,
         confirm_password: values.confirm_password,
       });
-      navigate('/namespaces', { replace: true });
+      navigate(paths.namespace(account.user_id), { replace: true });
     } catch (error) {
       setSubmitError(error);
       const fieldErrors = error?.fieldErrors ?? {};

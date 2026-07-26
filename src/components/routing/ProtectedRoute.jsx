@@ -1,6 +1,7 @@
 import { Navigate, Outlet, useLocation } from 'react-router';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { LoadingState } from '../ui/Feedback.jsx';
+import { paths } from '../../lib/paths.js';
 
 /**
  * Route guard for authenticated pages.
@@ -42,7 +43,7 @@ export function ProtectedRoute() {
  * @returns {JSX.Element} The nested route, or a redirect to the dashboard.
  */
 export function PublicOnlyRoute() {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, landingNamespaceId } = useAuth();
 
   if (isLoading) {
     return (
@@ -52,7 +53,14 @@ export function PublicOnlyRoute() {
     );
   }
 
-  if (isAuthenticated) return <Navigate to="/namespaces" replace />;
+  if (isAuthenticated) {
+    return (
+      <Navigate
+        to={landingNamespaceId ? paths.namespace(landingNamespaceId) : paths.namespaces()}
+        replace
+      />
+    );
+  }
 
   return <Outlet />;
 }

@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { useAuth } from '../context/AuthContext.jsx';
+import { useNamespace } from '../components/routing/NamespaceRoute.jsx';
+import { paths } from '../lib/paths.js';
 import { api } from '../lib/apiClient.js';
 import { TextField, TextAreaField } from '../components/ui/FormField.jsx';
 import { Callout, ErrorMessage, LoadingState } from '../components/ui/Feedback.jsx';
@@ -22,7 +24,8 @@ import {
  * @returns {JSX.Element} The page.
  */
 export function NamespaceSettingsPage() {
-  const { activeNamespace, refresh, selectNamespace, account } = useAuth();
+  const { refresh, selectNamespace, account } = useAuth();
+  const namespace = useNamespace();
   const navigate = useNavigate();
 
   const [values, setValues] = useState({
@@ -38,8 +41,8 @@ export function NamespaceSettingsPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
 
-  const isOrganization = activeNamespace?.type === 'ORG';
-  const isOwner = activeNamespace?.role === 'OWNER';
+  const isOrganization = namespace.type === 'ORG';
+  const isOwner = namespace?.role === 'OWNER';
 
   /**
    * Loads the current organization profile.
@@ -47,14 +50,14 @@ export function NamespaceSettingsPage() {
    * @returns {Promise<void>}
    */
   const load = useCallback(async () => {
-    if (!activeNamespace || !isOrganization) {
+    if (!isOrganization) {
       setIsLoading(false);
       return;
     }
 
     setIsLoading(true);
     try {
-      const result = await api.getNamespace(activeNamespace.user_id);
+      const result = await api.getNamespace(namespace.user_id);
       setValues({
         display_name: result.namespace.display_name ?? '',
         description: result.namespace.description ?? '',
@@ -67,7 +70,7 @@ export function NamespaceSettingsPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [activeNamespace, isOrganization]);
+  }, [namespace, isOrganization]);
 
   useEffect(() => {
     load();
@@ -109,7 +112,7 @@ export function NamespaceSettingsPage() {
 
     setIsSubmitting(true);
     try {
-      await api.updateNamespace(activeNamespace.user_id, {
+      await api.updateNamespace(namespace.user_id, {
         display_name: values.display_name.trim(),
         description: values.description.trim(),
         email: values.email.trim().toLowerCase(),
@@ -134,22 +137,14 @@ export function NamespaceSettingsPage() {
   async function handleDeleted() {
     if (account?.user_id) selectNamespace(account.user_id);
     await refresh();
-    navigate('/namespaces', { replace: true });
-  }
-
-  if (!activeNamespace) {
-    return (
-      <div className="container">
-        <LoadingState label="Loading namespace" />
-      </div>
-    );
+    navigate(paths.namespaces(), { replace: true });
   }
 
   if (!isOrganization) {
     return (
       <div className="container narrow">
         <Breadcrumbs
-          items={[{ label: 'Namespaces', to: '/namespaces' }, { label: 'Settings' }]}
+          items={[{ label: 'Namespaces', to: paths.namespaces() }, { label: 'Settings' }]}
         />
         <Callout tone="info" title="Personal namespace">
           Organization settings apply to organization namespaces only. Your personal
@@ -163,15 +158,15 @@ export function NamespaceSettingsPage() {
     <div className="container narrow">
       <Breadcrumbs
         items={[
-          { label: 'Namespaces', to: '/namespaces' },
-          { label: activeNamespace.user_id },
+          { label: 'Namespaces', to: paths.namespaces() },
+          { label: namespace.user_id, to: paths.namespace(namespace.user_id) },
           { label: 'Settings' },
         ]}
       />
 
       <h1>Organization settings</h1>
       <p className="lead">
-        Profile details for <span className="mono">{activeNamespace.user_id}</span>.
+        Profile details for <span className="mono">{namespace.user_id}</span>.
       </p>
 
       <ErrorMessage error={loadError} />
@@ -234,7 +229,7 @@ export function NamespaceSettingsPage() {
                 <button type="submit" className="btn btn--primary" disabled={isSubmitting}>
                   {isSubmitting ? 'Saving' : 'Save settings'}
                 </button>
-                <Link className="btn btn--ghost" to="/namespaces/settings/members">
+                <Link className="btn btn--ghost" to={paths.namespaceMembers(namespace.user_id)}>
                   Manage members
                 </Link>
               </div>
@@ -242,7 +237,7 @@ export function NamespaceSettingsPage() {
           </section>
 
           <DeleteOrganizationPanel
-            namespace={activeNamespace}
+            namespace={namespace}
             canDelete={isOwner}
             onDeleted={handleDeleted}
           />

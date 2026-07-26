@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react';
 import { Link, useNavigate } from 'react-router';
+import { paths } from '../lib/paths.js';
 import { useAuth } from '../context/AuthContext.jsx';
 import { api } from '../lib/apiClient.js';
 import { useAvailability } from '../hooks/useAvailability.js';
@@ -114,7 +115,7 @@ export function OrganizationCreatePage() {
       // Switch straight into the new organization, since that is almost
       // certainly what the visitor wants to work in next.
       selectNamespace(result.namespace.user_id);
-      navigate('/namespaces/settings', { replace: true });
+      navigate(paths.namespaceSettings(result.namespace.user_id), { replace: true });
     } catch (error) {
       setSubmitError(error);
       const fieldErrors = error?.fieldErrors ?? {};
@@ -130,7 +131,7 @@ export function OrganizationCreatePage() {
     <div className="container narrow">
       <Breadcrumbs
         items={[
-          { label: 'Namespaces', to: '/namespaces' },
+          { label: 'Namespaces', to: paths.namespaces() },
           { label: 'New organization' },
         ]}
       />

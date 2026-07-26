@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router';
+import { useNamespace } from '../components/routing/NamespaceRoute.jsx';
+import { paths } from '../lib/paths.js';
 import { api } from '../lib/apiClient.js';
 import {
   Callout,
@@ -24,6 +26,8 @@ const POLL_INTERVAL_MS = 2000;
  */
 export function ProjectDetailPage() {
   const { projectId } = useParams();
+  const namespace = useNamespace();
+  const ns = namespace.user_id;
 
   const [project, setProject] = useState(null);
   const [files, setFiles] = useState([]);
@@ -133,8 +137,8 @@ export function ProjectDetailPage() {
     <div className="container">
       <Breadcrumbs
         items={[
-          { label: 'Namespaces', to: '/namespaces' },
-          { label: 'Projects', to: '/namespaces/projects' },
+          { label: 'Namespaces', to: paths.namespaces() },
+          { label: ns, to: paths.namespace(ns) },
           { label: project?.name ?? 'Project' },
         ]}
       />
@@ -155,10 +159,10 @@ export function ProjectDetailPage() {
           </p>
         </div>
         <div className="btn-row">
-          <Link className="btn btn--primary" to={`/namespaces/project/${projectId}/uploads`}>
+          <Link className="btn btn--primary" to={paths.projectUploads(ns, projectId)}>
             Upload file
           </Link>
-          <Link className="btn" to={`/namespaces/project/${projectId}/settings`}>
+          <Link className="btn" to={paths.projectSettings(ns, projectId)}>
             Settings
           </Link>
         </div>
@@ -182,7 +186,7 @@ export function ProjectDetailPage() {
             <p className="muted">
               Upload a JSON locale file to start translating.
             </p>
-            <Link className="btn btn--primary" to={`/namespaces/project/${projectId}/uploads`}>
+            <Link className="btn btn--primary" to={paths.projectUploads(ns, projectId)}>
               Upload your first file
             </Link>
           </EmptyState>
@@ -206,7 +210,7 @@ export function ProjectDetailPage() {
                 {files.map((file) => (
                   <tr key={file.id}>
                     <td>
-                      <Link to={`/namespaces/project/${projectId}/file/${file.id}`}>
+                      <Link to={paths.projectFile(ns, projectId, file.id)}>
                         <strong>{file.filename}</strong>
                       </Link>
                       {file.error_message ? (
@@ -235,7 +239,7 @@ export function ProjectDetailPage() {
                         {file.status === 'READY' ? (
                           <Link
                             className="btn btn--small"
-                            to={`/namespaces/project/${projectId}/file/${file.id}`}
+                            to={paths.projectFile(ns, projectId, file.id)}
                           >
                             Edit
                           </Link>

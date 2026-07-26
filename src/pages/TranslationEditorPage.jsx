@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router';
+import { useNamespace } from '../components/routing/NamespaceRoute.jsx';
+import { paths } from '../lib/paths.js';
 import { api } from '../lib/apiClient.js';
 import { downloadJson } from '../lib/download.js';
 import {
@@ -26,6 +28,8 @@ const POLL_INTERVAL_MS = 2000;
  */
 export function TranslationEditorPage() {
   const { projectId, fileId } = useParams();
+  const namespace = useNamespace();
+  const ns = namespace.user_id;
 
   const [data, setData] = useState(null);
   const [activeLocale, setActiveLocale] = useState(null);
@@ -175,7 +179,7 @@ export function TranslationEditorPage() {
     return (
       <div className="container narrow">
         <ErrorMessage error={loadError} />
-        <Link className="btn" to={`/namespaces/project/${projectId}`}>
+        <Link className="btn" to={paths.project(ns, projectId)}>
           Back to project
         </Link>
       </div>
@@ -185,9 +189,9 @@ export function TranslationEditorPage() {
   const breadcrumbs = (
     <Breadcrumbs
       items={[
-        { label: 'Namespaces', to: '/namespaces' },
-        { label: 'Projects', to: '/namespaces/projects' },
-        { label: 'Project', to: `/namespaces/project/${projectId}` },
+        { label: 'Namespaces', to: paths.namespaces() },
+        { label: ns, to: paths.namespace(ns) },
+        { label: 'Project', to: paths.project(ns, projectId) },
         { label: file?.filename ?? 'File' },
       ]}
     />
@@ -225,7 +229,7 @@ export function TranslationEditorPage() {
           >
             Try again
           </button>
-          <Link className="btn" to={`/namespaces/project/${projectId}/settings`}>
+          <Link className="btn" to={paths.projectSettings(ns, projectId)}>
             Check API keys
           </Link>
         </div>
