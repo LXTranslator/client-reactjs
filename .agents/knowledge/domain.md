@@ -103,6 +103,23 @@ file's status afterwards exactly as it does after an upload.
 language. Prefer it to looping over the locales and saving each one, which a
 browser blocks after the first few downloads anyway.
 
+## Languages
+
+The catalogue in `src/lib/locales.js` holds 143 locales, and codes are not all
+two letters: Bavarian is `bar`, Low German `nds_de`, Malay in Jawi script
+`zlm_arab`. Anything matching `LOCALE_CODE_PATTERN` is valid whether or not the
+catalogue lists it, because the server validates shape rather than membership.
+Keep that pattern in step with `LANG_CODE_PATTERN` on the server.
+
+A list that long is never rendered whole. `LocalePicker` opens on a suggested
+set and narrows by initial letter or by search, over both the name and the code,
+since people arrive knowing one or the other. Initials fold diacritics, so Võro
+files under V rather than past Z.
+
+**The master and `en_us` are the same text.** The editor selects a comparison
+language from a dropdown, and choosing the master drops the read only column
+instead of printing every string twice.
+
 ## Interface conventions
 
 **Forms.** Validate on submit with helpers from `src/lib/validation.js`. Clear a
