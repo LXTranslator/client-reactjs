@@ -268,6 +268,17 @@ describe('the assistant', () => {
       expect(within(pane).getByText('done')).toBeInTheDocument();
     });
 
+    it('names an upload into an existing project', async () => {
+      const pane = await sendAndRead(
+        makeAnswer({
+          answer: 'Uploaded en_us.json into minecraft.',
+          tool_calls: [{ name: 'upload_file', ok: true }],
+        }),
+      );
+
+      expect(await within(pane).findByText('Uploaded a file')).toBeInTheDocument();
+    });
+
     it('reports a refused tool as refused, with the reason', async () => {
       // The answer above may be describing a refusal, and a person should not
       // have to infer that from prose.

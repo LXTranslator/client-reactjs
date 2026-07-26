@@ -108,7 +108,8 @@ export function ChatConversation({ turns, isLoading, isSending, error, pending, 
           <EmptyState title="Ask the assistant something.">
             <p className="muted">
               It can list your projects, check which languages a project has, add languages
-              across several projects at once, and create a project from a file you attach.
+              across several projects at once, and put a file you attach into a new project
+              or one you already have.
             </p>
           </EmptyState>
         ) : (

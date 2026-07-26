@@ -8,6 +8,8 @@ const TOOL_LABELS = {
   switch_namespace: 'Switched namespace',
   list_projects: 'Listed projects',
   create_project: 'Created a project',
+  upload_file: 'Uploaded a file',
+  list_files: 'Listed files',
   check_project_languages: 'Checked project languages',
   get_project_description: 'Read a description',
   update_project_description: 'Updated a description',

@@ -200,6 +200,10 @@ describing a refusal. `namespace` can differ from the one in the path when the
 assistant switched context, which the pane says out loud since the URL no longer
 describes what it is acting on.
 
+The tools the assistant may call include `create_project` for a new project and
+`upload_file` for one that already exists, so an attached file reaches either
+without a project ever needing to be deleted or recreated.
+
 There is no endpoint that lists a person's sessions, so the conversations pane
 keeps the handful this browser has open in local storage and finds anything else
 through search. `searchChats` reports `method`, which is `EMBEDDING` or `TEXT`,
