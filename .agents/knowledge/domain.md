@@ -140,6 +140,37 @@ files under V rather than past Z.
 language from a dropdown, and choosing the master drops the read only column
 instead of printing every string twice.
 
+## The assistant
+
+`/:namespace/chat` answers questions about a namespace and acts on it, through a
+fixed set of tools on the server.
+
+Three panes, because there are three questions: which conversation, the
+conversation itself, and what the assistant actually did.
+
+The third is the one that matters and the one an ordinary chat interface omits.
+This assistant creates projects and adds languages, so the difference between
+"it says it added Korean" and "it added Korean" is not something a person should
+have to infer from prose. Every tool call is listed with its outcome, and a
+refused one reads as refused: the server checks permission itself on every call,
+so an answer may well be describing a refusal.
+
+Three rules follow:
+
+1. **Render an answer as text, never as markup.** It can quote a project name, a
+   locale string or an earlier message, all written by users.
+2. **Report a namespace switch.** The assistant may move context mid turn, after
+   proving membership, and the path in the URL then no longer describes what it
+   is acting on.
+3. **Never present a tool result as though the interface performed it.** The
+   server did, or refused to.
+
+The conversations pane keeps what this browser has open in local storage,
+because the server offers no way to list a person's sessions, and finds anything
+else through search. Search says whether it matched by meaning or by text, since
+an account with no embedding model configured gets the second and deserves to
+know why a search found less than expected.
+
 ## Interface conventions
 
 **Forms.** Validate on submit with helpers from `src/lib/validation.js`. Clear a

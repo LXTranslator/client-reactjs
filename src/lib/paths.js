@@ -80,6 +80,7 @@ export const paths = {
   namespaceMembers: (namespace) => `/${segment(namespace)}/settings/members`,
   namespaceExportFormats: (namespace) => `/${segment(namespace)}/settings/export_formats`,
   namespaceAiSettings: (namespace) => `/${segment(namespace)}/settings/ai`,
+  namespaceChat: (namespace) => `/${segment(namespace)}/chat`,
 
   project: (namespace, projectId) => `/${segment(namespace)}/project/${segment(projectId)}`,
   projectUploads: (namespace, projectId) =>

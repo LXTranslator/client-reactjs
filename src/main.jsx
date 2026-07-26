@@ -11,6 +11,7 @@ import './styles/shared/layout.css';
 import './styles/shared/components.css';
 import './styles/auth/auth.css';
 import './styles/editor/editor.css';
+import './styles/chat/chat.css';
 
 const container = document.getElementById('root');
 

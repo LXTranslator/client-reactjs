@@ -1,0 +1,294 @@
+/*
+ * The assistant.
+ *
+ * Three panes on a wide screen: conversations, the conversation, and what the
+ * assistant did. Below the same 900px breakpoint the navigation collapses at,
+ * they stack, because three columns in a phone's width is three unusable
+ * columns rather than one readable one.
+ *
+ * Order matters when they stack. The conversation comes first, since it is what
+ * a person came for; the list and the context follow.
+ */
+
+.chat {
+  display: grid;
+  grid-template-columns: 17rem minmax(0, 1fr) 18rem;
+  gap: 1rem;
+  align-items: start;
+}
+
+.chat__pane {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1rem;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius);
+  background: var(--glass);
+  box-shadow: var(--shadow-sm);
+  min-width: 0;
+}
+
+.chat__pane--conversation {
+  /*
+   * A fixed height rather than a growing one, so the composer stays reachable
+   * and the page itself does not scroll while the conversation does.
+   */
+  height: min(70vh, 40rem);
+}
+
+.chat__pane-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.chat__pane-header h2 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+/* Conversations -------------------------------------------------------------- */
+
+.chat__search {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.chat__search .field__control {
+  flex: 1;
+  min-width: 0;
+  padding-top: 0.4rem;
+  padding-bottom: 0.4rem;
+  font-size: 0.9rem;
+}
+
+.chat__sessions {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  overflow-y: auto;
+  max-height: 22rem;
+}
+
+.chat__sessions li {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.chat__session {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.45rem 0.55rem;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+}
+
+.chat__session:hover {
+  background: var(--glass-faint);
+}
+
+.chat__session--active {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.chat__session-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chat__session-meta {
+  font-size: 0.78rem;
+  color: var(--ink-400);
+}
+
+.chat__session-forget {
+  flex-shrink: 0;
+  border: 0;
+  background: transparent;
+  color: var(--ink-400);
+  font-size: 1.1rem;
+  line-height: 1;
+  padding: 0.2rem 0.35rem;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.chat__session-forget:hover {
+  color: var(--ink-900);
+  background: var(--glass-faint);
+}
+
+.chat__results-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+/* Conversation --------------------------------------------------------------- */
+
+.chat__messages {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding-right: 0.25rem;
+}
+
+.chat__turn {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.chat__message {
+  padding: 0.6rem 0.8rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--hairline);
+  max-width: 90%;
+}
+
+.chat__message--you {
+  align-self: flex-end;
+  background: var(--accent-soft);
+  border-color: transparent;
+}
+
+.chat__message--assistant {
+  align-self: flex-start;
+  background: var(--glass-faint);
+}
+
+.chat__message-role {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink-400);
+  margin-bottom: 0.2rem;
+}
+
+.chat__message-body {
+  margin: 0;
+  /* An answer may quote a locale string, which can be anything at all. */
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.chat__composer {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.chat__input {
+  resize: vertical;
+}
+
+.chat__composer-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.chat__attach {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.chat__attachment {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  font-size: 0.85rem;
+}
+
+/* Context -------------------------------------------------------------------- */
+
+.chat__facts {
+  display: grid;
+  grid-template-columns: auto;
+  gap: 0.15rem;
+  margin: 0;
+}
+
+.chat__facts dt {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink-400);
+}
+
+.chat__facts dd {
+  margin: 0 0 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+
+.chat__section h3 {
+  margin: 0 0 0.4rem;
+  font-size: 0.9rem;
+}
+
+.chat__tools {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.chat__tool {
+  display: flex;
+  align-items: baseline;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+  font-size: 0.9rem;
+}
+
+.chat__tool-error {
+  flex-basis: 100%;
+  font-size: 0.82rem;
+  color: var(--ink-400);
+}
+
+@media (max-width: 900px) {
+  .chat {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  /* The conversation is what a person came for, so it leads when stacked. */
+  .chat__pane--conversation {
+    order: -1;
+    height: min(60vh, 32rem);
+  }
+}
