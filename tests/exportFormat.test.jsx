@@ -43,7 +43,7 @@ const { api, getAuthToken } = await import('../src/lib/apiClient.js');
 const { triggerDownload } = await import('../src/lib/download.js');
 const { App } = await import('../src/App.jsx');
 
-/** The two formats the server ships. */
+/** The three formats the server ships. */
 const DEFAULT_FORMAT = {
   format_id: 'default',
   name: 'Value and hash',
@@ -64,6 +64,18 @@ const KEY_VALUE_FORMAT = {
   value_field: null,
   hash_field: null,
   nested: true,
+  built_in: true,
+  created_at: null,
+};
+
+const FLAT_KEY_VALUE_FORMAT = {
+  format_id: 'flat_key_value',
+  name: 'Flat key and value',
+  description: 'Plain JSON key and value pairs with the dotted path kept as a single key.',
+  leaf_shape: 'STRING',
+  value_field: null,
+  hash_field: null,
+  nested: false,
   built_in: true,
   created_at: null,
 };
@@ -138,10 +150,10 @@ describe('export formats', () => {
       }),
     );
     api.listFileExportFormats.mockResolvedValue({
-      export_formats: [DEFAULT_FORMAT, KEY_VALUE_FORMAT],
+      export_formats: [DEFAULT_FORMAT, KEY_VALUE_FORMAT, FLAT_KEY_VALUE_FORMAT],
     });
     api.listExportFormats.mockResolvedValue({
-      export_formats: [DEFAULT_FORMAT, KEY_VALUE_FORMAT],
+      export_formats: [DEFAULT_FORMAT, KEY_VALUE_FORMAT, FLAT_KEY_VALUE_FORMAT],
     });
   });
 
@@ -170,6 +182,29 @@ describe('export formats', () => {
       const select = screen.getByLabelText('Format');
       expect(within(select).getByRole('option', { name: 'Value and hash' })).toBeInTheDocument();
       expect(within(select).getByRole('option', { name: 'Key and value' })).toBeInTheDocument();
+      expect(
+        within(select).getByRole('option', { name: 'Flat key and value' }),
+      ).toBeInTheDocument();
+    });
+
+    it('downloads a locale in the flat key and value format', async () => {
+      const user = await openEditor();
+
+      await user.selectOptions(screen.getByLabelText('Format'), 'flat_key_value');
+      await user.click(screen.getByRole('button', { name: /download th_th/i }));
+
+      await waitFor(() => {
+        expect(api.downloadLocale).toHaveBeenCalledWith('file_1', 'th_th', 'flat_key_value');
+      });
+      expect(triggerDownload).toHaveBeenCalledWith('th_th.json', expect.any(Blob));
+    });
+
+    it('warns that the flat format carries no fingerprint either', async () => {
+      const user = await openEditor();
+
+      await user.selectOptions(screen.getByLabelText('Format'), 'flat_key_value');
+
+      expect(await screen.findByText(/carries no fingerprint/i)).toBeInTheDocument();
     });
 
     it('downloads a locale in the chosen format', async () => {
@@ -247,7 +282,7 @@ describe('export formats', () => {
 
     it('separates the built in formats from the namespace own', async () => {
       api.listExportFormats.mockResolvedValue({
-        export_formats: [DEFAULT_FORMAT, KEY_VALUE_FORMAT, OWNED_FORMAT],
+        export_formats: [DEFAULT_FORMAT, KEY_VALUE_FORMAT, FLAT_KEY_VALUE_FORMAT, OWNED_FORMAT],
       });
 
       await openFormats();
@@ -265,13 +300,14 @@ describe('export formats', () => {
 
       expect(within(builtIn).getByText('default')).toBeInTheDocument();
       expect(within(builtIn).getByText('key_value')).toBeInTheDocument();
+      expect(within(builtIn).getByText('flat_key_value')).toBeInTheDocument();
       expect(within(owned).getByText('flat_text')).toBeInTheDocument();
       expect(within(owned).queryByText('default')).not.toBeInTheDocument();
     });
 
     it('offers no remove button on a built in format', async () => {
       api.listExportFormats.mockResolvedValue({
-        export_formats: [DEFAULT_FORMAT, KEY_VALUE_FORMAT, OWNED_FORMAT],
+        export_formats: [DEFAULT_FORMAT, KEY_VALUE_FORMAT, FLAT_KEY_VALUE_FORMAT, OWNED_FORMAT],
       });
 
       await openFormats();
@@ -385,7 +421,7 @@ describe('export formats', () => {
 
     it('removes a format after a confirmation', async () => {
       api.listExportFormats.mockResolvedValue({
-        export_formats: [DEFAULT_FORMAT, KEY_VALUE_FORMAT, OWNED_FORMAT],
+        export_formats: [DEFAULT_FORMAT, KEY_VALUE_FORMAT, FLAT_KEY_VALUE_FORMAT, OWNED_FORMAT],
       });
       vi.spyOn(window, 'confirm').mockReturnValue(true);
 
@@ -400,7 +436,7 @@ describe('export formats', () => {
 
     it('keeps the format when the confirmation is declined', async () => {
       api.listExportFormats.mockResolvedValue({
-        export_formats: [DEFAULT_FORMAT, KEY_VALUE_FORMAT, OWNED_FORMAT],
+        export_formats: [DEFAULT_FORMAT, KEY_VALUE_FORMAT, FLAT_KEY_VALUE_FORMAT, OWNED_FORMAT],
       });
       vi.spyOn(window, 'confirm').mockReturnValue(false);
 

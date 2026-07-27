@@ -26,12 +26,14 @@ import {
  * a team describes the shape its build tooling expects once, and every project
  * underneath can then be downloaded in it.
  *
- * Two formats ship with the application and appear in every namespace.
+ * Three formats ship with the application and appear in every namespace.
  * `default` carries the translated string beside the fingerprint of the English
  * master, which is what makes staleness detectable downstream. `key_value`
  * carries the bare string, which is what a localization library reads directly.
- * Neither can be edited or removed, because a build script already downloads
- * with it, and the interface says so rather than offering a button that fails.
+ * `flat_key_value` carries the same bare string with each dotted path left as
+ * one key. None can be edited or removed, because a build script already
+ * downloads with it, and the interface says so rather than offering a button
+ * that fails.
  *
  * @returns {JSX.Element} The page.
  */
@@ -236,12 +238,14 @@ export function NamespaceExportFormatsPage() {
           <span className="badge badge--accent">{builtIn.length}</span>
         </div>
 
-        <Callout tone="info" title="These two always exist">
+        <Callout tone="info" title="These always exist">
           <span className="mono">default</span> carries the translated string beside the
           fingerprint of the English master, which is how a consumer detects that a source
           string changed. <span className="mono">key_value</span> carries the bare string,
-          ready to use as it is, and carries no fingerprint. Neither can be changed or
-          removed, since a build script may already download with it.
+          ready to use as it is, and carries no fingerprint.{' '}
+          <span className="mono">flat_key_value</span> carries the same string with the
+          dotted key left whole, for tooling that reads one flat map. None can be changed
+          or removed, since a build script may already download with it.
         </Callout>
 
         <div className="formatlist">

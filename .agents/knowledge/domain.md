@@ -120,10 +120,11 @@ A download makes two independent choices: how it is packaged, and what shape the
 documents inside it take. `format` is the first and `export_format` is the
 second, and they stay separate for that reason.
 
-Two formats ship with the server and exist in every namespace. `default` gives
+Three formats ship with the server and exist in every namespace. `default` gives
 each leaf the translated string beside the fingerprint of the English master;
-`key_value` gives the bare string. Neither can be edited or removed, so the
-interface renders no control that would fail.
+`key_value` gives the bare string; `flat_key_value` gives the same bare string
+with each dotted path kept as one key rather than expanded into a tree. None can
+be edited or removed, so the interface renders no control that would fail.
 
 A namespace may describe formats of its own, and every project underneath can
 then be downloaded in them. A format is a description rather than a template: a

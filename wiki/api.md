@@ -321,11 +321,12 @@ A format describes the shape a downloaded locale document is written in, and it
 belongs to a namespace rather than to a project, so one description serves every
 project underneath.
 
-Two ship with the server and appear in every namespace: `default`, which carries
-the translated string beside the fingerprint of the English master, and
-`key_value`, which carries the bare string. Both are marked `built_in` and the
-server refuses to change or remove either, so the interface shows no control
-that would fail.
+Three ship with the server and appear in every namespace: `default`, which
+carries the translated string beside the fingerprint of the English master;
+`key_value`, which carries the bare string; and `flat_key_value`, which carries
+the bare string with the dotted path left whole. All are marked `built_in` and
+the server refuses to change or remove any of them, so the interface shows no
+control that would fail.
 
 ### Upload
 
@@ -419,6 +420,13 @@ In `key_value` the same locale comes back ready to use as it is:
 
 ```json
 { "greeting": { "hello": "สวัสดี {name}" } }
+```
+
+In `flat_key_value` the nesting is left alone entirely, so a consumer reads one
+key path out of one flat map:
+
+```json
+{ "greeting.hello": "สวัสดี {name}" }
 ```
 
 That trade is real and the editor says so when the format is selected: a
