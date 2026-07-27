@@ -177,7 +177,10 @@ describe('project settings', () => {
     expect(screen.getByText(/no openai key on this account/i)).toBeInTheDocument();
   });
 
-  it('says the offline platform needs no key at all', async () => {
+  it('warns that the offline platform translates nothing', async () => {
+    // Not "no key needed", which reads like a convenience. It hands back the
+    // English text with a locale marker in front of it and still reports the
+    // file as finished, which is the failure somebody has to be told about.
     api.getProject.mockResolvedValue({
       project: makeProject({ ai_provider: 'mock', ai_model: 'mock-small' }),
     });
@@ -185,7 +188,8 @@ describe('project settings', () => {
 
     await openPage();
 
-    expect(screen.getByText(/runs offline and needs no key at all/i)).toBeInTheDocument();
+    expect(screen.getByText(/this platform translates nothing/i)).toBeInTheDocument();
+    expect(screen.getByText(/hands back the English text/i)).toBeInTheDocument();
   });
 
   it('still renders when the credential list is refused', async () => {

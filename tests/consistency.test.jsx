@@ -28,6 +28,8 @@ vi.mock('../src/lib/apiClient.js', async (importOriginal) => {
       listFileExportFormats: vi.fn(),
       addFileLanguages: vi.fn(),
       mergeFileKeys: vi.fn(),
+      getProject: vi.fn(),
+      listProviders: vi.fn(),
     },
     getAuthToken: vi.fn(),
     setAuthToken: vi.fn(),
@@ -109,6 +111,30 @@ function makeEditorData({ stale = false } = {}) {
 
 const EDITOR_PATH = '/jetsada/project/7/file/file_1';
 
+/** Enough of the catalogue to tell an offline platform from a real one. */
+const PROVIDERS = [
+  {
+    name: 'mock',
+    label: 'Built in Mock (offline)',
+    default_model: 'mock-small',
+    models: ['mock-small'],
+    embedding_models: ['mock-embedding'],
+    default_embedding_model: 'mock-embedding',
+    supports_caching: false,
+    requires_network: false,
+  },
+  {
+    name: 'openrouter',
+    label: 'OpenRouter',
+    default_model: 'openai/gpt-4o-mini',
+    models: ['openai/gpt-4o-mini'],
+    embedding_models: ['qwen/qwen3-embedding-8b'],
+    default_embedding_model: 'qwen/qwen3-embedding-8b',
+    supports_caching: true,
+    requires_network: true,
+  },
+];
+
 describe('partial updates and consistency', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -118,6 +144,10 @@ describe('partial updates and consistency', () => {
     api.getFile.mockResolvedValue({ file: READY_FILE });
     api.getTranslations.mockResolvedValue(makeEditorData());
     api.listFileExportFormats.mockResolvedValue({ export_formats: [] });
+    api.getProject.mockResolvedValue({
+      project: { id: 7, name: 'website', ai_provider: 'openrouter', ai_model: 'openai/gpt-4o-mini' },
+    });
+    api.listProviders.mockResolvedValue({ providers: PROVIDERS });
   });
 
   /**
@@ -135,6 +165,53 @@ describe('partial updates and consistency', () => {
 
     return user;
   }
+
+  describe('a project on the offline platform', () => {
+    /*
+     * The offline platform returns the English text with a locale marker in
+     * front of it, and the file still reports itself as ready. So the editor
+     * fills with rows that look like translations and are not, and nothing
+     * else on the page would ever say so.
+     */
+
+    it('says the rows are placeholders rather than translations', async () => {
+      api.getProject.mockResolvedValue({
+        project: { id: 7, name: 'website', ai_provider: 'mock', ai_model: 'mock-small' },
+      });
+
+      await openEditor();
+
+      expect(
+        await screen.findByText(/these are placeholders, not translations/i),
+      ).toBeInTheDocument();
+      expect(screen.getByRole('link', { name: /project settings/i })).toHaveAttribute(
+        'href',
+        '/jetsada/project/7/settings',
+      );
+    });
+
+    it('says nothing when the project is on a real platform', async () => {
+      await openEditor();
+
+      await waitFor(() => expect(api.getProject).toHaveBeenCalled());
+      expect(
+        screen.queryByText(/these are placeholders, not translations/i),
+      ).not.toBeInTheDocument();
+    });
+
+    it('stays quiet rather than failing when the platform cannot be read', async () => {
+      // This is an explanation, not a feature. A page that breaks because an
+      // advisory lookup failed is worse than a page with no advisory.
+      api.getProject.mockRejectedValue(new Error('Nope.'));
+
+      await openEditor();
+
+      expect(screen.getByText('greeting.hello')).toBeInTheDocument();
+      expect(
+        screen.queryByText(/these are placeholders, not translations/i),
+      ).not.toBeInTheDocument();
+    });
+  });
 
   describe('the update control', () => {
     it('is absent while every language matches its master', async () => {

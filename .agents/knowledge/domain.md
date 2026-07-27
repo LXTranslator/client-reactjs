@@ -16,6 +16,7 @@ description: Concepts, routing model and conventions an agent must understand be
 | **Master** | The English (`en_us`) text. Every other language is derived from it. |
 | **Text hash** | A 36 character fingerprint of the master text, exported beside every translation. |
 | **Stale translation** | One whose recorded `source_hash` no longer matches its key's current `text_hash`, meaning the English source changed after it was translated. |
+| **Offline platform** | One the catalogue reports with `requires_network: false`, today only the built in mock. It contacts no vendor and returns the source text with a locale marker in front of it (`[th:711f] Dirt`). |
 
 ## Concepts that are easy to get wrong
 
@@ -28,6 +29,11 @@ description: Concepts, routing model and conventions an agent must understand be
    organization id can collide, which is why both forms check availability the
    same way.
 4. **An organization has its own email.** It is not the creator's address.
+5. **An offline platform produces placeholders, and says nothing about it.** The
+   file still reaches `READY` and the editor still fills with rows, so anywhere
+   those rows are shown has to say they are not translations. Detect it from the
+   catalogue's `requires_network`, never by testing for the name `mock`: which
+   platforms are offline is the server's to know.
    Billing and account notices go to the organization, which outlives whoever
    created it.
 5. **API keys are never readable.** The interface shows a label and the last four
