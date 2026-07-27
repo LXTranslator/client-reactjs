@@ -3,7 +3,13 @@ import { Link } from 'react-router';
 import { paths } from '../../lib/paths.js';
 import { Callout, ErrorMessage } from '../ui/Feedback.jsx';
 
-/** What each tool actually did, in the words a person would use. */
+/**
+ * What each tool actually did, in the words a person would use.
+ *
+ * A name with no entry falls through to the raw one, so a tool added on the
+ * server appears here as soon as it is used rather than vanishing from the
+ * report. This map is what makes it readable, not what makes it appear.
+ */
 const TOOL_LABELS = {
   switch_namespace: 'Switched namespace',
   list_projects: 'Listed projects',
@@ -13,7 +19,11 @@ const TOOL_LABELS = {
   check_project_languages: 'Checked project languages',
   get_project_description: 'Read a description',
   update_project_description: 'Updated a description',
+  list_platforms: 'Listed AI platforms',
+  update_project_ai: 'Set the AI platform and model',
   add_languages: 'Added languages',
+  list_export_formats: 'Listed export formats',
+  create_export_format: 'Created an export format',
   find_chat: 'Searched past conversations',
   stop: 'Finished',
 };
