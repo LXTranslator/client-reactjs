@@ -216,7 +216,9 @@ describes what it is acting on.
 
 The tools the assistant may call include `create_project` for a new project and
 `upload_file` for one that already exists, so an attached file reaches either
-without a project ever needing to be deleted or recreated. They also cover a
+without a project ever needing to be deleted or recreated. `add_keys` adds new
+strings to a file that is already there, keeping its identifier and everything
+in it, which is the same merge `mergeFileKeys` performs from the editor. They also cover a
 project's AI platform and model, and the export formats a namespace offers, so
 the assistant can set those rather than reporting them as unsupported.
 

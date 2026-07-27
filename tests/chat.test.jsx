@@ -364,6 +364,19 @@ describe('the assistant', () => {
       expect(within(pane).getByText('done')).toBeInTheDocument();
     });
 
+    it('names adding keys to a file that already exists', async () => {
+      // Distinct from an upload on purpose. The two read alike in prose and are
+      // not alike at all: one adds to a file, the other makes another one.
+      const pane = await sendAndRead(
+        makeAnswer({
+          answer: 'Added 2 keys to minecraft.json.',
+          tool_calls: [{ name: 'add_keys', ok: true }],
+        }),
+      );
+
+      expect(await within(pane).findByText('Added keys to a file')).toBeInTheDocument();
+    });
+
     it('names an upload into an existing project', async () => {
       const pane = await sendAndRead(
         makeAnswer({
