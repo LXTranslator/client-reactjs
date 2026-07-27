@@ -54,6 +54,7 @@ export function TranslationEditorPage() {
   const [exportFormat, setExportFormat] = useState(DEFAULT_FORMAT_ID);
   const [retranslatingIds, setRetranslatingIds] = useState(new Set());
   const [notice, setNotice] = useState(null);
+  const [offlinePlatform, setOfflinePlatform] = useState(null);
 
   const isProcessing = file?.status === 'PENDING' || file?.status === 'PROCESSING';
 
@@ -96,6 +97,46 @@ export function TranslationEditorPage() {
   useEffect(() => {
     load();
   }, [load]);
+
+  /*
+   * Whether this project translates through an offline platform.
+   *
+   * The offline platform returns the English text with a locale marker in front
+   * of it, and the file still reports itself as ready, so the editor fills with
+   * rows that look like translations and are not. Nothing else on this page
+   * would ever tell somebody that, which is exactly the kind of silent success
+   * worth spending a request on.
+   *
+   * Read once per project rather than inside `load`, which the poll calls every
+   * couple of seconds. A failure here is swallowed: this is an explanation, and
+   * an explanation that fails must not take the editor with it.
+   */
+  useEffect(() => {
+    let cancelled = false;
+
+    (async () => {
+      try {
+        const [{ project }, catalogue] = await Promise.all([
+          api.getProject(projectId),
+          api.listProviders(),
+        ]);
+
+        const platform = (catalogue.providers ?? []).find(
+          (entry) => entry.name === project.ai_provider,
+        );
+
+        if (!cancelled) {
+          setOfflinePlatform(platform?.requires_network === false ? platform.label : null);
+        }
+      } catch {
+        if (!cancelled) setOfflinePlatform(null);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [projectId]);
 
   /*
    * The format catalogue is loaded once and separately. It belongs to the
@@ -421,6 +462,24 @@ export function TranslationEditorPage() {
 
       <ErrorMessage error={actionError} />
       {notice ? <Callout tone="ok">{notice}</Callout> : null}
+
+      {offlinePlatform !== null ? (
+        <Callout tone="warn" title="These are placeholders, not translations">
+          <p style={{ margin: '0 0 0.6rem' }}>
+            This project is set to <span className="mono">{offlinePlatform}</span>, which
+            never contacts a vendor. It returns the English text with a locale marker in
+            front of it, which is why every row below reads like{' '}
+            <span className="mono">[th:711f] Dirt</span>.
+          </p>
+          <p style={{ margin: '0 0 0.6rem' }}>
+            Choose a real platform in project settings, then re translate. Anything you
+            corrected by hand is marked manual and survives.
+          </p>
+          <Link className="btn btn--small" to={paths.projectSettings(ns, projectId)}>
+            Project settings
+          </Link>
+        </Callout>
+      ) : null}
 
       {data.stale_translations?.length > 0 ? (
         <Callout tone="warn" title="Some translations are out of date">

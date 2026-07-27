@@ -135,7 +135,7 @@ Layered exactly as the design system specifies, imported in order by `main.jsx`.
 | [`tests/editor.test.jsx`](tests/editor.test.jsx) | Archive download, adding languages, merging keys and the compare dropdown. |
 | [`tests/locales.test.js`](tests/locales.test.js) | Locale catalogue, A to Z indexing, search and code validation. |
 | [`tests/exportFormat.test.jsx`](tests/exportFormat.test.jsx) | Format selection on the editor download and the format management page. |
-| [`tests/consistency.test.jsx`](tests/consistency.test.jsx) | Per key updates, the refresh control and the consistency report. |
+| [`tests/consistency.test.jsx`](tests/consistency.test.jsx) | Per key updates, the refresh control, the consistency report and the offline platform warning. |
 | [`tests/accountAi.test.jsx`](tests/accountAi.test.jsx) | Namespace AI credentials, the fallback chain and the optional embedding model. |
 | [`tests/chat.test.jsx`](tests/chat.test.jsx) | The three panes, attachments, tool reporting, search and embedding backfill. |
 | [`tests/projectCredentials.test.jsx`](tests/projectCredentials.test.jsx) | That project settings enters no key, and reports the account chain covering its platform. |

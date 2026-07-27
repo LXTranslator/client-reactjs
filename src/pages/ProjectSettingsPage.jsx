@@ -255,7 +255,7 @@ export function ProjectSettingsPage() {
               }))}
               hint={
                 selectedProvider?.requires_network === false
-                  ? 'Runs offline. No API key needed.'
+                  ? 'Offline. Produces placeholder text rather than a translation.'
                   : `Paid for by the ${ns} keys for this platform.`
               }
             />
@@ -294,10 +294,13 @@ export function ProjectSettingsPage() {
         </Callout>
 
         {selectedProvider?.requires_network === false ? (
-          <p className="muted">
-            <span className="mono">{selectedProvider.label}</span> runs offline and needs
-            no key at all.
-          </p>
+          <Callout tone="warn" title="This platform translates nothing">
+            <span className="mono">{selectedProvider.label}</span> never contacts a vendor.
+            It hands back the English text with a locale marker in front of it, and the file
+            still reports itself as finished, so the editor fills with rows that look like
+            translations and are not. It exists so the application runs with no
+            configuration. Pick a real platform above to translate for real.
+          </Callout>
         ) : keysForPlatform.length === 0 ? (
           <EmptyState title={`No ${selectedProvider?.label ?? 'matching'} key on this account.`}>
             <p className="muted">
