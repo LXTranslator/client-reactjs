@@ -22,6 +22,7 @@ const TOOL_LABELS = {
   list_platforms: 'Listed AI platforms',
   update_project_ai: 'Set the AI platform and model',
   add_languages: 'Added languages',
+  add_keys: 'Added keys to a file',
   list_export_formats: 'Listed export formats',
   create_export_format: 'Created an export format',
   export_file: 'Prepared a download',
