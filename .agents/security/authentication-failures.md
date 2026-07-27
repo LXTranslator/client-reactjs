@@ -9,6 +9,16 @@ description: Session token storage and handling in the LXTranslator client.
 
 `sessionStorage`, plus a module level variable in `src/lib/apiClient.js`.
 
+**Signing out must call `POST /auth/logout`.** Clearing the token here only
+makes this browser forget it; the session stays live on the server until it
+expires. Ending the current session from the session list goes through the same
+sign out, never through `revokeSession`, or the browser is left holding a token
+it does not know is dead.
+
+**A created API token is shown once and held until dismissed.** Never put it in
+a notice that clears itself. The server keeps a digest, so nothing can show it
+again.
+
 Session storage rather than local storage is deliberate: the token does not
 outlive the browser tab, which limits the window on a shared or unattended
 machine. Local storage would persist it indefinitely across restarts.

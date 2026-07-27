@@ -236,6 +236,34 @@ covers what somebody was just doing, search covers what was decided last month.
 which: somebody searching by meaning and finding nothing deserves to know no
 embedding model is configured.
 
+## Sessions and API tokens
+
+| Helper | Endpoint |
+|---|---|
+| `api.logout()` | `POST /auth/logout` |
+| `api.listSessions()` | `GET /auth/sessions` |
+| `api.revokeSession(sessionId)` | `DELETE /auth/sessions/:sessionId` |
+| `api.revokeOtherSessions()` | `POST /auth/sessions/revoke_others` |
+| `api.listApiTokens()` | `GET /auth/api_tokens` |
+| `api.createApiToken(body)` | `POST /auth/api_tokens` |
+| `api.revokeApiToken(tokenId)` | `DELETE /auth/api_tokens/:tokenId` |
+
+Signing out calls the server. Dropping the token locally only makes this browser
+forget it; the token stays valid until it expires anywhere else it reached,
+which on a borrowed machine is the difference between signing out and appearing
+to. A failure is swallowed and the local session is cleared anyway, because
+somebody who pressed sign out must end up signed out here whatever the network
+did.
+
+Ending the *current* session from the session list goes through the same sign
+out rather than calling `revokeSession` directly. Revoking the row would end the
+session on the server and leave this browser holding a token it does not know is
+dead, showing a signed in interface until the next request failed.
+
+`createApiToken` returns the token once. It is held on screen until dismissed
+rather than shown in a notice that disappears, because nothing can show it
+again: the server stores a digest and the last four characters.
+
 ## Namespace AI credentials
 
 | Helper | Endpoint |

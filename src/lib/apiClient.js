@@ -257,6 +257,24 @@ export const api = {
       { method: 'DELETE' },
     ),
 
+  /*
+   * Sessions and API tokens.
+   *
+   * A session is a row on the server now, so signing out ends it there rather
+   * than only forgetting the token here. An API token is the credential a
+   * script uses; it is returned once by `createApiToken` and never again.
+   */
+  logout: () => apiRequest('/auth/logout', { method: 'POST' }),
+  listSessions: () => apiRequest('/auth/sessions'),
+  revokeSession: (sessionId) =>
+    apiRequest(`/auth/sessions/${encodeURIComponent(sessionId)}`, { method: 'DELETE' }),
+  revokeOtherSessions: () =>
+    apiRequest('/auth/sessions/revoke_others', { method: 'POST' }),
+  listApiTokens: () => apiRequest('/auth/api_tokens'),
+  createApiToken: (body) => apiRequest('/auth/api_tokens', { method: 'POST', body }),
+  revokeApiToken: (tokenId) =>
+    apiRequest(`/auth/api_tokens/${encodeURIComponent(tokenId)}`, { method: 'DELETE' }),
+
   /* Projects. */
   listProjects: (namespace) =>
     apiRequest(`/namespaces/${encodeURIComponent(namespace)}/projects`),

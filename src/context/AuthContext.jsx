@@ -151,11 +151,26 @@ export function AuthProvider({ children }) {
   );
 
   /**
-   * Clears the session.
+   * Ends the session, on the server and then here.
    *
-   * @returns {void}
+   * The server call is what actually ends it. Dropping the token locally only
+   * makes this browser forget it: the token stays valid until it expires
+   * anywhere else it reached, which for a shared or borrowed machine is the
+   * difference between signing out and appearing to.
+   *
+   * A failure is swallowed on purpose. Somebody who pressed sign out must end
+   * up signed out of this browser whatever the network did, and the token they
+   * were holding is dropped either way.
+   *
+   * @returns {Promise<void>}
    */
-  const logout = useCallback(() => {
+  const logout = useCallback(async () => {
+    try {
+      await api.logout();
+    } catch {
+      // Already expired, already revoked, or unreachable. Nothing here changes.
+    }
+
     setAuthToken(null);
     setAccount(null);
     setNamespaces([]);
