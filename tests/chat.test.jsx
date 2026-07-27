@@ -364,6 +364,17 @@ describe('the assistant', () => {
       expect(within(pane).getByText('done')).toBeInTheDocument();
     });
 
+    it('names creating a file from dictated strings', async () => {
+      const pane = await sendAndRead(
+        makeAnswer({
+          answer: 'Created corp.json with 3 keys.',
+          tool_calls: [{ name: 'create_file', ok: true }],
+        }),
+      );
+
+      expect(await within(pane).findByText('Created a file')).toBeInTheDocument();
+    });
+
     it('names adding keys to a file that already exists', async () => {
       // Distinct from an upload on purpose. The two read alike in prose and are
       // not alike at all: one adds to a file, the other makes another one.
