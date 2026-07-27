@@ -104,7 +104,10 @@ export function getAuthToken() {
  * @param {FormData} [options.formData] Multipart body, used for uploads.
  * @param {boolean} [options.auth] Attach the session token. Defaults to true.
  * @param {AbortSignal} [options.signal] Cancellation signal.
- * @returns {Promise<object>} The `data` payload.
+ * @param {'blob'} [options.responseType] Return the raw body instead of
+ *   unwrapping an envelope. Required for any endpoint that serves a file, since
+ *   those send the document itself and have no `data` field to unwrap.
+ * @returns {Promise<object>} The `data` payload, or the body for a blob request.
  * @throws {ApiError} When the request fails.
  */
 export async function apiRequest(path, options = {}) {
@@ -162,6 +165,11 @@ export async function apiRequest(path, options = {}) {
     });
   }
 
+  /*
+   * Every JSON endpoint answers with a `{ data }` envelope, so this is the
+   * payload. An endpoint that serves a file does not, which is why those are
+   * requested with `responseType: 'blob'` above and never reach this line.
+   */
   return payload?.data ?? null;
 }
 
@@ -416,9 +424,23 @@ export const api = {
    * the documents inside it. They are separate on the server for that reason,
    * and kept separate here so a caller cannot conflate them.
    */
+  /*
+   * Downloads.
+   *
+   * All three are file endpoints: the server sets `Content-Disposition` and
+   * sends the document itself, not the `{ data }` envelope every other endpoint
+   * uses. So all three are fetched as blobs, and the bytes the server produced
+   * are the bytes that reach the disk.
+   *
+   * Asking for one of these as JSON is what broke the single locale download:
+   * the unwrapper looked for `data` on a document that has no such field and
+   * handed back `null`, which was then written out as the literal text `null`.
+   */
   downloadAll: (fileId, exportFormat) =>
-    apiRequest(`/files/${encodeURIComponent(fileId)}/download${exportFormatQuery(exportFormat)}`),
-  /** Every locale in one archive, returned as a Blob rather than JSON. */
+    apiRequest(
+      `/files/${encodeURIComponent(fileId)}/download${exportFormatQuery(exportFormat)}`,
+      { responseType: 'blob' },
+    ),
   downloadArchive: (fileId, exportFormat) =>
     apiRequest(
       `/files/${encodeURIComponent(fileId)}/download?format=zip${exportFormatQuery(exportFormat, true)}`,
@@ -427,6 +449,7 @@ export const api = {
   downloadLocale: (fileId, lang, exportFormat) =>
     apiRequest(
       `/files/${encodeURIComponent(fileId)}/download?lang=${encodeURIComponent(lang)}${exportFormatQuery(exportFormat, true)}`,
+      { responseType: 'blob' },
     ),
 
   /* Catalogue. */

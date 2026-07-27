@@ -47,7 +47,7 @@ Framework free helpers usable from anywhere in the tree.
 | [`src/lib/`](src/lib/) | Shared helpers. |
 | [`src/lib/apiClient.js`](src/lib/apiClient.js) | HTTP client, token storage, typed errors and every endpoint helper. |
 | [`src/lib/validation.js`](src/lib/validation.js) | Field validators, password scoring and placeholder examples. |
-| [`src/lib/download.js`](src/lib/download.js) | Saves exported locale documents to disk. |
+| [`src/lib/download.js`](src/lib/download.js) | Hands a fetched blob to the browser as a download. |
 | [`src/lib/paths.js`](src/lib/paths.js) | Client route builders and the reserved first segments. |
 | [`src/lib/locales.js`](src/lib/locales.js) | The 143 locale catalogue, A to Z indexing, search and locale code validation. |
 
@@ -130,6 +130,7 @@ Layered exactly as the design system specifies, imported in order by `main.jsx`.
 | [`tests/setup.js`](tests/setup.js) | Test environment setup and per test cleanup. |
 | [`tests/helpers/renderWithProviders.jsx`](tests/helpers/renderWithProviders.jsx) | Renders a tree inside the router and session providers, plus fixtures. |
 | [`tests/validation.test.js`](tests/validation.test.js) | Field validator and password scoring tests. |
+| [`tests/download.test.js`](tests/download.test.js) | That a download endpoint is fetched as a file and reaches the browser intact. |
 | [`tests/routing.test.jsx`](tests/routing.test.jsx) | Route guard and redirect tests. |
 | [`tests/organization.test.jsx`](tests/organization.test.jsx) | Organization creation, availability, contact email and deletion tests. |
 | [`tests/editor.test.jsx`](tests/editor.test.jsx) | Archive download, adding languages, merging keys and the compare dropdown. |
