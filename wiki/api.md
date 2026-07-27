@@ -247,6 +247,8 @@ embedding model is configured.
 | `api.listApiTokens()` | `GET /auth/api_tokens` |
 | `api.createApiToken(body)` | `POST /auth/api_tokens` |
 | `api.revokeApiToken(tokenId)` | `DELETE /auth/api_tokens/:tokenId` |
+| `api.listUsage({ sessionId, limit })` | `GET /auth/usage` |
+| `api.getUsageSummary(days)` | `GET /auth/usage/summary` |
 
 Signing out calls the server. Dropping the token locally only makes this browser
 forget it; the token stays valid until it expires anywhere else it reached,
@@ -259,6 +261,16 @@ Ending the *current* session from the session list goes through the same sign
 out rather than calling `revokeSession` directly. Revoking the row would end the
 session on the server and leave this browser holding a token it does not know is
 dead, showing a signed in interface until the next request failed.
+
+The activity panel sits directly under the credential lists rather than on a
+page of its own, because the question it answers is the one those lists provoke:
+"there is a token here I do not recognise, what has it been doing". Two screens
+apart, nobody asks it. The summary is shown above the log for the same reason: a
+page of log lines answers "what happened" and not "is anything wrong".
+
+A row names its credential rather than showing an identifier, and reads
+"Removed credential" when that credential is gone. The record outlives the
+credential on purpose, so that case is normal rather than an error.
 
 `createApiToken` returns the token once. It is held on screen until dismissed
 rather than shown in a notice that disappears, because nothing can show it

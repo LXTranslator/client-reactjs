@@ -105,6 +105,7 @@ One file per route.
 | [`src/pages/ProjectUploadsPage.jsx`](src/pages/ProjectUploadsPage.jsx) | File upload with multi select target languages. |
 | [`src/pages/ProjectSettingsPage.jsx`](src/pages/ProjectSettingsPage.jsx) | Platform and model. A project holds no credentials; the page links to the account chain that pays for it. |
 | [`src/pages/TranslationEditorPage.jsx`](src/pages/TranslationEditorPage.jsx) | Translation editor and locale download. |
+| [`src/components/account/UsagePanel.jsx`](src/components/account/UsagePanel.jsx) | Recent API activity, summarised by credential and filterable to one. |
 | [`src/components/account/SessionsPanel.jsx`](src/components/account/SessionsPanel.jsx) | Where the account is signed in, and the tokens machines use. |
 | [`src/pages/AccountSettingsPage.jsx`](src/pages/AccountSettingsPage.jsx) | User id, email and password changes behind a confirmation token. |
 | [`src/pages/NotFoundPage.jsx`](src/pages/NotFoundPage.jsx) | Fallback for an unmatched route. |

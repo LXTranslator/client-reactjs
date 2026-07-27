@@ -811,3 +811,63 @@ select.field__control option {
   background: var(--accent);
   border-color: var(--accent-strong);
 }
+
+/*
+ * The API usage log.
+ *
+ * A grid rather than a table element: the four columns need to collapse to
+ * stacked rows on a narrow screen, and a real table cannot reflow that way
+ * without losing its own semantics. The roles are declared explicitly so what
+ * a screen reader hears is a table either way.
+ */
+.usage-log {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  margin-top: 1rem;
+}
+
+.usage-log__row {
+  display: grid;
+  grid-template-columns: 12rem minmax(0, 1fr) 9rem 10rem;
+  gap: 0.75rem;
+  align-items: baseline;
+  padding: 0.5rem 0.6rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+}
+
+.usage-log__row:nth-child(even) {
+  background: var(--glass-faint);
+}
+
+.usage-log__row--head {
+  font-weight: 600;
+  color: var(--ink-400);
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  background: transparent;
+}
+
+/* The path is the one column that can be long, so it wraps rather than pushing
+   the row wider than the panel. */
+.usage-log__row .mono {
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 900px) {
+  .usage-log__row {
+    grid-template-columns: 1fr;
+    gap: 0.15rem;
+  }
+
+  /* The header labels describe columns that no longer exist side by side. */
+  .usage-log__row--head {
+    display: none;
+  }
+
+  .usage-log__row:nth-child(even) {
+    background: var(--glass-faint);
+  }
+}

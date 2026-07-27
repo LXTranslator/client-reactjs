@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
-import { screen, waitFor } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { renderWithProviders, makeAccount, makeNamespace } from './helpers/renderWithProviders.jsx';
 
@@ -31,6 +31,8 @@ vi.mock('../src/lib/apiClient.js', async (importOriginal) => {
       listApiTokens: vi.fn(),
       createApiToken: vi.fn(),
       revokeApiToken: vi.fn(),
+      listUsage: vi.fn(),
+      getUsageSummary: vi.fn(),
     },
     getAuthToken: vi.fn(),
     setAuthToken: vi.fn(),
@@ -92,6 +94,13 @@ describe('sessions and API tokens', () => {
     api.listSessions.mockResolvedValue({ sessions: [makeSession()] });
     api.listApiTokens.mockResolvedValue({ api_tokens: [] });
     api.logout.mockResolvedValue(null);
+    api.listUsage.mockResolvedValue({ usage: [] });
+    api.getUsageSummary.mockResolvedValue({
+      window_days: 7,
+      total_requests: 0,
+      failed_requests: 0,
+      by_credential: [],
+    });
   });
 
   /**
@@ -262,6 +271,128 @@ describe('sessions and API tokens', () => {
     it('says what a token is for, so it is not mistaken for a password', async () => {
       await openSettings();
       expect(screen.getByText(/for scripts, not for browsers/i)).toBeInTheDocument();
+    });
+});
+
+  describe('recent activity', () => {
+    /*
+     * The log sits under the credentials because the question it answers is the
+     * one the lists above provoke: "there is a token here I do not remember,
+     * what has it been doing".
+     */
+
+    it('shows what a request was, and what came back', async () => {
+      api.listUsage.mockResolvedValue({
+        usage: [
+          {
+            id: 1,
+            session_id: 'token_1',
+            credential_kind: 'API',
+            method: 'POST',
+            path: '/api/v1/projects/12/files',
+            status_code: 202,
+            duration_ms: 43,
+            created_at: '2026-07-27T09:14:00.000Z',
+          },
+        ],
+      });
+      api.listApiTokens.mockResolvedValue({ api_tokens: [makeToken()] });
+
+      await openSettings();
+
+      const log = await screen.findByRole('table', { name: /recent requests/i });
+      expect(within(log).getByText('POST /api/v1/projects/12/files')).toBeInTheDocument();
+      expect(within(log).getByText('202')).toBeInTheDocument();
+      // Named by its credential rather than by a bare identifier.
+      expect(within(log).getAllByText('ci pipeline').length).toBeGreaterThan(0);
+    });
+
+    it('says a credential is gone rather than showing a bare identifier', async () => {
+      // The record outlives the credential on purpose, so a row whose token was
+      // revoked and purged still has to read as something.
+      api.listUsage.mockResolvedValue({
+        usage: [
+          {
+            id: 1,
+            session_id: 'long_gone',
+            credential_kind: 'API',
+            method: 'GET',
+            path: '/api/v1/auth/me',
+            status_code: 200,
+            duration_ms: 5,
+            created_at: '2026-07-27T09:14:00.000Z',
+          },
+        ],
+      });
+
+      await openSettings();
+
+      expect(await screen.findByText('Removed credential')).toBeInTheDocument();
+    });
+
+    it('summarises by credential, so an unfamiliar one is visible', async () => {
+      api.listApiTokens.mockResolvedValue({ api_tokens: [makeToken()] });
+      api.getUsageSummary.mockResolvedValue({
+        window_days: 7,
+        total_requests: 120,
+        failed_requests: 0,
+        by_credential: [
+          { session_id: 'token_1', credential_kind: 'API', requests: 120, failed: 0 },
+        ],
+      });
+
+      await openSettings();
+
+      expect(await screen.findByText(/120 requests in the last 7 days/i)).toBeInTheDocument();
+    });
+
+    it('points out a run of failures rather than leaving it in the list', async () => {
+      api.getUsageSummary.mockResolvedValue({
+        window_days: 7,
+        total_requests: 100,
+        failed_requests: 40,
+        by_credential: [],
+      });
+
+      await openSettings();
+
+      expect(await screen.findByText(/some requests failed/i)).toBeInTheDocument();
+      expect(screen.getByText(/40 of 100/)).toBeInTheDocument();
+    });
+
+    it('narrows the list to one credential and back', async () => {
+      api.getUsageSummary.mockResolvedValue({
+        window_days: 7,
+        total_requests: 5,
+        failed_requests: 0,
+        by_credential: [
+          { session_id: 'token_1', credential_kind: 'API', requests: 5, failed: 0 },
+        ],
+      });
+
+      const user = await openSettings();
+
+      await user.click(await screen.findByRole('button', { name: /only this/i }));
+
+      await waitFor(() => {
+        expect(api.listUsage).toHaveBeenCalledWith(
+          expect.objectContaining({ sessionId: 'token_1' }),
+        );
+      });
+
+      await user.click(await screen.findByRole('button', { name: /show all/i }));
+
+      await waitFor(() => {
+        const last = api.listUsage.mock.calls.at(-1)[0];
+        expect(last.sessionId).toBeUndefined();
+      });
+    });
+
+    it('says plainly that nothing sent is kept', async () => {
+      await openSettings();
+      expect(
+        await screen.findByText(/no message bodies, no search terms, no addresses/i),
+      ).toBeInTheDocument();
     });
   });
 });
