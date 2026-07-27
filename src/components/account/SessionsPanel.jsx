@@ -3,6 +3,7 @@ import { useAuth } from '../../context/AuthContext.jsx';
 import { api } from '../../lib/apiClient.js';
 import { TextField } from '../ui/FormField.jsx';
 import { Callout, EmptyState, ErrorMessage, LoadingState } from '../ui/Feedback.jsx';
+import { UsagePanel } from './UsagePanel.jsx';
 
 /**
  * Where this account is signed in, and the tokens machines use.
@@ -334,6 +335,13 @@ export function SessionsPanel() {
           </button>
         </form>
       </section>
+
+      {/*
+        Directly under the credentials, because the question it answers is the
+        one the lists above provoke: "there is a token here I do not remember,
+        what has it been doing". Two screens apart, nobody ever asks it.
+      */}
+      <UsagePanel credentials={[...sessions, ...tokens]} />
     </>
   );
 }

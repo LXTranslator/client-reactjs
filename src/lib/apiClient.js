@@ -274,6 +274,15 @@ export const api = {
   createApiToken: (body) => apiRequest('/auth/api_tokens', { method: 'POST', body }),
   revokeApiToken: (tokenId) =>
     apiRequest(`/auth/api_tokens/${encodeURIComponent(tokenId)}`, { method: 'DELETE' }),
+  listUsage: (params = {}) => {
+    const query = new URLSearchParams();
+    if (params.sessionId) query.set('session_id', params.sessionId);
+    if (params.limit) query.set('limit', String(params.limit));
+    const suffix = query.toString();
+    return apiRequest(`/auth/usage${suffix ? `?${suffix}` : ''}`);
+  },
+  getUsageSummary: (days) =>
+    apiRequest(`/auth/usage/summary${days ? `?days=${encodeURIComponent(days)}` : ''}`),
 
   /* Projects. */
   listProjects: (namespace) =>
