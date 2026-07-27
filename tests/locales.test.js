@@ -19,6 +19,15 @@ describe('locale catalogue', () => {
     expect(new Set(codes).size).toBe(codes.length);
   });
 
+  it('has no duplicate names either', () => {
+    // Two rows reading the same in the picker is a dead end: there is no way to
+    // tell which one to choose. Script and region variants are distinguished by
+    // a parenthetical, which is what keeps Belarusian (Cyrillic) and Belarusian
+    // (Latin) two usable choices rather than one repeated.
+    const labels = LOCALES.map((locale) => locale.label);
+    expect(new Set(labels).size).toBe(labels.length);
+  });
+
   it('carries a name for every code', () => {
     expect(LOCALES.every((locale) => locale.label.trim().length > 0)).toBe(true);
   });
