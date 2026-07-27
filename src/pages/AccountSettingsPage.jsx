@@ -5,6 +5,7 @@ import { paths } from '../lib/paths.js';
 import { PasswordField, TextField, TextAreaField } from '../components/ui/FormField.jsx';
 import { Callout, ErrorMessage } from '../components/ui/Feedback.jsx';
 import { Breadcrumbs } from '../components/layout/AppLayout.jsx';
+import { SessionsPanel } from '../components/account/SessionsPanel.jsx';
 import {
   PLACEHOLDERS,
   runValidators,
@@ -400,6 +401,8 @@ export function AccountSettingsPage() {
           </button>
         </form>
       </section>
+
+      <SessionsPanel />
     </div>
   );
 }

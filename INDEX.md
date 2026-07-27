@@ -105,6 +105,7 @@ One file per route.
 | [`src/pages/ProjectUploadsPage.jsx`](src/pages/ProjectUploadsPage.jsx) | File upload with multi select target languages. |
 | [`src/pages/ProjectSettingsPage.jsx`](src/pages/ProjectSettingsPage.jsx) | Platform and model. A project holds no credentials; the page links to the account chain that pays for it. |
 | [`src/pages/TranslationEditorPage.jsx`](src/pages/TranslationEditorPage.jsx) | Translation editor and locale download. |
+| [`src/components/account/SessionsPanel.jsx`](src/components/account/SessionsPanel.jsx) | Where the account is signed in, and the tokens machines use. |
 | [`src/pages/AccountSettingsPage.jsx`](src/pages/AccountSettingsPage.jsx) | User id, email and password changes behind a confirmation token. |
 | [`src/pages/NotFoundPage.jsx`](src/pages/NotFoundPage.jsx) | Fallback for an unmatched route. |
 
@@ -129,6 +130,7 @@ Layered exactly as the design system specifies, imported in order by `main.jsx`.
 | [`tests/`](tests/) | Automated test suite. |
 | [`tests/setup.js`](tests/setup.js) | Test environment setup and per test cleanup. |
 | [`tests/helpers/renderWithProviders.jsx`](tests/helpers/renderWithProviders.jsx) | Renders a tree inside the router and session providers, plus fixtures. |
+| [`tests/sessions.test.jsx`](tests/sessions.test.jsx) | Real sign out, the device list, and a token shown exactly once. |
 | [`tests/validation.test.js`](tests/validation.test.js) | Field validator and password scoring tests. |
 | [`tests/download.test.js`](tests/download.test.js) | That a download endpoint is fetched as a file and reaches the browser intact. |
 | [`tests/routing.test.jsx`](tests/routing.test.jsx) | Route guard and redirect tests. |
