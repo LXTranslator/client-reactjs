@@ -1,31 +1,32 @@
 /**
  * Client side file download helpers.
  *
- * The editor fetches export documents as JSON through the authenticated API
- * client, then hands them to the browser as a download. Going through `fetch`
- * rather than pointing an anchor at the endpoint is deliberate: a plain link
- * cannot carry the Authorization header.
+ * The editor fetches export documents through the authenticated API client and
+ * hands the bytes to the browser. Going through `fetch` rather than pointing an
+ * anchor at the endpoint is deliberate: a plain link cannot carry the
+ * Authorization header.
+ *
+ * Every download endpoint is fetched as a blob, and what the server produced is
+ * what lands on disk. The client does not parse a document and write it out
+ * again: the server already chose the shape, the field names and the
+ * indentation, and re-serialising them here can only lose something.
  */
 
-/**
- * Saves a value as a JSON file.
- *
- * @param {string} filename Suggested filename.
- * @param {unknown} value Serialisable value.
- * @returns {void}
- */
-export function downloadJson(filename, value) {
-  const blob = new Blob([`${JSON.stringify(value, null, 2)}\n`], {
-    type: 'application/json',
-  });
-  triggerDownload(filename, blob);
-}
+/** How long a finished object URL is left alive before it is released. */
+const REVOKE_DELAY_MS = 60_000;
 
 /**
  * Hands a blob to the browser as a download.
  *
- * The object URL is revoked immediately after the click, since leaving it alive
- * pins the blob in memory for the life of the document.
+ * The object URL is released on a timer rather than on the next line. A click
+ * on an anchor only *starts* a download; the browser reads the blob afterwards,
+ * and revoking the URL in the same task can cancel a download that had not
+ * finished reading yet. That is not hypothetical, and it gets likelier the
+ * larger the blob, which is why an archive would fail where a small JSON
+ * document survived.
+ *
+ * The delay is bounded so a long session cannot pin every file it ever
+ * downloaded in memory.
  *
  * @param {string} filename Suggested filename.
  * @param {Blob} blob Content.
@@ -37,11 +38,12 @@ export function triggerDownload(filename, blob) {
 
   anchor.href = url;
   anchor.download = sanitizeDownloadName(filename);
+  anchor.rel = 'noopener';
   document.body.appendChild(anchor);
   anchor.click();
-  document.body.removeChild(anchor);
+  anchor.remove();
 
-  URL.revokeObjectURL(url);
+  setTimeout(() => URL.revokeObjectURL(url), REVOKE_DELAY_MS);
 }
 
 /**

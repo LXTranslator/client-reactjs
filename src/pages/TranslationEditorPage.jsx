@@ -3,7 +3,7 @@ import { Link, useParams } from 'react-router';
 import { useNamespace } from '../components/routing/NamespaceRoute.jsx';
 import { paths } from '../lib/paths.js';
 import { api } from '../lib/apiClient.js';
-import { downloadJson, triggerDownload } from '../lib/download.js';
+import { triggerDownload } from '../lib/download.js';
 import { FileGrowthPanel } from '../components/editor/FileGrowthPanel.jsx';
 import { ConsistencyPanel } from '../components/editor/ConsistencyPanel.jsx';
 import { localeLabel } from '../lib/locales.js';
@@ -268,8 +268,10 @@ export function TranslationEditorPage() {
   async function handleDownloadLocale() {
     setActionError(null);
     try {
-      const document = await api.downloadLocale(fileId, activeLocale, exportFormat);
-      downloadJson(`${activeLocale}.json`, document);
+      // The server already wrote the document in the chosen export format, so
+      // its bytes are saved as they arrived rather than parsed and rebuilt.
+      const locale = await api.downloadLocale(fileId, activeLocale, exportFormat);
+      triggerDownload(`${activeLocale}.json`, locale);
     } catch (error) {
       setActionError(error);
     }

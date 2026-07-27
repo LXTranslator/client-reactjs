@@ -36,11 +36,11 @@ vi.mock('../src/lib/apiClient.js', async (importOriginal) => {
 
 vi.mock('../src/lib/download.js', async (importOriginal) => {
   const actual = await importOriginal();
-  return { ...actual, triggerDownload: vi.fn(), downloadJson: vi.fn() };
+  return { ...actual, triggerDownload: vi.fn() };
 });
 
 const { api, getAuthToken } = await import('../src/lib/apiClient.js');
-const { downloadJson } = await import('../src/lib/download.js');
+const { triggerDownload } = await import('../src/lib/download.js');
 const { App } = await import('../src/App.jsx');
 
 /** The two formats the server ships. */
@@ -128,7 +128,15 @@ describe('export formats', () => {
     api.listNamespaces.mockResolvedValue({ namespaces: [makeNamespace()] });
     api.getFile.mockResolvedValue({ file: READY_FILE });
     api.getTranslations.mockResolvedValue(EDITOR_DATA);
-    api.downloadLocale.mockResolvedValue({ greeting: { hello: 'สวัสดี' } });
+    // A Blob, because every download endpoint serves a file and the client
+    // fetches all of them as blobs. Mocking a parsed document here is what let
+    // the null download ship: the mock returned something the real client never
+    // produces.
+    api.downloadLocale.mockResolvedValue(
+      new Blob([JSON.stringify({ greeting: { hello: 'สวัสดี' } })], {
+        type: 'application/json',
+      }),
+    );
     api.listFileExportFormats.mockResolvedValue({
       export_formats: [DEFAULT_FORMAT, KEY_VALUE_FORMAT],
     });
@@ -173,7 +181,7 @@ describe('export formats', () => {
       await waitFor(() => {
         expect(api.downloadLocale).toHaveBeenCalledWith('file_1', 'th_th', 'key_value');
       });
-      expect(downloadJson).toHaveBeenCalledWith('th_th.json', expect.any(Object));
+      expect(triggerDownload).toHaveBeenCalledWith('th_th.json', expect.any(Blob));
     });
 
     it('downloads the archive in the chosen format', async () => {

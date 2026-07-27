@@ -29,7 +29,12 @@ description: Concepts, routing model and conventions an agent must understand be
    organization id can collide, which is why both forms check availability the
    same way.
 4. **An organization has its own email.** It is not the creator's address.
-5. **An offline platform produces placeholders, and says nothing about it.** The
+5. **A download endpoint is a file, not a resource.** `?lang=`, `?format=zip`
+   and the bare download path all send the document itself rather than the
+   `{ data }` envelope. Fetch them with `responseType: 'blob'` and pass the blob
+   straight to `triggerDownload`; unwrapping one yields `null`, which then gets
+   written to disk as the text `null`.
+6. **An offline platform produces placeholders, and says nothing about it.** The
    file still reaches `READY` and the editor still fills with rows, so anywhere
    those rows are shown has to say they are not translations. Detect it from the
    catalogue's `requires_network`, never by testing for the name `mock`: which

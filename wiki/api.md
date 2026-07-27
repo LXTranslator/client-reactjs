@@ -158,6 +158,22 @@ the server surfaces in the interface with no client change.
 | `api.downloadArchive(fileId, exportFormat)` | `GET /files/:fileId/download?format=zip` |
 | `api.listFileExportFormats(fileId)` | `GET /files/:fileId/export_formats` |
 
+The three download helpers all resolve to a **`Blob`**, not to a parsed
+document. Those endpoints set `Content-Disposition` and send the document
+itself, with none of the `{ data }` envelope every other endpoint uses, so
+asking for one as JSON makes the unwrapper look for a `data` field that does not
+exist and hand back `null`.
+
+The bytes the server produced are the bytes that reach the disk. The client does
+not parse a document and write it out again: the server already chose the shape,
+the field names and the indentation of the selected export format, and
+re-serialising them here can only lose something.
+
+`triggerDownload` in `src/lib/download.js` is the only place a blob becomes a
+file. It releases the object URL on a timer rather than on the next line,
+because a click only *starts* a download and revoking the URL in the same task
+cancels one the browser has not finished reading.
+
 ## The assistant
 
 | Helper | Endpoint |
