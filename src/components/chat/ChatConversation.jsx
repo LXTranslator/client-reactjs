@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { EmptyState, ErrorMessage, LoadingState } from '../ui/Feedback.jsx';
 import { validateTranslationFile } from '../../lib/validation.js';
+import { api } from '../../lib/apiClient.js';
+import { triggerDownload } from '../../lib/download.js';
 
 /**
  * The conversation pane: the exchange, and the composer beneath it.
@@ -15,16 +17,29 @@ import { validateTranslationFile } from '../../lib/validation.js';
  * through exactly the same check the button does, because a dropped file is no
  * more trustworthy than a chosen one.
  *
+ * An answer may also come back offering downloads. Those are rendered as
+ * buttons beneath it, because a file is the thing being asked for and a
+ * sentence describing where to find one is not an answer to that.
+ *
  * @param {object} props Component props.
  * @param {Array<object>} props.turns Exchanges, oldest first.
  * @param {boolean} props.isLoading Whether the history is still arriving.
  * @param {boolean} props.isSending Whether a turn is in flight.
  * @param {Error|null} props.error Failure to render.
  * @param {object|null} props.pending The message awaiting an answer.
+ * @param {Array<object>} [props.downloads] What the newest answer offers.
  * @param {Function} props.onSend Called with the message and optional file.
  * @returns {JSX.Element} The pane.
  */
-export function ChatConversation({ turns, isLoading, isSending, error, pending, onSend }) {
+export function ChatConversation({
+  turns,
+  isLoading,
+  isSending,
+  error,
+  pending,
+  downloads = [],
+  onSend,
+}) {
   const [message, setMessage] = useState('');
   const [file, setFile] = useState(null);
   const [fileError, setFileError] = useState(null);
@@ -212,10 +227,17 @@ export function ChatConversation({ turns, isLoading, isSending, error, pending, 
           </EmptyState>
         ) : (
           <>
-            {turns.map((turn) => (
+            {turns.map((turn, index) => (
               <div className="chat__turn" key={turn.id}>
                 <ChatMessage role="you" text={turn.user_prompt} />
                 <ChatMessage role="assistant" text={turn.ai_answer} />
+                {/*
+                 * Only under the newest answer, because that is the one the
+                 * offers belong to. The server sends them with the reply rather
+                 * than storing them on the exchange, so an older turn scrolled
+                 * back to has none and must not borrow these.
+                 */}
+                {index === turns.length - 1 ? <ChatDownloads downloads={downloads} /> : null}
               </div>
             ))}
 
@@ -307,6 +329,79 @@ export function ChatConversation({ turns, isLoading, isSending, error, pending, 
         )}
       </form>
     </section>
+  );
+}
+
+/**
+ * The downloads an answer is offering.
+ *
+ * Each offer is a reference the server built: which file, which locale, which
+ * format, and what to save it as. The bytes are fetched here, through the
+ * authenticated client, exactly as the editor fetches them. That is what makes
+ * this safe to render from a chat answer: the download endpoint resolves access
+ * for the person clicking, so an offer cannot reach a file they could not have
+ * downloaded from the editor themselves.
+ *
+ * A failure is shown here rather than thrown away, because the button is the
+ * whole point of the answer above it.
+ *
+ * @param {object} props Component props.
+ * @param {Array<object>} props.downloads Offers from the newest answer.
+ * @returns {JSX.Element|null} The controls, or nothing when there are none.
+ */
+function ChatDownloads({ downloads }) {
+  const [busyFilename, setBusyFilename] = useState(null);
+  const [error, setError] = useState(null);
+
+  if (downloads.length === 0) return null;
+
+  /**
+   * Fetches one offer and hands it to the browser.
+   *
+   * @param {object} offer What the answer offered.
+   * @returns {Promise<void>}
+   */
+  async function handleDownload(offer) {
+    setError(null);
+    setBusyFilename(offer.filename);
+    try {
+      // The server already wrote the document in the chosen format, so what
+      // arrived is what is saved rather than something parsed and rebuilt.
+      const blob =
+        offer.lang === null
+          ? await api.downloadArchive(offer.file_id, offer.export_format)
+          : await api.downloadLocale(offer.file_id, offer.lang, offer.export_format);
+
+      triggerDownload(offer.filename, blob);
+    } catch (caught) {
+      setError(caught);
+    } finally {
+      setBusyFilename(null);
+    }
+  }
+
+  return (
+    <div className="chat__downloads">
+      {downloads.map((offer) => (
+        <button
+          key={`${offer.file_id}_${offer.lang ?? 'all'}_${offer.export_format}`}
+          type="button"
+          className="btn btn--small btn--primary"
+          onClick={() => handleDownload(offer)}
+          disabled={busyFilename !== null}
+        >
+          {busyFilename === offer.filename ? 'Preparing' : `Download ${offer.filename}`}
+        </button>
+      ))}
+
+      <span className="chat__downloads-note muted">
+        {downloads.length === 1 && downloads[0].lang === null
+          ? `${downloads[0].langs.length} languages, written in ${downloads[0].format_name}`
+          : `Written in ${downloads[0].format_name}`}
+      </span>
+
+      <ErrorMessage error={error} />
+    </div>
   );
 }
 

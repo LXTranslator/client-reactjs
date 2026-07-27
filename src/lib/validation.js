@@ -48,7 +48,11 @@ export const FORMAT_ID_PATTERN = /^[a-z0-9_]{2,50}$/;
 export const FIELD_NAME_PATTERN = /^[a-z][a-z0-9_]{0,39}$/;
 
 /** Identifiers the server ships and refuses to let a namespace redefine. */
-export const BUILT_IN_FORMAT_IDS = Object.freeze(['default', 'key_value']);
+export const BUILT_IN_FORMAT_IDS = Object.freeze([
+  'default',
+  'key_value',
+  'flat_key_value',
+]);
 
 /** Minimum password length. Length carries most of the strength. */
 export const PASSWORD_MIN_LENGTH = 10;

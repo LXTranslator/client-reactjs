@@ -199,6 +199,7 @@ The response describes what happened, not only what was said:
   "answer": "You have two projects.",
   "namespace": "acme_corp",
   "tool_calls": [{ "name": "list_projects", "ok": true }],
+  "downloads": [],
   "steps": 2,
   "stopped_by_tool": false,
   "token_usage": 812,
@@ -218,6 +219,28 @@ The tools the assistant may call include `create_project` for a new project and
 without a project ever needing to be deleted or recreated. They also cover a
 project's AI platform and model, and the export formats a namespace offers, so
 the assistant can set those rather than reporting them as unsupported.
+
+`downloads` holds what `export_file` offered on this turn:
+
+```json
+{
+  "file_id": "...",
+  "filename": "thai_strings.json",
+  "lang": "th_th",
+  "langs": ["th_th"],
+  "export_format": "flat_key_value",
+  "format_name": "Flat key and value"
+}
+```
+
+Each entry is a reference rather than a document, so the conversation pane
+renders one as a button and fetches the bytes through `downloadLocale`, or
+`downloadArchive` when `lang` is `null`, exactly as the editor does. `filename`
+is what it saves as, which the person may have asked for by name.
+
+They arrive with the answer and are not stored on the exchange, so
+`getChatSession` replays a conversation without them. The page therefore keeps
+them on the newest answer only.
 
 `ChatContextPane` names each call in a person's words. A tool with no entry in
 its label map falls through to the raw name, so a tool added on the server
@@ -321,11 +344,12 @@ A format describes the shape a downloaded locale document is written in, and it
 belongs to a namespace rather than to a project, so one description serves every
 project underneath.
 
-Two ship with the server and appear in every namespace: `default`, which carries
-the translated string beside the fingerprint of the English master, and
-`key_value`, which carries the bare string. Both are marked `built_in` and the
-server refuses to change or remove either, so the interface shows no control
-that would fail.
+Three ship with the server and appear in every namespace: `default`, which
+carries the translated string beside the fingerprint of the English master;
+`key_value`, which carries the bare string; and `flat_key_value`, which carries
+the bare string with the dotted path left whole. All are marked `built_in` and
+the server refuses to change or remove any of them, so the interface shows no
+control that would fail.
 
 ### Upload
 
@@ -419,6 +443,13 @@ In `key_value` the same locale comes back ready to use as it is:
 
 ```json
 { "greeting": { "hello": "สวัสดี {name}" } }
+```
+
+In `flat_key_value` the nesting is left alone entirely, so a consumer reads one
+key path out of one flat map:
+
+```json
+{ "greeting.hello": "สวัสดี {name}" }
 ```
 
 That trade is real and the editor says so when the format is selected: a
