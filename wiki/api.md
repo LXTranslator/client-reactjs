@@ -199,6 +199,7 @@ The response describes what happened, not only what was said:
   "answer": "You have two projects.",
   "namespace": "acme_corp",
   "tool_calls": [{ "name": "list_projects", "ok": true }],
+  "downloads": [],
   "steps": 2,
   "stopped_by_tool": false,
   "token_usage": 812,
@@ -218,6 +219,28 @@ The tools the assistant may call include `create_project` for a new project and
 without a project ever needing to be deleted or recreated. They also cover a
 project's AI platform and model, and the export formats a namespace offers, so
 the assistant can set those rather than reporting them as unsupported.
+
+`downloads` holds what `export_file` offered on this turn:
+
+```json
+{
+  "file_id": "...",
+  "filename": "thai_strings.json",
+  "lang": "th_th",
+  "langs": ["th_th"],
+  "export_format": "flat_key_value",
+  "format_name": "Flat key and value"
+}
+```
+
+Each entry is a reference rather than a document, so the conversation pane
+renders one as a button and fetches the bytes through `downloadLocale`, or
+`downloadArchive` when `lang` is `null`, exactly as the editor does. `filename`
+is what it saves as, which the person may have asked for by name.
+
+They arrive with the answer and are not stored on the exchange, so
+`getChatSession` replays a conversation without them. The page therefore keeps
+them on the newest answer only.
 
 `ChatContextPane` names each call in a person's words. A tool with no entry in
 its label map falls through to the raw name, so a tool added on the server

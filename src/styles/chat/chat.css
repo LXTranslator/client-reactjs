@@ -260,6 +260,26 @@
   overflow-wrap: anywhere;
 }
 
+/*
+ * Downloads offered by an answer.
+ *
+ * Aligned with the assistant message above rather than centred on the pane, so
+ * the buttons read as part of that answer rather than as page furniture.
+ */
+.chat__downloads {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+  align-self: flex-start;
+  max-width: 85%;
+  margin-top: 0.35rem;
+}
+
+.chat__downloads-note {
+  font-size: 0.82rem;
+}
+
 .chat__composer {
   display: flex;
   flex-direction: column;

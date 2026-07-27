@@ -27,13 +27,21 @@ vi.mock('../src/lib/apiClient.js', async (importOriginal) => {
       deleteChatSession: vi.fn(),
       searchChats: vi.fn(),
       backfillChatEmbeddings: vi.fn(),
+      downloadLocale: vi.fn(),
+      downloadArchive: vi.fn(),
     },
     getAuthToken: vi.fn(),
     setAuthToken: vi.fn(),
   };
 });
 
+vi.mock('../src/lib/download.js', async (importOriginal) => {
+  const actual = await importOriginal();
+  return { ...actual, triggerDownload: vi.fn() };
+});
+
 const { api, getAuthToken } = await import('../src/lib/apiClient.js');
+const { triggerDownload } = await import('../src/lib/download.js');
 const { App } = await import('../src/App.jsx');
 
 const CHAT_PATH = '/jetsada/chat';
@@ -50,6 +58,7 @@ function makeAnswer(overrides = {}) {
     answer: 'You have two projects.',
     namespace: 'jetsada',
     tool_calls: [{ name: 'list_projects', ok: true }],
+    downloads: [],
     steps: 2,
     stopped_by_tool: false,
     token_usage: 812,
@@ -623,6 +632,137 @@ describe('the assistant', () => {
 
       const list = await screen.findByRole('complementary', { name: 'Conversations' });
       expect(await within(list).findByText('Untitled conversation')).toBeInTheDocument();
+    });
+  });
+
+  /*
+   * Being handed a file.
+   *
+   * The answer offers a download and the pane turns it into a button. What
+   * matters here is that the button fetches the thing that was offered and
+   * saves it under the name that was offered, since the answer above it has
+   * already told the person both.
+   */
+  describe('downloads offered by an answer', () => {
+    const LOCALE_OFFER = {
+      file_id: 'file_1',
+      filename: 'thai_strings.json',
+      lang: 'th_th',
+      langs: ['th_th'],
+      export_format: 'flat_key_value',
+      format_name: 'Flat key and value',
+    };
+
+    const ARCHIVE_OFFER = {
+      file_id: 'file_1',
+      filename: 'langs.zip',
+      lang: null,
+      langs: ['en_us', 'th_th'],
+      export_format: 'default',
+      format_name: 'Value and hash',
+    };
+
+    /**
+     * Sends a message whose answer offers the given downloads.
+     *
+     * @param {Array<object>} downloads What the answer offers.
+     * @returns {Promise<object>} A user event instance.
+     */
+    async function ask(downloads) {
+      const user = await openChat();
+      api.sendChat.mockResolvedValue(makeAnswer({ downloads }));
+      api.getChatSession.mockResolvedValue({
+        session_id: '11111111-1111-4111-8111-111111111111',
+        turn_count: 1,
+        turns: [makeTurn({ ai_answer: 'Here is the Thai file.' })],
+      });
+
+      await user.type(screen.getByLabelText('Message'), 'Give me the Thai file');
+      await user.click(screen.getByRole('button', { name: 'Send' }));
+      await screen.findByText('Here is the Thai file.');
+
+      return user;
+    }
+
+    it('offers no button on an answer that exported nothing', async () => {
+      await ask([]);
+
+      expect(screen.queryByRole('button', { name: /^download/i })).not.toBeInTheDocument();
+    });
+
+    it('downloads one locale under the name the answer offered', async () => {
+      const user = await ask([LOCALE_OFFER]);
+      api.downloadLocale.mockResolvedValue(new Blob(['{}'], { type: 'application/json' }));
+
+      await user.click(screen.getByRole('button', { name: 'Download thai_strings.json' }));
+
+      await waitFor(() => {
+        expect(api.downloadLocale).toHaveBeenCalledWith('file_1', 'th_th', 'flat_key_value');
+      });
+      expect(triggerDownload).toHaveBeenCalledWith('thai_strings.json', expect.any(Blob));
+    });
+
+    it('downloads every locale as an archive when that is what was offered', async () => {
+      const user = await ask([ARCHIVE_OFFER]);
+      api.downloadArchive.mockResolvedValue(new Blob(['zip']));
+
+      await user.click(screen.getByRole('button', { name: 'Download langs.zip' }));
+
+      await waitFor(() => {
+        expect(api.downloadArchive).toHaveBeenCalledWith('file_1', 'default');
+      });
+      expect(api.downloadLocale).not.toHaveBeenCalled();
+      expect(triggerDownload).toHaveBeenCalledWith('langs.zip', expect.any(Blob));
+    });
+
+    it('says what the download holds', async () => {
+      await ask([ARCHIVE_OFFER]);
+
+      expect(screen.getByText(/2 languages, written in Value and hash/i)).toBeInTheDocument();
+    });
+
+    it('offers each of several downloads separately', async () => {
+      await ask([LOCALE_OFFER, ARCHIVE_OFFER]);
+
+      expect(
+        screen.getByRole('button', { name: 'Download thai_strings.json' }),
+      ).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Download langs.zip' })).toBeInTheDocument();
+    });
+
+    it('reports a failed download rather than looking as though nothing happened', async () => {
+      const user = await ask([LOCALE_OFFER]);
+      const { ApiError } = await import('../src/lib/apiClient.js');
+      api.downloadLocale.mockRejectedValue(
+        new ApiError('That file does not exist.', { status: 404 }),
+      );
+
+      await user.click(screen.getByRole('button', { name: 'Download thai_strings.json' }));
+
+      expect(await screen.findByText('That file does not exist.')).toBeInTheDocument();
+      expect(triggerDownload).not.toHaveBeenCalled();
+    });
+
+    it('drops the offer when another conversation is opened', async () => {
+      // Set before the turn is sent, because the pane reloads the conversation
+      // list as part of answering rather than afterwards.
+      api.listChatSessions.mockResolvedValue({ sessions: [makeSession({ title: 'Older' })] });
+      const user = await ask([LOCALE_OFFER]);
+
+      expect(
+        screen.getByRole('button', { name: 'Download thai_strings.json' }),
+      ).toBeInTheDocument();
+
+      const list = await screen.findByRole('complementary', { name: 'Conversations' });
+      // Anchored, because the rename and delete controls are labelled with the
+      // conversation's name too.
+      await user.click(await within(list).findByRole('button', { name: /^older/i }));
+
+      // The offer belonged to that answer, not to the stored conversation, so
+      // it must not follow the person into one they reopened.
+      await waitFor(() => {
+        expect(screen.queryByRole('button', { name: /^download/i })).not.toBeInTheDocument();
+      });
     });
   });
 });

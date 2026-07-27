@@ -191,6 +191,14 @@ A locale file can be dropped anywhere on the conversation pane as well as chosen
 through the button. Both paths run the same `validateTranslationFile` check: a
 dropped file is no more trustworthy than a chosen one.
 
+Files travel the other way too. An answer may arrive offering downloads, which
+the conversation pane renders as buttons beneath it, because a file is the thing
+being asked for and directions to another screen are not an answer to that. An
+offer is a reference rather than a document: the bytes are fetched through the
+same authenticated client the editor downloads with, so the server resolves
+access for the person clicking. Offers belong to the newest answer, since the
+server sends them with the reply rather than storing them on the exchange.
+
 ## Interface conventions
 
 **Forms.** Validate on submit with helpers from `src/lib/validation.js`. Clear a

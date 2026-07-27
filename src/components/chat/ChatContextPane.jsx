@@ -24,6 +24,7 @@ const TOOL_LABELS = {
   add_languages: 'Added languages',
   list_export_formats: 'Listed export formats',
   create_export_format: 'Created an export format',
+  export_file: 'Prepared a download',
   find_chat: 'Searched past conversations',
   stop: 'Finished',
 };

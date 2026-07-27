@@ -14,6 +14,12 @@ import { ChatContextPane } from '../components/chat/ChatContextPane.jsx';
  * conversation; in the middle, the conversation itself; on the right, what the
  * assistant actually did and what it cost.
  *
+ * An answer can also come back offering downloads, which the middle pane renders
+ * as buttons beneath it. They ride along with the reply rather than being stored
+ * on the exchange, so they belong to the newest answer only: reopening the
+ * conversation later replays the text without them, and asking again is what
+ * brings a file back.
+ *
  * The right pane exists because this assistant acts rather than only answers.
  * It creates projects and adds languages, and the difference between "it says
  * it added Korean" and "it added Korean" is one a person should not have to
@@ -227,6 +233,7 @@ export function ChatPage() {
           isSending={isSending}
           error={error}
           pending={pending}
+          downloads={lastTurn?.downloads ?? []}
           onSend={handleSend}
         />
 
