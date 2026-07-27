@@ -14,6 +14,7 @@ const TOOL_LABELS = {
   switch_namespace: 'Switched namespace',
   list_projects: 'Listed projects',
   create_project: 'Created a project',
+  create_file: 'Created a file',
   upload_file: 'Uploaded a file',
   list_files: 'Listed files',
   check_project_languages: 'Checked project languages',
