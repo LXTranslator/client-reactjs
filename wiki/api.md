@@ -215,7 +215,14 @@ describes what it is acting on.
 
 The tools the assistant may call include `create_project` for a new project and
 `upload_file` for one that already exists, so an attached file reaches either
-without a project ever needing to be deleted or recreated.
+without a project ever needing to be deleted or recreated. They also cover a
+project's AI platform and model, and the export formats a namespace offers, so
+the assistant can set those rather than reporting them as unsupported.
+
+`ChatContextPane` names each call in a person's words. A tool with no entry in
+its label map falls through to the raw name, so a tool added on the server
+appears as soon as it is used; the map makes an action readable rather than
+making it visible.
 
 The conversations pane lists what the server holds, so the same conversations
 appear on every machine somebody signs in from. Each arrives already named,

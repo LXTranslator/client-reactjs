@@ -366,6 +366,34 @@ describe('the assistant', () => {
       expect(await within(pane).findByText('Uploaded a file')).toBeInTheDocument();
     });
 
+    it('names setting the AI platform and creating an export format', async () => {
+      // Both tools are new on the server. The pane exists to say what happened
+      // in a person's words, so a raw snake_case name is a gap rather than a
+      // graceful fallback.
+      const pane = await sendAndRead(
+        makeAnswer({
+          answer: 'Created Minecraft on OpenRouter and added a flat export format.',
+          tool_calls: [
+            { name: 'update_project_ai', ok: true },
+            { name: 'create_export_format', ok: true },
+          ],
+        }),
+      );
+
+      expect(await within(pane).findByText('Set the AI platform and model')).toBeInTheDocument();
+      expect(within(pane).getByText('Created an export format')).toBeInTheDocument();
+    });
+
+    it('falls back to the raw name for a tool it has no wording for', async () => {
+      // A tool added on the server must still appear in the report, so the
+      // label map makes an action readable rather than making it visible.
+      const pane = await sendAndRead(
+        makeAnswer({ tool_calls: [{ name: 'some_future_tool', ok: true }] }),
+      );
+
+      expect(await within(pane).findByText('some_future_tool')).toBeInTheDocument();
+    });
+
     it('reports a refused tool as refused, with the reason', async () => {
       // The answer above may be describing a refusal, and a person should not
       // have to infer that from prose.
