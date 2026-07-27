@@ -73,7 +73,7 @@ Framework free helpers usable from anywhere in the tree.
 | [`src/components/editor/FileGrowthPanel.jsx`](src/components/editor/FileGrowthPanel.jsx) | Adds languages and merges new keys into an existing file. |
 | [`src/components/editor/ConsistencyPanel.jsx`](src/components/editor/ConsistencyPanel.jsx) | On demand placeholder and coverage check against the master. |
 | [`src/components/chat/ChatSessionList.jsx`](src/components/chat/ChatSessionList.jsx) | Conversations pane: the server's list, renaming, deleting and search. |
-| [`src/components/chat/ChatConversation.jsx`](src/components/chat/ChatConversation.jsx) | Conversation pane and the composer, including attachments chosen or dropped. |
+| [`src/components/chat/ChatConversation.jsx`](src/components/chat/ChatConversation.jsx) | Conversation pane and the composer, including attachments chosen or dropped, and the downloads an answer offers. |
 | [`src/components/chat/ChatContextPane.jsx`](src/components/chat/ChatContextPane.jsx) | What the assistant did, what it cost, and embedding backfill. |
 | [`src/components/ui/FormField.jsx`](src/components/ui/FormField.jsx) | Accessible text, textarea, select and password fields. |
 | [`src/components/ui/Feedback.jsx`](src/components/ui/Feedback.jsx) | Callouts, loading, empty, error and status displays. |
