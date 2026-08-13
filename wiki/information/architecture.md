@@ -167,7 +167,7 @@ independently requires the identifier to be echoed and refuses anyone below
 
 ## Styling
 
-The Silver Glass design system, described in [`DESIGN.md`](../DESIGN.md). Layers
+The Silver Glass design system, described in [`design-system.md`](design-system.md). Layers
 are imported in the specified order by `main.jsx`:
 
 ```
@@ -181,7 +181,7 @@ The single deliberate deviation from the specification is section 6, the runtime
 partial include system. That solves a problem a static multi page site has and a
 single page application does not; header and footer are React components
 rendered by `AppLayout` instead. The intent, navigation defined once and every
-page in step, is preserved exactly. `DESIGN.md` section 10 records the mapping.
+page in step, is preserved exactly. Section 10 of that document records the mapping.
 
 ## Accessibility
 
