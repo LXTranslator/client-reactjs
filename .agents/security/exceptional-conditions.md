@@ -1,5 +1,5 @@
 ---
-name: Mishandling of Exceptional Conditions
+name: exceptional-conditions
 description: Render failures usefully without inventing detail the server withheld.
 ---
 

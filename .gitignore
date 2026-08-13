@@ -13,7 +13,9 @@ build/
 coverage/
 
 # Logs
-logs/
+# Anchored to the root so it catches runtime logs without swallowing the
+# versioned change logs under wiki/logs/.
+/logs/
 *.log
 npm-debug.log*
 

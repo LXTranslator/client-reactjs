@@ -1,5 +1,5 @@
 ---
-name: Cross Site Scripting Prevention
+name: xss
 description: Keep attacker controlled content out of the DOM as markup in the LXTranslator client.
 ---
 

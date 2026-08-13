@@ -1,5 +1,5 @@
 ---
-name: Cross Site Request Forgery
+name: csrf
 description: Why bearer tokens avoid CSRF here, and exactly what would reintroduce it.
 ---
 

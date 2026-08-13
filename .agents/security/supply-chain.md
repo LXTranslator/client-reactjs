@@ -1,5 +1,5 @@
 ---
-name: Software Supply Chain
+name: supply-chain
 description: Dependency policy for a browser bundle, where every dependency ships to the user.
 ---
 

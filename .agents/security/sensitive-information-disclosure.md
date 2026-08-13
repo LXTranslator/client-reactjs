@@ -1,5 +1,5 @@
 ---
-name: Sensitive Information Disclosure
+name: sensitive-information-disclosure
 description: What must never be rendered, logged or persisted by the LXTranslator client.
 ---
 

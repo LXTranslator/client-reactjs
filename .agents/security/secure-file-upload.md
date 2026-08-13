@@ -1,5 +1,5 @@
 ---
-name: Secure File Upload
+name: secure-file-upload
 description: Client side upload checks in the LXTranslator client, and their limits.
 ---
 

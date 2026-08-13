@@ -1,5 +1,5 @@
 ---
-name: Product Domain and Interface Conventions
+name: product-domain
 description: Concepts, routing model and conventions an agent must understand before changing the LXTranslator client.
 ---
 
@@ -220,7 +220,7 @@ is not. Two pages poll: project detail and the translation editor.
 | Delete a project | Retype the project name. |
 | Delete an organization | Two dialogs: retype the identifier, then confirm. |
 
-**Styling.** Compose the components in `DESIGN.md` section 4. Add a per section
+**Styling.** Compose the components in section 4 of `wiki/information/design-system.md`. Add a per section
 stylesheet only for genuinely bespoke layout. Never hard code a colour.
 
 ## Common mistakes

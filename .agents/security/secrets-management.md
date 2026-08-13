@@ -1,5 +1,5 @@
 ---
-name: Secrets Management
+name: secrets-management
 description: Why no secret can exist in a browser bundle, and what to do instead.
 ---
 
