@@ -1,123 +1,176 @@
+---
+name: agents-entry-point
+description: Entry point and activation contract for the LXTranslator client — resolves the shared set and routes to this repository's own instructions.
+---
+
 # Agent Instructions — client-reactjs
 
-Instructions for AI agents working in **this repository only**. The backend
-lives in a separate repository with its own `AGENTS.md` and its own `.agents/`
-directory; never read from or apply rules from that one here.
+The web interface for LXTranslator, a translation management application. A React
+single page application built with Vite and React Router, styled with the Silver Glass
+design system. It consumes the API served by `LXTranslator/server-expressjs`, which is
+a separate repository with its own instruction set — never apply rules from that one
+here.
 
-## Before you change anything
+## Shared Instruction Set
 
-1. Read [`INDEX.md`](INDEX.md) for the repository structure.
-2. Read [`README.md`](README.md) for the project context and hosting details.
-3. Read [`DESIGN.md`](DESIGN.md) before touching any styling. It is the source
-   of truth for the visual language, and section 10 records how it maps onto
-   this React application.
-4. Read [`.agents/knowledge/domain.md`](.agents/knowledge/domain.md) for the
-   product concepts and routing model.
-5. Read the relevant file in [`.agents/security/`](.agents/security/) before
-   touching authentication, uploads, or anything that renders user content.
+The conventions this repository follows — branching, commits, pull requests, task
+workflow, the creators — live in the shared instruction set served by the
+**`lxagents-agents-base`** MCP server. This repository carries only what is its
+own. **Resolve the shared set before doing any work:**
 
-Keep `INDEX.md` current whenever you add, move or remove a file.
+1. If the `lxagents-agents-base` connector is available in this session, that is
+   the shared set. Refer to it as `{shared}`; its files are addressed as
+   `agents://{folder}/{file}.md`.
+2. Read `agents://manifest.json` once. It lists every shared file with its `name`,
+   path and description — one read instead of twenty, and it is what the routing
+   tables below are checked against.
+3. Read `agents://index/root-index.md` and route from there. Do not bulk-read the
+   set.
+4. If the connector is not available, say so plainly and continue with this
+   repository's local instruction set only. **Do not reconstruct the missing rules
+   from memory, and do not clone or copy them into this repository.**
 
-## Project shape
+Never commit shared content into this repository. A file that can be read from
+`agents://` must not exist here as a copy — see
+`{shared}/rules/duplicate-instruction-audit.md`.
 
-React single page application. Node.js 20 or newer, ES modules, Vite, React
-Router.
+**Local overrides shared.** A file in `.agents/` whose `name` matches a shared
+file's `name` replaces that shared file entirely for this repository. The current
+overrides are listed in
+[`.agents/index/root-index.md`](.agents/index/root-index.md).
 
-```
-src/lib/          framework free helpers: api client, validation, download
-src/context/      session and namespace state
-src/hooks/        reusable hooks
-src/components/   layout, routing guards and ui primitives
-src/pages/        one file per route
-src/styles/       the Silver Glass layers, imported in order
-tests/            vitest and testing library
-```
+## Auto-Activation
 
-## Non negotiable rules
+The instruction set is **always active** — the local `.agents/` set and the shared set
+together. It applies to every task in this repository whether or not the user mentions
+it, links to it, or asks for it. Treat these files as standing orders, not as optional
+reference material.
 
-1. **No secrets, ever.** A browser bundle is public. Every `VITE_` variable is
-   readable by anyone who opens the network tab. If a value would matter if
-   published, it belongs on the server.
-2. **Never call `fetch` directly from a component.** Add an endpoint helper to
-   `src/lib/apiClient.js` and use that, so token attachment and error shaping
-   stay in one place.
-3. **Never use `dangerouslySetInnerHTML`.** React escapes by default and that is
-   the whole defence against cross site scripting here.
-4. **Route guards are presentation, not security.** They decide what to render.
-   Never rely on one to protect data; the server authorises every request.
-5. **Client validation mirrors the server, it does not replace it.** When a
-   server schema changes, update `src/lib/validation.js` to match so a user is
-   not told something is valid and then rejected.
-6. **Tokens are never used to make a decision the server should make.** Do not
-   read claims out of the JWT in the browser.
-7. **Styling comes from tokens.** Never hard code a hex value in a component.
-8. **Content covering overlays are opaque.** Modals and the mobile nav panel do
-   not use `backdrop-filter`. `DESIGN.md` section 3 explains why.
+At the start of every session, before doing any work:
 
-## Adding a page
+1. Read `AGENTS.md` (this file).
+2. Resolve the shared set per the bootstrap above.
+3. Read [`.agents/index/root-index.md`](.agents/index/root-index.md).
+4. Read [`.agents/index/memory-index.md`](.agents/index/memory-index.md) and load only
+   the memory rows whose scope matches the current request, so you continue prior work
+   instead of restarting it.
+5. Match the request against the trigger table below and load the instruction files it
+   names, local first, shared second.
 
-```
-src/pages/<Name>Page.jsx     the route component
-```
+If a rule conflicts with a habit, a default, or a template you would otherwise follow,
+the rule wins. If it conflicts with an explicit instruction from the user in this
+session, the user wins — and you say out loud which rule you are setting aside.
 
-Then register it in `src/App.jsx`, under `ProtectedRoute` if it needs a session.
-Compose it from the existing components rather than writing new CSS; add a
-per section stylesheet only when the layout is genuinely bespoke.
+## Trigger Table
 
-Every form should:
+`{shared}/rules/auto-activation.md` is the authority behind this table. The shared rows
+are mirrored from it unchanged and in order; the local rows below them are this
+repository's own.
 
-* Validate with helpers from `src/lib/validation.js`.
-* Show a placeholder example on every field, from `PLACEHOLDERS`.
-* Clear a field's error as soon as the user edits it.
-* Map `error.fieldErrors` back onto fields after a server rejection.
+| When you are about to… | Load and obey |
+|---|---|
+| Take in any new request of more than one step | `{shared}/planning/task-workflow.md` |
+| Create a branch | `{shared}/git/branching-strategy.md` |
+| Write a commit message | `{shared}/git/commit-conventions.md` |
+| Open or update a pull request | `{shared}/git/pull-request-template.md` |
+| Write **any** commit, tag, PR, comment, or file that will be committed or posted | `{shared}/rules/no-session-links.md` |
+| Notice a rule worth adding, or content worth adding to an existing instruction | `{shared}/rules/discovery-protocol.md` |
+| Wonder whether something is local or shared, or need to override a shared rule | `{shared}/rules/shared-instructions.md` |
+| Decide where a new file goes | `{shared}/rules/directories.md` |
+| Resolve, connect, or fail to reach the shared set | `{shared}/rules/mcp-connector.md` |
+| Add, move, rename, or delete any file in a set or in `wiki/` | `{shared}/creators/index-creator.md` |
+| Write a rule or instruction | `{shared}/creators/instruction-creator.md` |
+| Write documentation, an SOP, or a domain guideline | `{shared}/creators/information-creator.md` |
+| Change code or structure that a document describes | `{shared}/rules/change-propagation.md` |
+| Record progress, a decision, or session state | `{shared}/creators/memory-creator.md` |
+| Touch anything that carries a version number | `{shared}/rules/versioning.md` |
+| Record a release | `{shared}/creators/changelog-creator.md` |
+| Report finished work back to the user | `{shared}/rules/work-summary.md` |
+| Need project facts, commands, or orientation | [`.agents/wiki/context/repository-map.md`](.agents/wiki/context/repository-map.md) |
+| Do anything at all in this project | [`.agents/rules/repository.md`](.agents/rules/repository.md) |
+| Change routing, namespaces, or any product concept | [`.agents/knowledge/domain.md`](.agents/knowledge/domain.md) |
+| Render content the team did not write, or touch anything that emits markup | [`.agents/security/xss.md`](.agents/security/xss.md) |
+| Store, read, or transmit a token, or change session handling | [`.agents/security/authentication-failures.md`](.agents/security/authentication-failures.md) |
+| Add or change a route guard, or gate anything on a role | [`.agents/security/broken-access-control.md`](.agents/security/broken-access-control.md) |
+| Add an environment variable or any client-side configuration value | [`.agents/security/secrets-management.md`](.agents/security/secrets-management.md) |
+| Change how a request carries its credential | [`.agents/security/csrf.md`](.agents/security/csrf.md) |
+| Add or change a file upload | [`.agents/security/secure-file-upload.md`](.agents/security/secure-file-upload.md) |
+| Render, log, or report a server payload or error | [`.agents/security/sensitive-information-disclosure.md`](.agents/security/sensitive-information-disclosure.md) |
+| Write an error path, a fallback, or a retry | [`.agents/security/exceptional-conditions.md`](.agents/security/exceptional-conditions.md) |
+| Add, update, or remove a dependency | [`.agents/security/supply-chain.md`](.agents/security/supply-chain.md) |
+| Change the build output, the served headers, or the container | [`.agents/security/security-misconfiguration.md`](.agents/security/security-misconfiguration.md) |
 
-## Style
+Any row whose file is overridden locally resolves to the local copy — that is what the
+override table in [`.agents/index/root-index.md`](.agents/index/root-index.md) is for.
 
-- ES modules with JSX.
-- JSDoc on every exported component and function: purpose, `@param`,
-  `@returns`.
-- Comments explain **why**, not what. Do not narrate the next line.
-- Two space indent, single quotes, semicolons, trailing commas in multiline
-  literals.
-- camelCase in JavaScript, snake_case in API payloads, since that is what the
-  server speaks.
-- Avoid dashes outside file names, directory names, branch names and CSS class
-  modifiers.
-- Named exports for components, not default exports.
+## Reading Order
 
-## Testing
+1. Read `AGENTS.md` (this file).
+2. Resolve the shared set.
+3. Read [`.agents/index/root-index.md`](.agents/index/root-index.md) — and nothing else
+   at this stage.
+4. From its routing table, pick the ONE index whose scope matches the task, and read
+   that index.
+5. If that index delegates to a child index, follow the one branch that matches.
+6. Only then open the specific file(s) you need.
 
-```bash
-npm test                # full suite, no configuration required
-npm run test:coverage   # with coverage
-npm run audit:security  # fails at high severity
-```
+## Routing Protocol
 
-Mock `src/lib/apiClient.js` rather than `fetch`, and render through
-`tests/helpers/renderWithProviders.jsx` so the router and session provider are
-present.
+Route by reading index tables, not by reading files. Do NOT load every index. Do NOT
+bulk-scan either set to build a registry — `agents://manifest.json` already is one, and
+it is one read instead of twenty. Do NOT read an instruction body until that instruction
+has been selected. The standing exception is
+[`.agents/index/memory-index.md`](.agents/index/memory-index.md), read every session
+because continuity depends on it.
 
-Two things that have already caused flaky tests here, worth avoiding:
+## Iron Rule
 
-* **Scope ambiguous queries.** The footer repeats several navigation links, so
-  an unscoped `getByRole('link', ...)` can match twice. Use `within(main)`.
-* **Wait for what you are asserting on.** A page renders its heading before its
-  data resolves, so waiting on the heading and then querying a data dependent
-  element races. Wait for the element itself.
+* `AGENTS.md` and `README.md` are overviews and must never carry detailed rules or
+  documentation.
+* [`.agents/index/root-index.md`](.agents/index/root-index.md) is a **router only**. It
+  lists other indexes. It must never contain rules, documentation, prose, or direct
+  links to leaf content.
+* Each index owns exactly one scope and writes outside it never.
+* **Local carries only what is local.** A convention true for more than this repository
+  belongs in the shared set — propose it there, do not copy it here.
+* `wiki/` is for humans, `.agents/wiki/` is for agents, and neither duplicates the
+  other.
+* **One subject per file.** A cross-cutting rule gets its own file and is linked, not
+  pasted into a file about something else.
+* An index never teaches. The moment it explains something, that content belongs in a
+  real file.
 
-## Git
+## Placement
 
-- Branches follow `{type}/{primary-noun}`, for example `feat/login`.
-  Types: `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `build`,
-  `ci`, `chore`, `revert`.
-- Never work directly on `main` or `master`.
-- Conventional Commits, plain text, no links and no issue identifiers.
-- Commit each logical change rather than batching a session into one commit.
-  Review the diff before committing.
-- Bump `version` in `package.json` on every pull request, following semantic
-  versioning.
+`{shared}/rules/directories.md` is the placement authority. In short:
 
-## License
+* Local instructions → `.agents/{folder}/{file}.md`.
+* Human documentation → `wiki/{folder}/{file-name}.md`.
+* Agent knowledge → `.agents/wiki/{type}/{file-name}.md`.
+* Memory → `.agents/memory/{type}/{file-name}.md`; indexes → `.agents/index/{scope}-index.md`.
 
-Proprietary, reserved for the LXTranslator organization. Do not add a dependency
-whose license conflicts with it, and keep the `LICENSE` file intact.
+Anything universal goes to the shared set, never here. No `INDEX.md`, anywhere, ever.
+
+## Discovery Protocol
+
+Source of truth: `{shared}/rules/discovery-protocol.md`.
+
+> While working, if you find an instruction worth adding — a new rule, or content
+> that belongs in an existing instruction file — you must NOT create or edit it on
+> your own. Present each finding to the user separately, each in its own code block,
+> including the target set (local or shared), the proposed file path, `name`,
+> `description`, and full body. Let the user select which ones to apply. Create only
+> what the user selects. This gate covers instruction files only — writing memory
+> under `.agents/memory/` is expected and needs no approval.
+
+## Version Rule
+
+Never change this project's version without explicit user approval — see
+`{shared}/rules/versioning.md`. `package.json` is the version carrier here.
+
+## No Session Links
+
+Never write a link or identifier pointing at an assistant or tool session into a file,
+commit message, commit trailer, branch name, tag, pull request, or comment. If your
+tooling appends one by default, strip it before committing or posting — see
+`{shared}/rules/no-session-links.md`.

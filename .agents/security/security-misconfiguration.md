@@ -1,5 +1,5 @@
 ---
-name: Security Misconfiguration
+name: security-misconfiguration
 description: Build output and serving configuration for the LXTranslator client.
 ---
 

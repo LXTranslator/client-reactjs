@@ -1,5 +1,5 @@
 ---
-name: Broken Access Control
+name: broken-access-control
 description: Why client side guards are presentation and never authorization.
 ---
 
