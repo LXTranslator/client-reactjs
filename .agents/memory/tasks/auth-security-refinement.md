@@ -6,8 +6,8 @@ description: Task record for the client half of adding alternative sign in, a se
 # Task Record — auth-security-refinement
 
 The client half of a change that spans both LXTranslator repositories. Twelve tasks in
-total; this repository owns tasks 7 to 12. `LXTranslator/server-expressjs` carries the
-same record for tasks 1 to 6, which are done.
+total; this repository owns tasks 8 to 14. `LXTranslator/server-expressjs` carries the
+same record for tasks 1 to 7, which are done.
 
 ## Why
 
@@ -37,29 +37,30 @@ Separately, the product has no policy pages at all.
 
 | # | Title | Scope | Repository | Branch | PR |
 |---|---|---|---|---|---|
-| 1–6 | The server half | Second factor, provider sign in, upload containment, release 0.25.0 | server | see that repository's record | |
-| 7 | Task record | This file and its index row | client | `chore/auth-security-refinement-plan` | |
-| 8 | Policy pages | Two public pages and a footer column | client | `feat/policy-page` | |
-| 9 | Upload validation | Close the double extension gap client side | client | `fix/upload-validation` | |
-| 10 | Second factor | Challenge step at login, enrolment page, QR encoder | client | `feat/second-factor` | |
-| 11 | Account linking | Provider buttons, callback page, connections page | client | `feat/account-linking` | |
-| 12 | Release 0.17.0 | Version, changelog, indexes, close this record | client | `chore/release` | |
+| 1–7 | The server half | Second factor, provider sign in, upload containment, dependencies, release 0.25.0 | server | see that repository's record | |
+| 8 | Task record | This file and its index row | client | `chore/auth-security-refinement-plan` | |
+| 9 | Policy pages | Two public pages and a footer column | client | `feat/policy-page` | |
+| 10 | Upload validation | Close the double extension gap client side | client | `fix/upload-validation` | |
+| 11 | Second factor | Challenge step at login, enrolment page, QR encoder | client | `feat/second-factor` | |
+| 12 | Account linking | Provider buttons, callback page, connections page | client | `feat/account-linking` | |
+| 13 | Dependencies | Every dependency to its latest version, and the audit to clean | client | `build/dependencies` | |
+| 14 | Release 0.17.0 | Version, changelog, indexes, close this record | client | `chore/release` | |
 
-Task 7 branches from `master`; task `k` branches from task `k-1`. Branches cannot stack
+Task 8 branches from `master`; task `k` branches from task `k-1`. Branches cannot stack
 across repositories, so this chain is **ordered after** the server chain rather than built
 on it: each pull request here names the server pull request that must merge first.
 
-Tasks 8 and 9 come before 10 and 11 deliberately. Neither depends on a server endpoint, so
+Tasks 9 and 10 come before 11 and 12 deliberately. Neither depends on a server endpoint, so
 their pull requests can merge without waiting for the server chain at all.
 
 ## Progress
 
-### Task 7 — chore/auth-security-refinement-plan
+### Task 8 — chore/auth-security-refinement-plan
 
 Created this record and its row in `.agents/index/memory-index.md`, before any of the work
 exists.
 
-### Task 8 — feat/policy-page
+### Task 9 — feat/policy-page
 
 `/privacy-policy` and `/terms-of-service`, public in both session states, beside the
 password recovery routes rather than inside either guard: somebody has to be able to read
@@ -86,7 +87,7 @@ what `domain.md` requires.
 
 Client suite: 257 passing across 13 files, up from 248 across 12. `npm run build` clean.
 
-### Task 9 — fix/upload-validation
+### Task 10 — fix/upload-validation
 
 `validateTranslationFile` in `src/lib/validation.js` now mirrors the server rule task 5
 tightened: no second extension in the stem, no path separator, no leading dot, and a 128
@@ -110,7 +111,7 @@ input is a hint the browser may ignore.
 
 Client suite: 262 passing, up from 257.
 
-### Task 10 — feat/second-factor
+### Task 11 — feat/second-factor
 
 `src/lib/qrcode.js`, a QR encoder written here rather than installed: byte mode, level M,
 versions 1 to 10, all eight masks with the standard penalty scoring, and the version
@@ -153,7 +154,7 @@ lands back on it.
 
 Client suite: 285 passing across 15 files, up from 262 across 13.
 
-### Task 11 — feat/account-linking
+### Task 12 — feat/account-linking
 
 `OAuthProviderButtons` asks the server which providers exist and **renders nothing** when
 the answer is empty — not a disabled button, not an orphan divider. That is what "no
@@ -184,7 +185,7 @@ flake in `repository.md`, met first hand.
 
 Client suite: 297 passing across 16 files, up from 285 across 15.
 
-### Task 14 — build/dependencies
+### Task 13 — build/dependencies
 
 Every dependency to its latest version, and `npm audit` now reports **0 vulnerabilities**
 where it previously reported three, one of them high.
@@ -217,3 +218,46 @@ produced one order dependent failure during task 11. Trading isolation for four 
 inside a dependency bump is the wrong place to make that call.
 
 Client suite: 297 passing across 16 files, unchanged. Build clean. Audit clean.
+### Task 14 — chore/release
+
+Version 0.17.0, `wiki/logs/0/17/0/CHANGELOG.md`, the `logs-index.md` row, and
+`.agents/memory/state/repository-state.md` rewritten around the two things a future
+session most needs before touching this code: that a correct password no longer implies a
+session, and the three content security policy facts that each rule out an otherwise
+obvious approach.
+
+`package-lock.json` carried a stale version field here too. Corrected in both fields.
+
+No new `VITE_` variable, so `wiki/environments/env.md` is unchanged — which is the point.
+Which providers exist is asked of the server at runtime; a build time flag would be public,
+static, and free to drift from what the server will accept.
+
+The `PR` column of the table above is still empty. Nothing is pushed and no pull request
+is open; the numbers go in when the chain exists.
+
+Both chains complete: fourteen tasks, fourteen branches. Server 560 tests across 19 suites,
+client 297 across 16.
+
+## Not done, and why: the dependency audit fails here too
+
+`npm run audit:security` fails at 0.17.0 with **3 advisories, 1 high**: `nanoid` and
+`@vitest/mocker`, both arriving through the build and test tooling rather than through
+anything this application ships to a browser.
+
+**Not caused by this work.** No dependency was added; the same audit fails identically on
+`master`. These were published against the existing tree since the policy last recorded a
+clean audit.
+
+Raised with the user rather than fixed, on the same footing as the server's five: a
+dependency bump is a trust decision `supply-chain.md` asks to be justified, and it belongs
+in its own task rather than folded into a release.
+
+## Discovery finding — awaiting the user's decision
+
+One, `local` to this repository:
+
+1. `.agents/security/xss.md` covers rendering untrusted values but says nothing about the
+   policy forbidding a **remote image**. That is not an XSS rule, it is a "this will render
+   as a broken image and you will not find out until it is deployed" rule, and it was
+   rediscovered from scratch while building the connections page. It belongs either there
+   or in a new `.agents/security/content-security-policy.md`.

@@ -14,4 +14,5 @@ approval.
 
 | Version | Change log | Summary |
 |---|---|---|
+| 0.17.0 | [`../../wiki/logs/0/17/0/CHANGELOG.md`](../../wiki/logs/0/17/0/CHANGELOG.md) | The second factor interface, github.com and gitlab.com sign in, the policy pages, and a filename rule matched to the server. |
 | 0.16.0 | [`../../wiki/logs/0/16/0/CHANGELOG.md`](../../wiki/logs/0/16/0/CHANGELOG.md) | Adoption of the shared agent instruction set, and the documentation restructure that came with it. |
