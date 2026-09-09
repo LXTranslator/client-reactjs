@@ -37,14 +37,14 @@ Separately, the product has no policy pages at all.
 
 | # | Title | Scope | Repository | Branch | PR |
 |---|---|---|---|---|---|
-| 1–7 | The server half | Second factor, provider sign in, upload containment, dependencies, release 0.25.0 | server | see that repository's record | |
-| 8 | Task record | This file and its index row | client | `chore/auth-security-refinement-plan` | |
-| 9 | Policy pages | Two public pages and a footer column | client | `feat/policy-page` | |
-| 10 | Upload validation | Close the double extension gap client side | client | `fix/upload-validation` | |
-| 11 | Second factor | Challenge step at login, enrolment page, QR encoder | client | `feat/second-factor` | |
-| 12 | Account linking | Provider buttons, callback page, connections page | client | `feat/account-linking` | |
-| 13 | Dependencies | Every dependency to its latest version, and the audit to clean | client | `build/dependencies` | |
-| 14 | Release 0.17.0 | Version, changelog, indexes, close this record | client | `chore/release` | |
+| 1–7 | The server half | Second factor, provider sign in, upload containment, dependencies, release 0.25.0 | server | see that repository's record | LXTranslator/server-expressjs#27 – #33 |
+| 8 | Task record | This file and its index row | client | `chore/auth-security-refinement-plan` | #25 |
+| 9 | Policy pages | Two public pages and a footer column | client | `feat/policy-page` | #26 |
+| 10 | Upload validation | Close the double extension gap client side | client | `fix/upload-validation` | #27 |
+| 11 | Second factor | Challenge step at login, enrolment page, QR encoder | client | `feat/second-factor` | #28 |
+| 12 | Account linking | Provider buttons, callback page, connections page | client | `feat/account-linking` | #29 |
+| 13 | Dependencies | Every dependency to its latest version, and the audit to clean | client | `build/dependencies` | #30 |
+| 14 | Release 0.17.0 | Version, changelog, indexes, close this record | client | `chore/release` | #31 |
 
 Task 8 branches from `master`; task `k` branches from task `k-1`. Branches cannot stack
 across repositories, so this chain is **ordered after** the server chain rather than built
@@ -232,8 +232,11 @@ No new `VITE_` variable, so `wiki/environments/env.md` is unchanged — which is
 Which providers exist is asked of the server at runtime; a build time flag would be public,
 static, and free to drift from what the server will accept.
 
-The `PR` column of the table above is still empty. Nothing is pushed and no pull request
-is open; the numbers go in when the chain exists.
+The `PR` column of the table above is filled. Fourteen pull requests are open, in two
+ordered chains, and **none is merged**: #25 is the index of this repository's chain and
+`LXTranslator/server-expressjs`#27 is the index of the other. #28 here waits on
+`server-expressjs`#29 and #29 here waits on `server-expressjs`#30, since each consumes
+endpoints that chain adds.
 
 Both chains complete: fourteen tasks, fourteen branches. Server 560 tests across 19 suites,
 client 297 across 16.
