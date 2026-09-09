@@ -281,11 +281,27 @@ export function validateLangCode(value) {
   return validateLocaleCode(value);
 }
 
+/** Longest filename the server stores, mirroring UPLOAD_MAX_FILENAME_LENGTH. */
+export const MAX_UPLOAD_FILENAME_LENGTH = 128;
+
+/**
+ * Characters the server permits in a filename before its extension.
+ *
+ * Note the absence of a dot. `report.html.json` and `payload.php.json` both
+ * satisfy an extension check that only looks at the last extension, so the
+ * server refuses a second extension outright and this mirrors that. Without it
+ * a person is told their file is fine and then rejected after the upload.
+ */
+const UPLOAD_STEM_PATTERN = /^[A-Za-z0-9_ -]+$/;
+
 /**
  * Validates a file chosen for upload, before it is sent.
  *
- * Catching an obviously wrong file here saves a round trip. The server repeats
- * every one of these checks and adds content verification on top.
+ * Catching an obviously wrong file here saves a round trip, and every rule
+ * below exists on the server first. **This is a convenience, not a control.**
+ * A file picker's `accept` attribute is a hint the browser may ignore, and
+ * nothing here is reachable by anything that decides to skip it — the server
+ * repeats all of it and adds content verification on top.
  *
  * @param {File|null} file Selected file.
  * @param {{maxBytes?: number}} [options] Size ceiling.
@@ -295,9 +311,30 @@ export function validateTranslationFile(file, options = {}) {
   const maxBytes = options.maxBytes ?? 2 * 1024 * 1024;
 
   if (!file) return 'Choose a JSON file to upload.';
-  if (!file.name.toLowerCase().endsWith('.json')) {
+
+  const name = String(file.name ?? '');
+
+  if (!name.toLowerCase().endsWith('.json')) {
     return 'Only .json translation files can be uploaded.';
   }
+  if (name.length > MAX_UPLOAD_FILENAME_LENGTH) {
+    return `The filename must be ${MAX_UPLOAD_FILENAME_LENGTH} characters or fewer.`;
+  }
+  if (name.includes('/') || name.includes('\\')) {
+    return 'The filename must not contain a path.';
+  }
+  if (name.startsWith('.')) {
+    return 'The filename must not start with a dot.';
+  }
+
+  const stem = name.slice(0, -'.json'.length);
+  if (stem.length === 0) {
+    return 'The filename must have a name before its extension.';
+  }
+  if (!UPLOAD_STEM_PATTERN.test(stem)) {
+    return 'The filename may contain only letters, digits, spaces, underscores and hyphens before .json.';
+  }
+
   if (file.size === 0) return 'That file is empty.';
   if (file.size > maxBytes) {
     return `The file must be ${Math.floor(maxBytes / 1024)} KB or smaller.`;

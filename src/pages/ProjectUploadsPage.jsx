@@ -127,8 +127,10 @@ export function ProjectUploadsPage() {
 
       <Callout tone="info" title="What is accepted">
         JSON files only, up to {Math.floor(MAX_UPLOAD_BYTES / 1024)} KB, containing a JSON
-        object at the root. Filenames are sanitised and the contents are verified on the
-        server before anything is stored.
+        object at the root. The name may use letters, digits, spaces, underscores and
+        hyphens before <span className="mono">.json</span> — a second extension such as{' '}
+        <span className="mono">report.html.json</span> is refused. Filenames are sanitised
+        and the contents are verified on the server before anything is stored.
       </Callout>
 
       <ErrorMessage error={submitError} />

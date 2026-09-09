@@ -211,6 +211,45 @@ describe('validation', () => {
         }),
       ).toMatch(/or smaller/);
     });
+
+    it('accepts the shapes a real locale file takes', () => {
+      for (const name of ['en_us.json', 'en-us.json', 'my file.json', 'zlm_arab.json']) {
+        expect(validateTranslationFile(fakeFile(name, 2048))).toBeNull();
+      }
+    });
+
+    it('rejects a second extension hidden before the json one', () => {
+      /*
+       * The gap this closes. Both of these satisfy a check that only looks at
+       * the last extension, and both used to be accepted here and stored on the
+       * server. Harmless while a stored name never becomes a path — but that is
+       * an invariant holding somewhere else, and the server stopped relying on
+       * it, so this mirrors that rather than letting a person be told a file is
+       * fine and then rejected after the upload.
+       */
+      expect(validateTranslationFile(fakeFile('evil.php.json', 100))).toMatch(/only letters/);
+      expect(validateTranslationFile(fakeFile('report.html.json', 100))).toMatch(/only letters/);
+      expect(validateTranslationFile(fakeFile('en_us.v2.json', 100))).toMatch(/only letters/);
+    });
+
+    it('rejects a name carrying a path', () => {
+      expect(validateTranslationFile(fakeFile('../../etc/passwd.json', 100))).toMatch(
+        /must not contain a path/,
+      );
+      expect(validateTranslationFile(fakeFile('a\\b.json', 100))).toMatch(
+        /must not contain a path/,
+      );
+    });
+
+    it('rejects a hidden file and a name that is only an extension', () => {
+      expect(validateTranslationFile(fakeFile('.hidden.json', 100))).toMatch(/start with a dot/);
+      expect(validateTranslationFile(fakeFile('.json', 100))).toMatch(/start with a dot/);
+    });
+
+    it('rejects a name longer than the server stores', () => {
+      const long = `${'a'.repeat(130)}.json`;
+      expect(validateTranslationFile(fakeFile(long, 100))).toMatch(/128 characters or fewer/);
+    });
   });
 
   describe('runValidators', () => {

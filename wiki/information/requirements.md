@@ -81,6 +81,7 @@ The browser interface for LXTranslator. It consumes the API provided by
 | NFR-4 | No user content is rendered as markup; `dangerouslySetInnerHTML` is never used. | Done |
 | NFR-5 | URLs entered by a user are restricted to http and https before being rendered as links. | Done |
 | NFR-6 | Client side upload checks are treated as convenience, with the server as the control. | Done |
+| NFR-6a | The filename rules match the server exactly, including the refusal of a second extension, so a file is never accepted here and rejected there. | Done |
 | NFR-7 | Route guards are documented as presentation, not authorization. | Done |
 | NFR-8 | Credentials are sent in an Authorization header, so no cookie and no CSRF token are needed. | Done |
 | NFR-9 | The served bundle carries a restrictive content security policy. | Done |
