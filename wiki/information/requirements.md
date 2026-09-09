@@ -23,6 +23,9 @@ The browser interface for LXTranslator. It consumes the API provided by
 | FR-10 | `/{namespace}/project/{project_id}/file/{file_id}` edits and downloads translations. | Done |
 | FR-11 | `/{namespace}/project/{project_id}/settings` manages provider and model, and reports whether the account holds a key for that platform. | Done |
 | FR-12 | `/settings` manages user id, email and password. | Done |
+| FR-12a | `/settings/two_factor` enrols, confirms, disables and regenerates a TOTP second factor. | Done |
+| FR-12b | Sign in renders a code step in place of navigating when the server answers with a challenge. | Done |
+| FR-12c | The setup secret, its QR code and the recovery codes are shown once and held until dismissed. | Done |
 | FR-13 | `/organizations/new` creates an organization. | Done |
 | FR-14 | An unknown path renders a not found page. | Done |
 | FR-14a | `/privacy-policy` and `/terms-of-service` render signed in and signed out, and are linked from a Legal column in the footer. | Done |
@@ -85,6 +88,7 @@ The browser interface for LXTranslator. It consumes the API provided by
 | NFR-7 | Route guards are documented as presentation, not authorization. | Done |
 | NFR-8 | Credentials are sent in an Authorization header, so no cookie and no CSRF token are needed. | Done |
 | NFR-9 | The served bundle carries a restrictive content security policy. | Done |
+| NFR-9a | The QR code is an inline SVG generated in the bundle, so no remote image or third party service is contacted. | Done |
 | NFR-10 | Dependencies audit clean at high severity. | Done |
 
 ### Quality and accessibility

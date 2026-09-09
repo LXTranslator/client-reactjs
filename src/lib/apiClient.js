@@ -209,6 +209,39 @@ export const api = {
     apiRequest('/auth/password/reset', { method: 'POST', body, auth: false }),
   me: () => apiRequest('/auth/me'),
 
+  /* The second factor. */
+  getTwoFactor: () => apiRequest('/auth/mfa'),
+  setupTwoFactor: (body) => apiRequest('/auth/mfa/setup', { method: 'POST', body }),
+  enableTwoFactor: (body) => apiRequest('/auth/mfa/enable', { method: 'POST', body }),
+  disableTwoFactor: (body) => apiRequest('/auth/mfa/disable', { method: 'POST', body }),
+  regenerateRecoveryCodes: (body) =>
+    apiRequest('/auth/mfa/recovery_codes', { method: 'POST', body }),
+  // Unauthenticated: the caller holds a challenge, which is not a session and
+  // can do nothing else.
+  completeMfaChallenge: (body) =>
+    apiRequest('/auth/login/mfa', { method: 'POST', body, auth: false }),
+
+  /* Provider sign in. */
+  listAuthProviders: () => apiRequest('/auth/oauth/providers', { auth: false }),
+  startOauthLogin: (provider) =>
+    apiRequest(`/auth/oauth/${encodeURIComponent(provider)}/login/start`, {
+      method: 'POST',
+      body: {},
+      auth: false,
+    }),
+  completeOauthLogin: (body) =>
+    apiRequest('/auth/oauth/login/callback', { method: 'POST', body, auth: false }),
+  startOauthLink: (provider) =>
+    apiRequest(`/auth/oauth/${encodeURIComponent(provider)}/link/start`, {
+      method: 'POST',
+      body: {},
+    }),
+  completeOauthLink: (body) =>
+    apiRequest('/auth/oauth/link/callback', { method: 'POST', body }),
+  listOauthIdentities: () => apiRequest('/auth/oauth/identities'),
+  unlinkOauthProvider: (provider) =>
+    apiRequest(`/auth/oauth/${encodeURIComponent(provider)}`, { method: 'DELETE' }),
+
   /* Account settings. */
   getSettings: () => apiRequest('/settings'),
   confirmPassword: (body) => apiRequest('/settings/confirm', { method: 'POST', body }),

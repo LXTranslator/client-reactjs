@@ -85,6 +85,13 @@ export const paths = {
   newOrganization: () => '/organizations/new',
   /** The signed in account's own credentials, which belong to no namespace. */
   accountSettings: () => '/settings',
+  /*
+   * Nested under `/settings`, which is already a reserved segment, so these
+   * need no new reservation either.
+   */
+  twoFactor: () => '/settings/two_factor',
+  linkedAccounts: () => '/settings/linked',
+  oauthCallback: () => '/oauth-callback',
 
   /** A namespace, which is its project list. */
   namespace: (namespace) => `/${segment(namespace)}`,

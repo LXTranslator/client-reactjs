@@ -122,15 +122,79 @@ export function AuthProvider({ children }) {
    * @param {{identifier: string, password: string}} credentials Login payload.
    * @returns {Promise<object>} The signed in account.
    */
-  const login = useCallback(
-    async (credentials) => {
-      const result = await api.login(credentials);
+  /**
+   * Adopts a completed sign in.
+   *
+   * The tail every sign in path shares, whatever proved the identity: a
+   * password, a second factor, or a linked provider account.
+   *
+   * @param {object} result Server payload carrying a token and an account.
+   * @returns {Promise<object>} The signed in account.
+   */
+  const adoptSession = useCallback(
+    async (result) => {
       setAuthToken(result.access_token);
       setAccount(result.account);
       await loadNamespaces(result.account);
       return result.account;
     },
     [loadNamespaces],
+  );
+
+  const login = useCallback(
+    async (credentials) => {
+      const result = await api.login(credentials);
+
+      /*
+       * A correct password no longer implies a session. When the account holds
+       * a second factor the server answers with a challenge and no token, so
+       * this branches on the shape rather than reaching for `access_token` —
+       * doing that would call `setAuthToken(undefined)` and carry on as though
+       * somebody were signed in.
+       */
+      if (result.mfa_required) {
+        return { mfaRequired: true, challengeToken: result.challenge_token };
+      }
+
+      return { mfaRequired: false, account: await adoptSession(result) };
+    },
+    [adoptSession],
+  );
+
+  /**
+   * Answers a second factor challenge and starts the session.
+   *
+   * @param {{challengeToken: string, code: string}} input Challenge and code.
+   * @returns {Promise<object>} The signed in account.
+   */
+  const completeMfa = useCallback(
+    async ({ challengeToken, code }) => {
+      const result = await api.completeMfaChallenge({
+        challenge_token: challengeToken,
+        code,
+      });
+      return adoptSession(result);
+    },
+    [adoptSession],
+  );
+
+  /**
+   * Completes a provider sign in, which may itself require a second factor.
+   *
+   * @param {{state: string, code: string}} input Callback parameters.
+   * @returns {Promise<object>} The same discriminated result `login` returns.
+   */
+  const completeOauthLogin = useCallback(
+    async ({ state, code }) => {
+      const result = await api.completeOauthLogin({ state, code });
+
+      if (result.mfa_required) {
+        return { mfaRequired: true, challengeToken: result.challenge_token };
+      }
+
+      return { mfaRequired: false, account: await adoptSession(result) };
+    },
+    [adoptSession],
   );
 
   /**
@@ -141,13 +205,12 @@ export function AuthProvider({ children }) {
    */
   const register = useCallback(
     async (payload) => {
+      // A brand new account can hold no second factor, so registration keeps
+      // returning the account directly rather than a discriminated result.
       const result = await api.register(payload);
-      setAuthToken(result.access_token);
-      setAccount(result.account);
-      await loadNamespaces(result.account);
-      return result.account;
+      return adoptSession(result);
     },
-    [loadNamespaces],
+    [adoptSession],
   );
 
   /**
@@ -212,6 +275,8 @@ export function AuthProvider({ children }) {
       isAuthenticated: account !== null,
       isLoading,
       login,
+      completeMfa,
+      completeOauthLogin,
       register,
       logout,
       selectNamespace,
@@ -223,6 +288,8 @@ export function AuthProvider({ children }) {
       landingNamespaceId,
       isLoading,
       login,
+      completeMfa,
+      completeOauthLogin,
       register,
       logout,
       selectNamespace,

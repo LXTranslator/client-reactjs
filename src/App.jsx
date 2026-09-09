@@ -20,6 +20,7 @@ import { ProjectUploadsPage } from './pages/ProjectUploadsPage.jsx';
 import { ProjectSettingsPage } from './pages/ProjectSettingsPage.jsx';
 import { TranslationEditorPage } from './pages/TranslationEditorPage.jsx';
 import { AccountSettingsPage } from './pages/AccountSettingsPage.jsx';
+import { TwoFactorPage } from './pages/TwoFactorPage.jsx';
 import { PrivacyPolicyPage } from './pages/PrivacyPolicyPage.jsx';
 import { TermsOfServicePage } from './pages/TermsOfServicePage.jsx';
 import { NotFoundPage } from './pages/NotFoundPage.jsx';
@@ -77,6 +78,7 @@ export function App() {
           <Route path="/namespaces" element={<NamespacesPage />} />
           <Route path="/organizations/new" element={<OrganizationCreatePage />} />
           <Route path="/settings" element={<AccountSettingsPage />} />
+          <Route path="/settings/two_factor" element={<TwoFactorPage />} />
 
           {/*
             Everything below acts inside the namespace named in the path.
