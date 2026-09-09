@@ -64,6 +64,7 @@ export const PASSWORD_MIN_LENGTH = 10;
  * every field in the application gets one.
  */
 export const PLACEHOLDERS = Object.freeze({
+  totpCode: '123456',
   userId: 'jetsada_w',
   email: 'you@example.com',
   password: 'At least 10 characters',
@@ -307,6 +308,29 @@ const UPLOAD_STEM_PATTERN = /^[A-Za-z0-9_ -]+$/;
  * @param {{maxBytes?: number}} [options] Size ceiling.
  * @returns {string|null} An error message, or null when valid.
  */
+/**
+ * Validates a second factor code, of either kind.
+ *
+ * @param {string} value Submitted code.
+ * @returns {string|null} An error message, or null when the shape is plausible.
+ */
+export function validateTotpCode(value) {
+  const trimmed = String(value ?? '').replace(/[\s-]/g, '');
+
+  if (trimmed.length === 0) return 'Enter the code from your authenticator app.';
+
+  /*
+   * Two shapes are accepted on one field, matching the server: six digits from
+   * an authenticator, or a longer recovery code. Somebody reaching for a
+   * recovery code has already lost their authenticator and should not also have
+   * to declare which kind of code they are holding.
+   */
+  if (/^\d{6}$/.test(trimmed)) return null;
+  if (/^[A-Za-z0-9]{16,32}$/.test(trimmed)) return null;
+
+  return 'Enter the six digit code, or one of your recovery codes.';
+}
+
 export function validateTranslationFile(file, options = {}) {
   const maxBytes = options.maxBytes ?? 2 * 1024 * 1024;
 

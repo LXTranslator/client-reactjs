@@ -109,3 +109,46 @@ convenience, not a control.** Every rule exists on the server first, and `accept
 input is a hint the browser may ignore.
 
 Client suite: 262 passing, up from 257.
+
+### Task 10 — feat/second-factor
+
+`src/lib/qrcode.js`, a QR encoder written here rather than installed: byte mode, level M,
+versions 1 to 10, all eight masks with the standard penalty scoring, and the version
+information block versions 7 and up require. No dependency, and none was possible anyway —
+`connect-src 'self'` rules out a QR service and `img-src 'self' data:` rules out a remote
+image, so the output is an inline SVG.
+
+**It did not work at first, and the way it failed is the point.** The first version
+produced symbols that looked completely correct — right size, right finder patterns, right
+version — and decoded as nothing at all. Three bugs, found by comparing against an
+independent encoder module by module and then decoding the output with two independent
+decoders:
+
+1. **Format information written least significant bit first.** Position zero carries bit
+   fourteen. This alone made every symbol unreadable.
+2. **The second copy of the format information split after eight positions instead of
+   seven**, putting a format bit where the dark module belongs.
+3. Pad codewords alternating from the running codeword count rather than always starting
+   at `0xEC`.
+
+After those, `zxing-cpp` read **all 213 payload lengths** from one byte to the level M
+version 10 ceiling. OpenCV, a weaker detector, missed four of them; those four decode
+under seven of the eight mask patterns, the function patterns are byte identical to the
+reference encoder, and the data and error correction codewords were verified against an
+independent Reed-Solomon implementation. The mask this encoder picks was also confirmed
+against an independent implementation of the four penalty rules, which agrees.
+
+`tests/qrcode.test.js` pins the exact output as digests, so a change that alters a symbol
+has to be justified rather than absorbed.
+
+The client seam: `AuthContext.login` previously read `access_token` off whatever came back.
+Against a server that answers a challenge instead, that calls `setAuthToken(undefined)` and
+carries on as though somebody were signed in — silently. It now returns a discriminated
+result, and there is a test asserting `setAuthToken` is never called with `undefined`.
+
+The challenge is a second render state inside `LoginPage`, not a route. A route would sit
+inside `PublicOnlyRoute` and be redirected away the moment a session existed, and keeping
+it here preserves `location.state.from` so somebody sent here from a protected page still
+lands back on it.
+
+Client suite: 285 passing across 15 files, up from 262 across 13.

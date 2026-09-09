@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router';
 import { useAuth } from '../context/AuthContext.jsx';
 import { api } from '../lib/apiClient.js';
 import { paths } from '../lib/paths.js';
@@ -400,6 +401,21 @@ export function AccountSettingsPage() {
             Update password
           </button>
         </form>
+      </section>
+
+      <section className="panel">
+        <div className="panel__header">
+          <h2>Security</h2>
+        </div>
+        <p className="muted">
+          A second factor asks for a code from your authenticator app after your password,
+          so a stolen password is not enough on its own.
+        </p>
+        <div className="btn-row">
+          <Link className="btn btn--ghost" to={paths.twoFactor()}>
+            Two factor authentication
+          </Link>
+        </div>
       </section>
 
       <SessionsPanel />

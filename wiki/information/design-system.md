@@ -309,6 +309,14 @@ src/styles/
 
 ### Additions
 
+**Two factor and provider sign in (0.17.0).** The enrolment page and the sign in
+challenge compose existing classes only — `.panel`, `.callout`, `.btn-row`,
+`.feature-list`, `.mono`, `.badge`. The QR code is an inline `<svg>` rather than
+an image, because the served content security policy sets `img-src 'self' data:`
+and a remote or generated image is either blocked or more machinery than drawing
+the squares directly.
+
+
 Three component groups the specification does not cover, because a
 documentation site has no forms:
 
