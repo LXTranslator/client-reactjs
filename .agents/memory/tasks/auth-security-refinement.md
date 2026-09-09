@@ -152,3 +152,34 @@ it here preserves `location.state.from` so somebody sent here from a protected p
 lands back on it.
 
 Client suite: 285 passing across 15 files, up from 262 across 13.
+
+### Task 11 — feat/account-linking
+
+`OAuthProviderButtons` asks the server which providers exist and **renders nothing** when
+the answer is empty — not a disabled button, not an orphan divider. That is what "no
+environment variables set, the application still works" looks like in the interface, and
+there is a test for it. A catalogue that cannot be read is treated the same as an empty
+one.
+
+`OAuthCallbackPage` takes the code and state out of the address bar before doing anything
+with them. A URL reaches browser history, the referrer header and any proxy log in
+between, and these are single use credentials. The effect is also guarded against React's
+development strict mode, which runs it twice — the second run would spend a credential
+that no longer exists and show an error to somebody who had just signed in successfully.
+
+A provider sign in into an account with a second factor is challenged here too, and the
+step renders on this page rather than being handed to another route, so the challenge
+token never travels anywhere.
+
+`LinkedAccountsPage` renders provider **initials, not avatars**. The served policy is
+`img-src 'self' data:`, so a github.com avatar URL is blocked by the browser and would show
+as a broken image. A test asserts no image on the page has an `http` source.
+
+The only new CSS in the whole client change is `.auth__providers` and `.auth__divider`.
+
+Two things the tests caught rather than review: eleven existing suites failed because their
+`api` mocks predated `listAuthProviders`, and one new test passed alone and failed in the
+full run because it queried for a button that arrives from its own effect — the documented
+flake in `repository.md`, met first hand.
+
+Client suite: 297 passing across 16 files, up from 285 across 15.
