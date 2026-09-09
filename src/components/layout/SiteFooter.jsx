@@ -42,13 +42,25 @@ export function SiteFooter() {
             <h4>Account</h4>
             <ul>
               <li>
-                <Link to="/login">Sign in</Link>
+                <Link to={paths.login()}>Sign in</Link>
               </li>
               <li>
-                <Link to="/register">Create account</Link>
+                <Link to={paths.register()}>Create account</Link>
               </li>
               <li>
-                <Link to="/forgot-password">Forgot password</Link>
+                <Link to={paths.forgotPassword()}>Forgot password</Link>
+              </li>
+            </ul>
+          </div>
+
+          <div className="site-footer__col">
+            <h4>Legal</h4>
+            <ul>
+              <li>
+                <Link to={paths.privacyPolicy()}>Privacy policy</Link>
+              </li>
+              <li>
+                <Link to={paths.termsOfService()}>Terms of service</Link>
               </li>
             </ul>
           </div>

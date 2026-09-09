@@ -20,6 +20,8 @@ import { ProjectUploadsPage } from './pages/ProjectUploadsPage.jsx';
 import { ProjectSettingsPage } from './pages/ProjectSettingsPage.jsx';
 import { TranslationEditorPage } from './pages/TranslationEditorPage.jsx';
 import { AccountSettingsPage } from './pages/AccountSettingsPage.jsx';
+import { PrivacyPolicyPage } from './pages/PrivacyPolicyPage.jsx';
+import { TermsOfServicePage } from './pages/TermsOfServicePage.jsx';
 import { NotFoundPage } from './pages/NotFoundPage.jsx';
 
 /**
@@ -61,6 +63,13 @@ export function App() {
         */}
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
+
+        {/*
+          Public in both states, like the recovery routes above. Somebody has to
+          be able to read the terms before deciding to register under them.
+        */}
+        <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
+        <Route path="/terms-of-service" element={<TermsOfServicePage />} />
 
         {/* Signed in only. */}
         <Route element={<ProtectedRoute />}>
