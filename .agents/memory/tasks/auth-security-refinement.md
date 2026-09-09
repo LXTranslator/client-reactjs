@@ -58,3 +58,30 @@ their pull requests can merge without waiting for the server chain at all.
 
 Created this record and its row in `.agents/index/memory-index.md`, before any of the work
 exists.
+
+### Task 8 — feat/policy-page
+
+`/privacy-policy` and `/terms-of-service`, public in both session states, beside the
+password recovery routes rather than inside either guard: somebody has to be able to read
+the terms before deciding to register under them.
+
+Composed entirely from existing Silver Glass classes — `.container.narrow`, `.hero`,
+`.panel`, `.deflist`, `.feature-list`, `.callout`, `details.acc`. **No new CSS.**
+
+The content is written from what the application actually does, so every claim can be
+checked against the code: the account fields are the columns on `accounts`, the session
+paragraph reflects that a user agent is stored and a network address deliberately is not,
+and the archived upload paragraph matches the change made in task 5. The one thing a
+generated policy would have missed is the paragraph that matters most — source text
+reaching a third party AI platform, which is the only place customer content leaves the
+deployment. Both pages say plainly that they are not legal advice and have not been
+reviewed by a lawyer, and there is a test asserting that sentence is present.
+
+`RESERVED_SEGMENTS` is unchanged, and a test asserts it, because that is the whole reason
+the addresses are hyphenated.
+
+Also tidied while in the file: the footer's Account column used hardcoded string literals
+where the Workspace column beside it used `paths.*()`. Both now use the builders, which is
+what `domain.md` requires.
+
+Client suite: 257 passing across 13 files, up from 248 across 12. `npm run build` clean.

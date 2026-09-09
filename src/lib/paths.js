@@ -67,6 +67,18 @@ export const paths = {
   forgotPassword: () => '/forgot-password',
   resetPassword: () => '/reset-password',
 
+  /*
+   * Public, and reachable signed in or signed out.
+   *
+   * Hyphenated deliberately. A namespace owns the first path segment, so a
+   * bare `/policy` would have to join RESERVED_SEGMENTS here and
+   * RESERVED_IDENTIFIERS on the server — they are one list — and any account
+   * already called `policy` would become unreachable. An identifier may not
+   * contain a hyphen, so these two can never collide with one.
+   */
+  privacyPolicy: () => '/privacy-policy',
+  termsOfService: () => '/terms-of-service',
+
   /** Every namespace the visitor can act in. */
   namespaces: () => '/namespaces',
   /** Organization creation. */
