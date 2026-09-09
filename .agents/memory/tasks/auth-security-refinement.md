@@ -85,3 +85,27 @@ where the Workspace column beside it used `paths.*()`. Both now use the builders
 what `domain.md` requires.
 
 Client suite: 257 passing across 13 files, up from 248 across 12. `npm run build` clean.
+
+### Task 9 — fix/upload-validation
+
+`validateTranslationFile` in `src/lib/validation.js` now mirrors the server rule task 5
+tightened: no second extension in the stem, no path separator, no leading dot, and a 128
+character cap matching `UPLOAD_MAX_FILENAME_LENGTH`.
+
+The gap it closes: `evil.php.json` and `report.html.json` satisfy a check that only looks
+at the last extension, so both were accepted here and stored on the server. Harmless while
+a stored name never becomes a path, but the server stopped relying on that invariant, and
+a client that lags behind tells somebody their file is fine and then watches it be
+rejected.
+
+One function, four call sites, all fixed at once: `ProjectUploadsPage` twice,
+`ChatConversation` and `FileGrowthPanel`.
+
+The `What is accepted` callout on the upload page was updated in the same commit. A rule
+enforced in code and described loosely in prose beside it is worse than no prose.
+
+Restated in the docblock, because it is the thing most easily forgotten: **this is a
+convenience, not a control.** Every rule exists on the server first, and `accept` on a file
+input is a hint the browser may ignore.
+
+Client suite: 262 passing, up from 257.
