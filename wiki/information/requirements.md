@@ -26,6 +26,9 @@ The browser interface for LXTranslator. It consumes the API provided by
 | FR-12a | `/settings/two_factor` enrols, confirms, disables and regenerates a TOTP second factor. | Done |
 | FR-12b | Sign in renders a code step in place of navigating when the server answers with a challenge. | Done |
 | FR-12c | The setup secret, its QR code and the recovery codes are shown once and held until dismissed. | Done |
+| FR-12d | `/settings/linked` connects and disconnects GitHub and GitLab accounts. | Done |
+| FR-12e | `/oauth-callback` completes a provider redirect and clears its credentials from the address bar. | Done |
+| FR-12f | Provider buttons render only when the server reports a configured provider, and nothing at all otherwise. | Done |
 | FR-13 | `/organizations/new` creates an organization. | Done |
 | FR-14 | An unknown path renders a not found page. | Done |
 | FR-14a | `/privacy-policy` and `/terms-of-service` render signed in and signed out, and are linked from a Legal column in the footer. | Done |
@@ -89,6 +92,8 @@ The browser interface for LXTranslator. It consumes the API provided by
 | NFR-8 | Credentials are sent in an Authorization header, so no cookie and no CSRF token are needed. | Done |
 | NFR-9 | The served bundle carries a restrictive content security policy. | Done |
 | NFR-9a | The QR code is an inline SVG generated in the bundle, so no remote image or third party service is contacted. | Done |
+| NFR-9b | No provider avatar is rendered; the policy forbids a remote image, so initials are shown instead. | Done |
+| NFR-9c | Provider sign in is a full page redirect, never a popup, because the served headers isolate the opener. | Done |
 | NFR-10 | Dependencies audit clean at high severity. | Done |
 
 ### Quality and accessibility

@@ -17,6 +17,7 @@ vi.mock('../src/lib/apiClient.js', async (importOriginal) => {
   return {
     ...actual,
     api: {
+      listAuthProviders: vi.fn().mockResolvedValue({ providers: [] }),
       me: vi.fn(),
       listNamespaces: vi.fn(),
       getFile: vi.fn(),

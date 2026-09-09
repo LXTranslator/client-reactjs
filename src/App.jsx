@@ -21,6 +21,8 @@ import { ProjectSettingsPage } from './pages/ProjectSettingsPage.jsx';
 import { TranslationEditorPage } from './pages/TranslationEditorPage.jsx';
 import { AccountSettingsPage } from './pages/AccountSettingsPage.jsx';
 import { TwoFactorPage } from './pages/TwoFactorPage.jsx';
+import { LinkedAccountsPage } from './pages/LinkedAccountsPage.jsx';
+import { OAuthCallbackPage } from './pages/OAuthCallbackPage.jsx';
 import { PrivacyPolicyPage } from './pages/PrivacyPolicyPage.jsx';
 import { TermsOfServicePage } from './pages/TermsOfServicePage.jsx';
 import { NotFoundPage } from './pages/NotFoundPage.jsx';
@@ -72,6 +74,12 @@ export function App() {
         <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
         <Route path="/terms-of-service" element={<TermsOfServicePage />} />
 
+        {/*
+          Reachable while the session is still being established, so it sits
+          outside both guards like the recovery routes.
+        */}
+        <Route path="/oauth-callback" element={<OAuthCallbackPage />} />
+
         {/* Signed in only. */}
         <Route element={<ProtectedRoute />}>
           {/* Fixed segments, which belong to no single namespace. */}
@@ -79,6 +87,7 @@ export function App() {
           <Route path="/organizations/new" element={<OrganizationCreatePage />} />
           <Route path="/settings" element={<AccountSettingsPage />} />
           <Route path="/settings/two_factor" element={<TwoFactorPage />} />
+          <Route path="/settings/linked" element={<LinkedAccountsPage />} />
 
           {/*
             Everything below acts inside the namespace named in the path.

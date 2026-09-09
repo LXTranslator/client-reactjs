@@ -4,6 +4,7 @@ import { paths } from '../lib/paths.js';
 import { useAuth } from '../context/AuthContext.jsx';
 import { TextField } from '../components/ui/FormField.jsx';
 import { ErrorMessage } from '../components/ui/Feedback.jsx';
+import { OAuthProviderButtons } from '../components/account/OAuthProviderButtons.jsx';
 import {
   PLACEHOLDERS,
   runValidators,
@@ -185,6 +186,14 @@ export function LoginPage() {
             </button>
           </form>
         ) : (
+        <>
+        {/*
+          Renders nothing at all when this deployment configured no provider,
+          which is why the divider lives inside the same component boundary and
+          not above it.
+        */}
+        <OAuthProviderButtons mode="LOGIN" onError={setSubmitError} />
+
         <form onSubmit={handleSubmit} noValidate>
           <TextField
             label="User id or email"
@@ -229,6 +238,7 @@ export function LoginPage() {
             )}
           </button>
         </form>
+        </>
         )}
 
         <p className="auth__footer">

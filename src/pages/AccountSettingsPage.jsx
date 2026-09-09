@@ -415,6 +415,9 @@ export function AccountSettingsPage() {
           <Link className="btn btn--ghost" to={paths.twoFactor()}>
             Two factor authentication
           </Link>
+          <Link className="btn btn--ghost" to={paths.linkedAccounts()}>
+            Connected accounts
+          </Link>
         </div>
       </section>
 
