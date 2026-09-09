@@ -183,3 +183,37 @@ full run because it queried for a button that arrives from its own effect — th
 flake in `repository.md`, met first hand.
 
 Client suite: 297 passing across 16 files, up from 285 across 15.
+
+### Task 14 — build/dependencies
+
+Every dependency to its latest version, and `npm audit` now reports **0 vulnerabilities**
+where it previously reported three, one of them high.
+
+| Package | From | To |
+|---|---|---|
+| `vitest` | 4.1.10 | 5.0.0 |
+| `jsdom` | 29.1.1 | 30.0.1 |
+| `vite` | 8.1.5 | 8.2.2 |
+| `@vitejs/plugin-react` | 6.0.4 | 6.1.1 |
+| `react-router` | 8.3.0 | 8.3.1 |
+| `@testing-library/jest-dom` | 7.0.0 | 7.0.1 |
+| `@testing-library/react` | 16.3.2 | 16.3.3 |
+| `@testing-library/user-event` | 14.6.1 | 14.6.7 |
+
+Both advisories were transitive and neither reached the browser bundle: `nanoid` through
+`postcss` through `vite`, and `@vitest/mocker` through `vitest`. Bumping the two parents
+cleared both, so no override was needed here.
+
+Two majors, `vitest` 4 to 5 and `jsdom` 29 to 30, and **no configuration change was
+required** — `vite.config.js` was checked to still resolve its proxy target, test
+environment, setup file and build target. All 297 tests pass unchanged and the production
+build is clean. `react-router` is the only runtime dependency in the set and moved by a
+patch.
+
+One thing deliberately **not** done: vitest 5 reports that the suite would run about four
+seconds faster with `isolate: false`. That reuses workers across files rather than giving
+each its own, which changes the isolation semantics tests rely on — and this suite already
+produced one order dependent failure during task 11. Trading isolation for four seconds
+inside a dependency bump is the wrong place to make that call.
+
+Client suite: 297 passing across 16 files, unchanged. Build clean. Audit clean.
