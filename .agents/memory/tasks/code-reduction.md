@@ -35,23 +35,24 @@ Baseline on `master`: 297 tests passing across 16 files, 12,021 lines of JavaScr
 | Decision | Reason |
 |---|---|
 | Branch convention over the harness branch | The harness named `claude/project-thread-mut6ku`; `branching-strategy.md` forbids a tool preset prefix and a generated suffix, and the user asked for the convention. |
-| Work autonomously, choosing the recommended option | The user is away and asked that each question be posed with a recommendation and then answered with it. The plan, the version and opening the pull requests were settled that way; merging is left to the user. |
+| Work autonomously, choosing the recommended option | The user is away and asked that each question be posed with a recommendation and then answered with it. The plan, the version and opening the pull requests were settled that way. |
 | Version 0.17.1 | Nothing new is offered to a user. The links are a fix and the rest is internal, so the release is a patch. |
+| Merge in order, each rebased | The user asked for the pull requests to be merged in order once the work was finished, each branch rebased onto the updated `master` before its merge. They merge with a merge commit, as earlier pull requests did. No tag was cut; a tag is a version claim of its own. |
 | Keep `.btn--sponsor` | No page renders it, but `wiki/information/design-system.md`, which describes itself as the project agnostic source of truth, lists it among the buttons. Removing it would leave that document wrong or make this copy drift, for five lines. |
 
 ## The tasks
 
 | # | Title | Scope | Branch | PR |
 |---|---|---|---|---|
-| 1 | Task record | This file and its index row | `chore/code-reduction-plan` | |
-| 2 | Project links | The two dead back links, and inline paths moved onto `paths.*()` | `fix/project-link` | |
-| 3 | API client paths | One encoding path builder and one query helper in `apiClient.js` | `refactor/api-client` | |
-| 4 | Form field shell | One label, hint and error wrapper shared by the three controls | `refactor/form-field` | |
-| 5 | Load state | A `useLoader` hook in place of the hand written load blocks | `refactor/load-state` | |
-| 6 | Form state | A `useForm` hook in place of the hand written form blocks, and one provider picker | `refactor/form-state` | |
-| 7 | Route splitting | Pages loaded on demand behind `Suspense` | `perf/route-splitting` | |
-| 8 | Unused styles | Rules no component renders | `refactor/unused-css` | |
-| 9 | Release 0.17.1 | Version, change log, logs index, close this record | `release/0.17.1` | |
+| 1 | Task record | This file and its index row | `chore/code-reduction-plan` | #32 |
+| 2 | Project links | The two dead back links, and inline paths moved onto `paths.*()` | `fix/project-link` | #33 |
+| 3 | API client paths | One encoding path builder and one query helper in `apiClient.js` | `refactor/api-client` | #34 |
+| 4 | Form field shell | One label, hint and error wrapper shared by the three controls | `refactor/form-field` | #35 |
+| 5 | Load state | A `useLoader` hook in place of the hand written load blocks | `refactor/load-state` | #36 |
+| 6 | Form state | A `useForm` hook in place of the hand written form blocks, and one provider picker | `refactor/form-state` | #37 |
+| 7 | Route splitting | Pages loaded on demand behind `Suspense` | `perf/route-splitting` | #38 |
+| 8 | Unused styles | Rules no component renders | `refactor/unused-css` | #39 |
+| 9 | Release 0.17.1 | Version, change log, logs index, close this record | `release/0.17.1` | #40 |
 
 Task 1 branches from `master`; task `k` branches from task `k-1`. The fix comes first so
 it can merge on its own without waiting for any of the refactors.
@@ -132,10 +133,10 @@ module and comparing the markup. Two differences, both deliberate:
 ### Task 5 — refactor/load-state
 
 `src/hooks/useLoader.js` takes a loader and its dependencies and returns the data, the
-busy flag, the failure and a `reload`. Twelve pages and panels had written that by hand —
-two `useState` calls, a `useCallback` with a `try`, `catch` and `finally`, and a
-`useEffect` to start it — and four more components had their own `cancelled` flag
-around a one off catalogue fetch. All of them use the hook now:
+busy flag, the failure and a `reload`. Thirteen pages and panels had written that by
+hand, most as two `useState` calls, a `useCallback` with a `try`, `catch` and `finally`,
+and a `useEffect` to start it, and four as a one off catalogue fetch behind their own
+`cancelled` flag. All of them use the hook now:
 
 * the account panels: `SessionsPanel`, `UsagePanel`, `OAuthProviderButtons`;
 * the account pages: `TwoFactorPage`, `LinkedAccountsPage`;
@@ -252,3 +253,35 @@ several accents, so both stay.
 
 Built CSS: 27.43 kB to 27.18 kB (6.00 kB to 5.96 kB gzip). Client suite: 309 passing
 across 19 files.
+
+### Task 9 — release/0.17.1
+
+Version 0.17.1 in `package.json` and `package-lock.json`, `wiki/logs/0/17/1/CHANGELOG.md`,
+its row in `.agents/index/logs-index.md`, and a "Shared building blocks" section in
+`state/repository-state.md` naming the hooks and helpers a new page should reach for. There
+were no session memories to fold into a digest. The working plan under `.agents/plans/` is
+deleted.
+
+The pull requests are #32 to #40, one per branch, each based on the branch before it, so
+each diff shows only its own task. At the user's request they were merged in order, each
+branch rebased onto the updated `master` first.
+
+## Outcome
+
+Against the baseline: 11,594 lines of JavaScript in `src/`, down from 12,021, and 2,164
+lines of CSS, down from 2,186. JavaScript before any page renders: 255.24 kB, 82.27 kB
+gzip, down from 406.54 kB and 116.62 kB. Client suite: 309 passing across 19 files, up
+from 297 across 16. `npm run build` is clean.
+
+Found along the way and reported rather than changed:
+
+* `.gitignore` does not exclude `.agents/plans/`, which `plan-creator.md` expects.
+* `OrganizationCreatePage` keeps a `website_url` value and validates it, but renders no
+  field for it and never sends it. Either the field was meant to be offered at creation,
+  as namespace settings does, or the value and its validator are dead.
+* `.agents/rules/repository.md` asks every form to clear a field's error on edit and to
+  map `error.fieldErrors` back onto the fields. A proposed edit would name `useForm` as the
+  way to do both, and add `useLoader` for a page's data; per the discovery protocol it is
+  a proposal, not written.
+
+**Status: done.** Every task is merged into `master`.
