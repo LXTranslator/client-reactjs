@@ -29,7 +29,7 @@ export function ProtectedRoute() {
 
   if (!isAuthenticated) {
     // The intended destination is carried along so sign in can return there.
-    return <Navigate to="/login" replace state={{ from: location.pathname }} />;
+    return <Navigate to={paths.login()} replace state={{ from: location.pathname }} />;
   }
 
   return <Outlet />;

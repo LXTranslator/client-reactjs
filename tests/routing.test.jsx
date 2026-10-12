@@ -15,6 +15,8 @@ vi.mock('../src/lib/apiClient.js', async (importOriginal) => {
       register: vi.fn(),
       listProviders: vi.fn().mockResolvedValue({ providers: [], default_provider: 'mock' }),
       listProjects: vi.fn().mockResolvedValue({ projects: [] }),
+      getProject: vi.fn(),
+      listFiles: vi.fn().mockResolvedValue({ files: [] }),
     },
     getAuthToken: vi.fn(),
     setAuthToken: vi.fn(),
@@ -159,6 +161,17 @@ describe('routing', () => {
       await waitFor(() => {
         expect(screen.getByText('Personal namespace')).toBeInTheDocument();
       });
+    });
+
+    it('links a project that fails to load back to its namespace', async () => {
+      // The link used to point at /namespaces/projects, which no route matches.
+      const { ApiError } = await import('../src/lib/apiClient.js');
+      api.getProject.mockRejectedValue(new ApiError('Project not found.', { status: 404 }));
+
+      renderWithProviders(<App />, { initialEntries: ['/jetsada/project/7'] });
+
+      const link = await screen.findByRole('link', { name: /back to projects/i });
+      expect(link).toHaveAttribute('href', '/jetsada');
     });
 
     it('signs the visitor out when the stored token is rejected', async () => {

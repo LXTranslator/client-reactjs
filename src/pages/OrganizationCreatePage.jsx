@@ -221,7 +221,7 @@ export function OrganizationCreatePage() {
               'Create organization'
             )}
           </button>
-          <Link className="btn btn--ghost" to="/namespaces">
+          <Link className="btn btn--ghost" to={paths.namespaces()}>
             Cancel
           </Link>
         </div>

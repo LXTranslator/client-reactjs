@@ -126,7 +126,7 @@ export function ProjectDetailPage() {
     return (
       <div className="container narrow">
         <ErrorMessage error={loadError} />
-        <Link className="btn" to="/namespaces/projects">
+        <Link className="btn" to={paths.namespace(ns)}>
           Back to projects
         </Link>
       </div>

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router';
+import { paths } from '../lib/paths.js';
 import { api } from '../lib/apiClient.js';
 import { PasswordField, TextField } from '../components/ui/FormField.jsx';
 import { Callout, ErrorMessage } from '../components/ui/Feedback.jsx';
@@ -76,7 +77,7 @@ export function ResetPasswordPage() {
       });
       setIsDone(true);
       // A short pause so the confirmation is actually read before redirecting.
-      setTimeout(() => navigate('/login', { replace: true }), 2500);
+      setTimeout(() => navigate(paths.login(), { replace: true }), 2500);
     } catch (error) {
       setSubmitError(error);
     } finally {
@@ -156,7 +157,7 @@ export function ResetPasswordPage() {
         )}
 
         <p className="auth__footer">
-          <Link to="/login">Back to sign in</Link>
+          <Link to={paths.login()}>Back to sign in</Link>
         </p>
       </div>
     </div>

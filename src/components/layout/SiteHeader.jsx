@@ -57,7 +57,7 @@ export function SiteHeader() {
    */
   function handleLogout() {
     logout();
-    navigate('/login', { replace: true });
+    navigate(paths.login(), { replace: true });
   }
 
   return (
@@ -143,12 +143,12 @@ export function SiteHeader() {
           ) : (
             <ul className="nav__links" id="primary_navigation">
               <li className="nav__spacer">
-                <NavLink to="/login" className="nav__link">
+                <NavLink to={paths.login()} className="nav__link">
                   Sign in
                 </NavLink>
               </li>
               <li>
-                <Link to="/register" className="btn btn--primary btn--small">
+                <Link to={paths.register()} className="btn btn--primary btn--small">
                   Create account
                 </Link>
               </li>
