@@ -5,16 +5,12 @@ import { useNamespace } from '../components/routing/NamespaceRoute.jsx';
 import { paths } from '../lib/paths.js';
 import { api } from '../lib/apiClient.js';
 import { useLoader } from '../hooks/useLoader.js';
+import { useForm } from '../hooks/useForm.js';
 import { TextField, TextAreaField } from '../components/ui/FormField.jsx';
 import { Callout, ErrorMessage, LoadingState } from '../components/ui/Feedback.jsx';
 import { Modal } from '../components/ui/Modal.jsx';
 import { Breadcrumbs } from '../components/layout/AppLayout.jsx';
-import {
-  PLACEHOLDERS,
-  runValidators,
-  validateEmail,
-  validateWebsiteUrl,
-} from '../lib/validation.js';
+import { PLACEHOLDERS, validateEmail, validateWebsiteUrl } from '../lib/validation.js';
 
 /**
  * Organization profile settings, including deletion.
@@ -29,16 +25,11 @@ export function NamespaceSettingsPage() {
   const namespace = useNamespace();
   const navigate = useNavigate();
 
-  const [values, setValues] = useState({
-    display_name: '',
-    description: '',
-    website_url: '',
-    email: '',
-  });
-  const [errors, setErrors] = useState({});
-  const [submitError, setSubmitError] = useState(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
+  const { values, setValues, errors, submitError, isSubmitting, handleChange, submit } = useForm(
+    { display_name: '', description: '', website_url: '', email: '' },
+    { onEdit: () => setIsSaved(false) },
+  );
 
   const isOrganization = namespace.type === 'ORG';
   const isOwner = namespace?.role === 'OWNER';
@@ -56,21 +47,6 @@ export function NamespaceSettingsPage() {
   }, [namespace, isOrganization]);
 
   /**
-   * Updates a field and clears its error.
-   *
-   * @param {string} field Field name.
-   * @returns {Function} Change handler.
-   */
-  function handleChange(field) {
-    return (event) => {
-      const { value } = event.target;
-      setValues((current) => ({ ...current, [field]: value }));
-      setErrors((current) => ({ ...current, [field]: undefined }));
-      setIsSaved(false);
-    };
-  }
-
-  /**
    * Saves the profile.
    *
    * @param {React.FormEvent} event Submit event.
@@ -78,34 +54,24 @@ export function NamespaceSettingsPage() {
    */
   async function handleSubmit(event) {
     event.preventDefault();
-    setSubmitError(null);
     setIsSaved(false);
 
-    const { errors: found, isValid } = runValidators({
-      email: () => validateEmail(values.email),
-      website_url: () => validateWebsiteUrl(values.website_url),
-    });
-
-    setErrors(found);
-    if (!isValid) return;
-
-    setIsSubmitting(true);
-    try {
-      await api.updateNamespace(namespace.user_id, {
-        display_name: values.display_name.trim(),
-        description: values.description.trim(),
-        email: values.email.trim().toLowerCase(),
-        ...(values.website_url.trim() ? { website_url: values.website_url.trim() } : {}),
-      });
-      setIsSaved(true);
-      await refresh();
-    } catch (error) {
-      setSubmitError(error);
-      const fieldErrors = error?.fieldErrors ?? {};
-      if (Object.keys(fieldErrors).length > 0) setErrors(fieldErrors);
-    } finally {
-      setIsSubmitting(false);
-    }
+    await submit(
+      {
+        email: () => validateEmail(values.email),
+        website_url: () => validateWebsiteUrl(values.website_url),
+      },
+      async () => {
+        await api.updateNamespace(namespace.user_id, {
+          display_name: values.display_name.trim(),
+          description: values.description.trim(),
+          email: values.email.trim().toLowerCase(),
+          ...(values.website_url.trim() ? { website_url: values.website_url.trim() } : {}),
+        });
+        setIsSaved(true);
+        await refresh();
+      },
+    );
   }
 
   /**

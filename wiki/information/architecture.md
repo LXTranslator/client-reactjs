@@ -125,6 +125,11 @@ Two rules keep the two in step:
 * Every field carries a concrete placeholder example, which removes far more
   confusion than prose does.
 
+Forms hold their state through `useForm` in `src/hooks/`, which applies the same
+three rules to every form: an error clears as soon as its field is edited, nothing
+is sent until every validator passes, and a server rejection is mapped back onto
+the fields it names.
+
 ## Availability checking
 
 Registration and organization creation both check identifiers against the API
