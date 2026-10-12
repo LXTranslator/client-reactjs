@@ -81,3 +81,30 @@ them now use the builders. The route table in `App.jsx` still declares its patte
 literals, because those are the definitions the builders mirror.
 
 Client suite: 298 passing across 16 files, up from 297.
+
+### Task 3 — refactor/api-client
+
+Every endpoint helper wrapped each path segment in `encodeURIComponent` by hand, 55 times
+in all, and four helpers assembled their own query strings, each in a slightly different
+way. Now:
+
+* `endpoint` is a template tag that encodes every interpolated value as one segment, so a
+  helper cannot forget to and a value holding a slash cannot reach another route;
+* `withQuery` appends the parameters that carry a value and leaves the rest out;
+* `exportFormatParam` keeps the one special case, dropping `default` so a download URL
+  stays the one this client produced before formats existed.
+
+The two comment blocks both headed "Downloads" are one block again.
+
+Checked rather than assumed: a script called all 94 helper and argument combinations
+against the old and the new module and compared every URL, method and body. None differ.
+The one change on the wire is that a search query with a space is now sent as `+` instead
+of `%20`, which both URL decoders and Express read back as the same text. That was already
+the case for the availability probe.
+
+`tests/apiClient.test.js` pins three URLs against the real client: an encoded segment, an
+omitted filter, and the default export format. They pass on the old module too, which is
+the point; they hold the behaviour still while the code underneath changed.
+
+`apiClient.js`: 517 lines, down to 494, with one `encodeURIComponent` left where there were
+55. Client suite: 301 passing across 17 files.

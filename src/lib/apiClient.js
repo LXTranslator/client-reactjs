@@ -173,20 +173,50 @@ export async function apiRequest(path, options = {}) {
   return payload?.data ?? null;
 }
 
+
 /**
- * Builds the `export_format` query fragment, omitting it when none is chosen.
+ * Builds an endpoint path, encoding every interpolated value as one segment.
  *
- * Omitting rather than sending `default` keeps a download URL identical to the
- * one this client produced before formats existed, so a bookmarked or scripted
- * request is unaffected.
+ * Used as a template tag, so `endpoint\`/files/${fileId}\`` cannot forget to
+ * encode an identifier and a value holding a slash can never reach a different
+ * route.
+ *
+ * @param {TemplateStringsArray} strings Literal parts of the template.
+ * @param {...(string|number)} values Interpolated segments.
+ * @returns {string} The path.
+ */
+function endpoint(strings, ...values) {
+  return strings.reduce((path, part, index) => path + encodeURIComponent(values[index - 1]) + part);
+}
+
+/**
+ * Appends a query string built from the parameters that carry a value.
+ *
+ * An absent, null or empty parameter is left out rather than sent empty, so an
+ * optional filter costs nothing in the URL when it is not used.
+ *
+ * @param {string} path Endpoint path.
+ * @param {Record<string, string|number|null|undefined>} params Query parameters.
+ * @returns {string} The path with its query string, if any.
+ */
+function withQuery(path, params) {
+  const entries = Object.entries(params).filter(([, value]) => value != null && value !== '');
+  const query = new URLSearchParams(entries).toString();
+  return query ? `${path}?${query}` : path;
+}
+
+/**
+ * Normalises an export format choice for a download query.
+ *
+ * `default` is dropped rather than sent, which keeps a download URL identical to
+ * the one this client produced before formats existed, so a bookmarked or
+ * scripted request is unaffected.
  *
  * @param {string} [exportFormat] Format identifier.
- * @param {boolean} [continuation] True when a query string has already begun.
- * @returns {string} The fragment, or an empty string.
+ * @returns {string|undefined} The identifier, or undefined for the default.
  */
-function exportFormatQuery(exportFormat, continuation = false) {
-  if (!exportFormat || exportFormat === 'default') return '';
-  return `${continuation ? '&' : '?'}export_format=${encodeURIComponent(exportFormat)}`;
+function exportFormatParam(exportFormat) {
+  return exportFormat === 'default' ? undefined : exportFormat;
 }
 
 /**
@@ -197,10 +227,8 @@ function exportFormatQuery(exportFormat, continuation = false) {
  */
 export const api = {
   /* Authentication. */
-  checkAvailability: (params) => {
-    const query = new URLSearchParams(params).toString();
-    return apiRequest(`/auth/availability?${query}`, { auth: false });
-  },
+  checkAvailability: (params) =>
+    apiRequest(withQuery('/auth/availability', params), { auth: false }),
   register: (body) => apiRequest('/auth/register', { method: 'POST', body, auth: false }),
   login: (body) => apiRequest('/auth/login', { method: 'POST', body, auth: false }),
   forgotPassword: (body) =>
@@ -224,7 +252,7 @@ export const api = {
   /* Provider sign in. */
   listAuthProviders: () => apiRequest('/auth/oauth/providers', { auth: false }),
   startOauthLogin: (provider) =>
-    apiRequest(`/auth/oauth/${encodeURIComponent(provider)}/login/start`, {
+    apiRequest(endpoint`/auth/oauth/${provider}/login/start`, {
       method: 'POST',
       body: {},
       auth: false,
@@ -232,15 +260,12 @@ export const api = {
   completeOauthLogin: (body) =>
     apiRequest('/auth/oauth/login/callback', { method: 'POST', body, auth: false }),
   startOauthLink: (provider) =>
-    apiRequest(`/auth/oauth/${encodeURIComponent(provider)}/link/start`, {
-      method: 'POST',
-      body: {},
-    }),
+    apiRequest(endpoint`/auth/oauth/${provider}/link/start`, { method: 'POST', body: {} }),
   completeOauthLink: (body) =>
     apiRequest('/auth/oauth/link/callback', { method: 'POST', body }),
   listOauthIdentities: () => apiRequest('/auth/oauth/identities'),
   unlinkOauthProvider: (provider) =>
-    apiRequest(`/auth/oauth/${encodeURIComponent(provider)}`, { method: 'DELETE' }),
+    apiRequest(endpoint`/auth/oauth/${provider}`, { method: 'DELETE' }),
 
   /* Account settings. */
   getSettings: () => apiRequest('/settings'),
@@ -254,12 +279,9 @@ export const api = {
   listNamespaces: () => apiRequest('/namespaces'),
   createOrganization: (body) =>
     apiRequest('/namespaces/organizations', { method: 'POST', body }),
-  getNamespace: (namespace) => apiRequest(`/namespaces/${encodeURIComponent(namespace)}`),
+  getNamespace: (namespace) => apiRequest(endpoint`/namespaces/${namespace}`),
   updateNamespace: (namespace, body) =>
-    apiRequest(`/namespaces/${encodeURIComponent(namespace)}/settings`, {
-      method: 'PATCH',
-      body,
-    }),
+    apiRequest(endpoint`/namespaces/${namespace}/settings`, { method: 'PATCH', body }),
   /**
    * Permanently deletes an organization.
    *
@@ -268,27 +290,22 @@ export const api = {
    * namespace.
    */
   deleteNamespace: (namespace, confirmUserId) =>
-    apiRequest(`/namespaces/${encodeURIComponent(namespace)}`, {
+    apiRequest(endpoint`/namespaces/${namespace}`, {
       method: 'DELETE',
       body: { confirm_user_id: confirmUserId },
     }),
-  listMembers: (namespace) =>
-    apiRequest(`/namespaces/${encodeURIComponent(namespace)}/settings/members`),
+  listMembers: (namespace) => apiRequest(endpoint`/namespaces/${namespace}/settings/members`),
   addMember: (namespace, body) =>
-    apiRequest(`/namespaces/${encodeURIComponent(namespace)}/settings/members`, {
-      method: 'POST',
+    apiRequest(endpoint`/namespaces/${namespace}/settings/members`, { method: 'POST', body }),
+  updateMember: (namespace, memberId, body) =>
+    apiRequest(endpoint`/namespaces/${namespace}/settings/members/${memberId}`, {
+      method: 'PATCH',
       body,
     }),
-  updateMember: (namespace, memberId, body) =>
-    apiRequest(
-      `/namespaces/${encodeURIComponent(namespace)}/settings/members/${encodeURIComponent(memberId)}`,
-      { method: 'PATCH', body },
-    ),
   removeMember: (namespace, memberId) =>
-    apiRequest(
-      `/namespaces/${encodeURIComponent(namespace)}/settings/members/${encodeURIComponent(memberId)}`,
-      { method: 'DELETE' },
-    ),
+    apiRequest(endpoint`/namespaces/${namespace}/settings/members/${memberId}`, {
+      method: 'DELETE',
+    }),
 
   /*
    * Sessions and API tokens.
@@ -300,36 +317,25 @@ export const api = {
   logout: () => apiRequest('/auth/logout', { method: 'POST' }),
   listSessions: () => apiRequest('/auth/sessions'),
   revokeSession: (sessionId) =>
-    apiRequest(`/auth/sessions/${encodeURIComponent(sessionId)}`, { method: 'DELETE' }),
+    apiRequest(endpoint`/auth/sessions/${sessionId}`, { method: 'DELETE' }),
   revokeOtherSessions: () =>
     apiRequest('/auth/sessions/revoke_others', { method: 'POST' }),
   listApiTokens: () => apiRequest('/auth/api_tokens'),
   createApiToken: (body) => apiRequest('/auth/api_tokens', { method: 'POST', body }),
   revokeApiToken: (tokenId) =>
-    apiRequest(`/auth/api_tokens/${encodeURIComponent(tokenId)}`, { method: 'DELETE' }),
-  listUsage: (params = {}) => {
-    const query = new URLSearchParams();
-    if (params.sessionId) query.set('session_id', params.sessionId);
-    if (params.limit) query.set('limit', String(params.limit));
-    const suffix = query.toString();
-    return apiRequest(`/auth/usage${suffix ? `?${suffix}` : ''}`);
-  },
-  getUsageSummary: (days) =>
-    apiRequest(`/auth/usage/summary${days ? `?days=${encodeURIComponent(days)}` : ''}`),
+    apiRequest(endpoint`/auth/api_tokens/${tokenId}`, { method: 'DELETE' }),
+  listUsage: ({ sessionId, limit } = {}) =>
+    apiRequest(withQuery('/auth/usage', { session_id: sessionId, limit })),
+  getUsageSummary: (days) => apiRequest(withQuery('/auth/usage/summary', { days })),
 
   /* Projects. */
-  listProjects: (namespace) =>
-    apiRequest(`/namespaces/${encodeURIComponent(namespace)}/projects`),
+  listProjects: (namespace) => apiRequest(endpoint`/namespaces/${namespace}/projects`),
   createProject: (namespace, body) =>
-    apiRequest(`/namespaces/${encodeURIComponent(namespace)}/projects`, {
-      method: 'POST',
-      body,
-    }),
-  getProject: (projectId) => apiRequest(`/projects/${encodeURIComponent(projectId)}`),
+    apiRequest(endpoint`/namespaces/${namespace}/projects`, { method: 'POST', body }),
+  getProject: (projectId) => apiRequest(endpoint`/projects/${projectId}`),
   updateProject: (projectId, body) =>
-    apiRequest(`/projects/${encodeURIComponent(projectId)}/settings`, { method: 'PATCH', body }),
-  deleteProject: (projectId) =>
-    apiRequest(`/projects/${encodeURIComponent(projectId)}`, { method: 'DELETE' }),
+    apiRequest(endpoint`/projects/${projectId}/settings`, { method: 'PATCH', body }),
+  deleteProject: (projectId) => apiRequest(endpoint`/projects/${projectId}`, { method: 'DELETE' }),
 
   /*
    * A project has no credentials of its own. It names a platform and a model,
@@ -338,20 +344,16 @@ export const api = {
    */
 
   /* Files. */
-  listFiles: (projectId) => apiRequest(`/projects/${encodeURIComponent(projectId)}/files`),
+  listFiles: (projectId) => apiRequest(endpoint`/projects/${projectId}/files`),
   uploadFile: (projectId, formData) =>
-    apiRequest(`/projects/${encodeURIComponent(projectId)}/files`, {
-      method: 'POST',
-      formData,
-    }),
-  getFile: (fileId) => apiRequest(`/files/${encodeURIComponent(fileId)}`),
-  deleteFile: (fileId) => apiRequest(`/files/${encodeURIComponent(fileId)}`, { method: 'DELETE' }),
-  reprocessFile: (fileId) =>
-    apiRequest(`/files/${encodeURIComponent(fileId)}/reprocess`, { method: 'POST' }),
+    apiRequest(endpoint`/projects/${projectId}/files`, { method: 'POST', formData }),
+  getFile: (fileId) => apiRequest(endpoint`/files/${fileId}`),
+  deleteFile: (fileId) => apiRequest(endpoint`/files/${fileId}`, { method: 'DELETE' }),
+  reprocessFile: (fileId) => apiRequest(endpoint`/files/${fileId}/reprocess`, { method: 'POST' }),
   addFileLanguages: (fileId, body) =>
-    apiRequest(`/files/${encodeURIComponent(fileId)}/languages`, { method: 'POST', body }),
+    apiRequest(endpoint`/files/${fileId}/languages`, { method: 'POST', body }),
   mergeFileKeys: (fileId, formData) =>
-    apiRequest(`/files/${encodeURIComponent(fileId)}/keys`, { method: 'POST', formData }),
+    apiRequest(endpoint`/files/${fileId}/keys`, { method: 'POST', formData }),
 
   /*
    * Namespace AI credentials.
@@ -362,25 +364,20 @@ export const api = {
    * ADMIN, reading included, because the list is a statement about the
    * organization's spending.
    */
-  listAccountKeys: (namespace) =>
-    apiRequest(`/namespaces/${encodeURIComponent(namespace)}/settings/ai_keys`),
+  listAccountKeys: (namespace) => apiRequest(endpoint`/namespaces/${namespace}/settings/ai_keys`),
   addAccountKey: (namespace, body) =>
-    apiRequest(`/namespaces/${encodeURIComponent(namespace)}/settings/ai_keys`, {
-      method: 'POST',
+    apiRequest(endpoint`/namespaces/${namespace}/settings/ai_keys`, { method: 'POST', body }),
+  updateAccountKey: (namespace, keyId, body) =>
+    apiRequest(endpoint`/namespaces/${namespace}/settings/ai_keys/${keyId}`, {
+      method: 'PATCH',
       body,
     }),
-  updateAccountKey: (namespace, keyId, body) =>
-    apiRequest(
-      `/namespaces/${encodeURIComponent(namespace)}/settings/ai_keys/${encodeURIComponent(keyId)}`,
-      { method: 'PATCH', body },
-    ),
   removeAccountKey: (namespace, keyId) =>
-    apiRequest(
-      `/namespaces/${encodeURIComponent(namespace)}/settings/ai_keys/${encodeURIComponent(keyId)}`,
-      { method: 'DELETE' },
-    ),
+    apiRequest(endpoint`/namespaces/${namespace}/settings/ai_keys/${keyId}`, {
+      method: 'DELETE',
+    }),
   reorderAccountKeys: (namespace, orderedKeyIds) =>
-    apiRequest(`/namespaces/${encodeURIComponent(namespace)}/settings/ai_keys/reorder`, {
+    apiRequest(endpoint`/namespaces/${namespace}/settings/ai_keys/reorder`, {
       method: 'POST',
       body: { ordered_key_ids: orderedKeyIds },
     }),
@@ -393,80 +390,56 @@ export const api = {
    * the two are kept apart rather than always sending a form.
    */
   sendChat: (namespace, payload) =>
-    apiRequest(`/namespaces/${encodeURIComponent(namespace)}/chat`, {
+    apiRequest(endpoint`/namespaces/${namespace}/chat`, {
       method: 'POST',
       ...(payload instanceof FormData ? { formData: payload } : { body: payload }),
     }),
-  listChatSessions: (namespace) =>
-    apiRequest(`/namespaces/${encodeURIComponent(namespace)}/chat/sessions`),
+  listChatSessions: (namespace) => apiRequest(endpoint`/namespaces/${namespace}/chat/sessions`),
   getChatSession: (namespace, sessionId) =>
-    apiRequest(
-      `/namespaces/${encodeURIComponent(namespace)}/chat/sessions/${encodeURIComponent(sessionId)}`,
-    ),
+    apiRequest(endpoint`/namespaces/${namespace}/chat/sessions/${sessionId}`),
   renameChatSession: (namespace, sessionId, title) =>
-    apiRequest(
-      `/namespaces/${encodeURIComponent(namespace)}/chat/sessions/${encodeURIComponent(sessionId)}`,
-      { method: 'PATCH', body: { title } },
-    ),
-  deleteChatSession: (namespace, sessionId) =>
-    apiRequest(
-      `/namespaces/${encodeURIComponent(namespace)}/chat/sessions/${encodeURIComponent(sessionId)}`,
-      { method: 'DELETE' },
-    ),
-  searchChats: (namespace, query, limit) =>
-    apiRequest(
-      `/namespaces/${encodeURIComponent(namespace)}/chat/search?q=${encodeURIComponent(query)}${
-        limit ? `&limit=${encodeURIComponent(limit)}` : ''
-      }`,
-    ),
-  backfillChatEmbeddings: (namespace, body = {}) =>
-    apiRequest(`/namespaces/${encodeURIComponent(namespace)}/chat/embeddings`, {
-      method: 'POST',
-      body,
+    apiRequest(endpoint`/namespaces/${namespace}/chat/sessions/${sessionId}`, {
+      method: 'PATCH',
+      body: { title },
     }),
-  getChatLogBuffer: (namespace) =>
-    apiRequest(`/namespaces/${encodeURIComponent(namespace)}/chat/log_buffer`),
+  deleteChatSession: (namespace, sessionId) =>
+    apiRequest(endpoint`/namespaces/${namespace}/chat/sessions/${sessionId}`, {
+      method: 'DELETE',
+    }),
+  searchChats: (namespace, query, limit) =>
+    apiRequest(withQuery(endpoint`/namespaces/${namespace}/chat/search`, { q: query, limit })),
+  backfillChatEmbeddings: (namespace, body = {}) =>
+    apiRequest(endpoint`/namespaces/${namespace}/chat/embeddings`, { method: 'POST', body }),
+  getChatLogBuffer: (namespace) => apiRequest(endpoint`/namespaces/${namespace}/chat/log_buffer`),
 
   /* Export formats. */
-  listExportFormats: (namespace) =>
-    apiRequest(`/namespaces/${encodeURIComponent(namespace)}/export_formats`),
+  listExportFormats: (namespace) => apiRequest(endpoint`/namespaces/${namespace}/export_formats`),
   createExportFormat: (namespace, body) =>
-    apiRequest(`/namespaces/${encodeURIComponent(namespace)}/export_formats`, {
-      method: 'POST',
-      body,
-    }),
+    apiRequest(endpoint`/namespaces/${namespace}/export_formats`, { method: 'POST', body }),
   updateExportFormat: (namespace, formatId, body) =>
-    apiRequest(
-      `/namespaces/${encodeURIComponent(namespace)}/export_formats/${encodeURIComponent(formatId)}`,
-      { method: 'PATCH', body },
-    ),
-  removeExportFormat: (namespace, formatId) =>
-    apiRequest(
-      `/namespaces/${encodeURIComponent(namespace)}/export_formats/${encodeURIComponent(formatId)}`,
-      { method: 'DELETE' },
-    ),
-  /** The same catalogue, reached from the file being downloaded. */
-  listFileExportFormats: (fileId) =>
-    apiRequest(`/files/${encodeURIComponent(fileId)}/export_formats`),
-
-  /* Translations. */
-  getTranslations: (fileId) => apiRequest(`/files/${encodeURIComponent(fileId)}/translations`),
-  updateTranslation: (fileId, translationId, body) =>
-    apiRequest(
-      `/files/${encodeURIComponent(fileId)}/translations/${encodeURIComponent(translationId)}`,
-      { method: 'PATCH', body },
-    ),
-  updateMasterText: (fileId, keyId, body) =>
-    apiRequest(`/files/${encodeURIComponent(fileId)}/keys/${encodeURIComponent(keyId)}`, {
+    apiRequest(endpoint`/namespaces/${namespace}/export_formats/${formatId}`, {
       method: 'PATCH',
       body,
     }),
-  /** Refreshes the named keys only. Everything else is left untouched. */
-  retranslateKeys: (fileId, body) =>
-    apiRequest(`/files/${encodeURIComponent(fileId)}/keys/retranslate`, {
-      method: 'POST',
+  removeExportFormat: (namespace, formatId) =>
+    apiRequest(endpoint`/namespaces/${namespace}/export_formats/${formatId}`, {
+      method: 'DELETE',
+    }),
+  /** The same catalogue, reached from the file being downloaded. */
+  listFileExportFormats: (fileId) => apiRequest(endpoint`/files/${fileId}/export_formats`),
+
+  /* Translations. */
+  getTranslations: (fileId) => apiRequest(endpoint`/files/${fileId}/translations`),
+  updateTranslation: (fileId, translationId, body) =>
+    apiRequest(endpoint`/files/${fileId}/translations/${translationId}`, {
+      method: 'PATCH',
       body,
     }),
+  updateMasterText: (fileId, keyId, body) =>
+    apiRequest(endpoint`/files/${fileId}/keys/${keyId}`, { method: 'PATCH', body }),
+  /** Refreshes the named keys only. Everything else is left untouched. */
+  retranslateKeys: (fileId, body) =>
+    apiRequest(endpoint`/files/${fileId}/keys/retranslate`, { method: 'POST', body }),
   /**
    * Validates that every language still matches the English master.
    *
@@ -474,18 +447,14 @@ export const api = {
    * it, which is why nothing calls this on a keystroke.
    */
   checkConsistency: (fileId, lang) =>
-    apiRequest(
-      `/files/${encodeURIComponent(fileId)}/consistency${lang ? `?lang=${encodeURIComponent(lang)}` : ''}`,
-    ),
+    apiRequest(withQuery(endpoint`/files/${fileId}/consistency`, { lang })),
+
   /*
    * Downloads.
    *
    * `format` is how the download is packaged and `export_format` is the shape of
    * the documents inside it. They are separate on the server for that reason,
    * and kept separate here so a caller cannot conflate them.
-   */
-  /*
-   * Downloads.
    *
    * All three are file endpoints: the server sets `Content-Disposition` and
    * sends the document itself, not the `{ data }` envelope every other endpoint
@@ -498,17 +467,25 @@ export const api = {
    */
   downloadAll: (fileId, exportFormat) =>
     apiRequest(
-      `/files/${encodeURIComponent(fileId)}/download${exportFormatQuery(exportFormat)}`,
+      withQuery(endpoint`/files/${fileId}/download`, {
+        export_format: exportFormatParam(exportFormat),
+      }),
       { responseType: 'blob' },
     ),
   downloadArchive: (fileId, exportFormat) =>
     apiRequest(
-      `/files/${encodeURIComponent(fileId)}/download?format=zip${exportFormatQuery(exportFormat, true)}`,
+      withQuery(endpoint`/files/${fileId}/download`, {
+        format: 'zip',
+        export_format: exportFormatParam(exportFormat),
+      }),
       { responseType: 'blob' },
     ),
   downloadLocale: (fileId, lang, exportFormat) =>
     apiRequest(
-      `/files/${encodeURIComponent(fileId)}/download?lang=${encodeURIComponent(lang)}${exportFormatQuery(exportFormat, true)}`,
+      withQuery(endpoint`/files/${fileId}/download`, {
+        lang,
+        export_format: exportFormatParam(exportFormat),
+      }),
       { responseType: 'blob' },
     ),
 
