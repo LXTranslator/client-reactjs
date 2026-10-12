@@ -148,7 +148,7 @@ export function NamespaceSettingsPage() {
         />
         <Callout tone="info" title="Personal namespace">
           Organization settings apply to organization namespaces only. Your personal
-          namespace is configured from <Link to="/settings">account settings</Link>.
+          namespace is configured from <Link to={paths.accountSettings()}>account settings</Link>.
         </Callout>
       </div>
     );

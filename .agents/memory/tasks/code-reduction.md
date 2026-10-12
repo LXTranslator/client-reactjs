@@ -65,3 +65,19 @@ exists.
 Found while planning and reported rather than changed: `.gitignore` does not exclude
 `.agents/plans/`, which `plan-creator.md` expects. The working plan was kept out of
 history through `.git/info/exclude` on the working clone only.
+
+### Task 2 — fix/project-link
+
+The "Back to projects" link on a project that fails to load, on both the project page and
+the project settings page, pointed at `/namespaces/projects`. No route matches that path,
+so the way out of an error led to the not found page. Both now use
+`paths.namespace(ns)`, and a routing test pins the address the link resolves to. The test
+fails against the old link.
+
+Twelve other links and redirects were written as string literals where `domain.md` asks
+for the `paths.*()` builders, in the header, the route guard, and the sign in, register,
+recovery and settings pages. None was broken, but each was one rename away from it. All of
+them now use the builders. The route table in `App.jsx` still declares its patterns as
+literals, because those are the definitions the builders mirror.
+
+Client suite: 298 passing across 16 files, up from 297.

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router';
+import { paths } from '../lib/paths.js';
 import { api } from '../lib/apiClient.js';
 import { TextField } from '../components/ui/FormField.jsx';
 import { Callout, ErrorMessage } from '../components/ui/Feedback.jsx';
@@ -117,7 +118,7 @@ export function ForgotPasswordPage() {
         )}
 
         <p className="auth__footer">
-          Remembered it? <Link to="/login">Back to sign in</Link>
+          Remembered it? <Link to={paths.login()}>Back to sign in</Link>
         </p>
       </div>
     </div>

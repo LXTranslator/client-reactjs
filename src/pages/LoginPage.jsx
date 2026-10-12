@@ -221,7 +221,7 @@ export function LoginPage() {
 
           <div className="auth__meta">
             <span />
-            <Link to="/forgot-password">Forgot password?</Link>
+            <Link to={paths.forgotPassword()}>Forgot password?</Link>
           </div>
 
           <button
@@ -242,7 +242,7 @@ export function LoginPage() {
         )}
 
         <p className="auth__footer">
-          Do not have an account? <Link to="/register">Create one</Link>
+          Do not have an account? <Link to={paths.register()}>Create one</Link>
         </p>
       </div>
     </div>

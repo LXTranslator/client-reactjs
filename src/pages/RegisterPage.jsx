@@ -189,7 +189,7 @@ export function RegisterPage() {
         </form>
 
         <p className="auth__footer">
-          Already have an account? <Link to="/login">Sign in</Link>
+          Already have an account? <Link to={paths.login()}>Sign in</Link>
         </p>
       </div>
     </div>
