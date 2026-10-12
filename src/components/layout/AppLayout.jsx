@@ -1,4 +1,6 @@
+import { Suspense } from 'react';
 import { Outlet } from 'react-router';
+import { LoadingState } from '../ui/Feedback.jsx';
 import { SiteHeader } from './SiteHeader.jsx';
 import { SiteFooter } from './SiteFooter.jsx';
 
@@ -9,6 +11,9 @@ import { SiteFooter } from './SiteFooter.jsx';
  * same structure and the semantic landmarks are guaranteed rather than repeated
  * per page.
  *
+ * Pages load on demand, so the main landmark waits for one inside a suspense
+ * boundary while the header and footer stay in place.
+ *
  * @returns {JSX.Element} The layout.
  */
 export function AppLayout() {
@@ -16,7 +21,9 @@ export function AppLayout() {
     <>
       <SiteHeader />
       <main className="page" id="main_content">
-        <Outlet />
+        <Suspense fallback={<LoadingState label="Loading page" />}>
+          <Outlet />
+        </Suspense>
       </main>
       <SiteFooter />
     </>
