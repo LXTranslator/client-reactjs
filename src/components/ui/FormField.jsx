@@ -12,6 +12,69 @@ import { scorePassword } from '../../lib/validation.js';
  */
 
 /**
+ * The label, hint and error around one control.
+ *
+ * Every control renders through this, so the three of them cannot drift apart
+ * on how a label is tied to its input or how an error is announced.
+ *
+ * @param {object} props Component props.
+ * @param {string} props.label Visible label.
+ * @param {string} [props.error] Validation message.
+ * @param {string} [props.hint] Helper text.
+ * @param {boolean} [props.required] Marks the field required.
+ * @param {React.ReactNode} [props.trailing] Content rendered beside the label.
+ * @param {Function} props.children Receives the props the control must carry.
+ * @returns {JSX.Element} The field.
+ */
+function Field({ label, error, hint, required = false, trailing = null, children }) {
+  const id = useId();
+  const errorId = `${id}_error`;
+  const hintId = `${id}_hint`;
+
+  const labelElement = (
+    <label className="field__label" htmlFor={id}>
+      {label}
+      {required ? (
+        <span className="field__required" aria-hidden="true">
+          *
+        </span>
+      ) : null}
+    </label>
+  );
+
+  return (
+    <div className="field">
+      {trailing ? (
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+          {labelElement}
+          {trailing}
+        </div>
+      ) : (
+        labelElement
+      )}
+
+      {children({
+        id,
+        className: 'field__control',
+        'aria-invalid': error ? 'true' : undefined,
+        'aria-describedby': error ? errorId : hint ? hintId : undefined,
+        'aria-required': required || undefined,
+      })}
+
+      {error ? (
+        <span className="field__error" id={errorId} role="alert">
+          {error}
+        </span>
+      ) : hint ? (
+        <span className="field__hint" id={hintId}>
+          {hint}
+        </span>
+      ) : null}
+    </div>
+  );
+}
+
+/**
  * A labelled text input.
  *
  * @param {object} props Component props.
@@ -27,167 +90,49 @@ import { scorePassword } from '../../lib/validation.js';
  * @param {React.ReactNode} [props.trailing] Content rendered beside the label.
  * @returns {JSX.Element} The field.
  */
-export function TextField({
-  label,
-  name,
-  value,
-  onChange,
-  type = 'text',
-  error,
-  hint,
-  placeholder,
-  required = false,
-  trailing = null,
-  ...rest
-}) {
-  const id = useId();
-  const errorId = `${id}_error`;
-  const hintId = `${id}_hint`;
-
+export function TextField({ label, error, hint, required, trailing, type = 'text', ...rest }) {
   return (
-    <div className="field">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-        <label className="field__label" htmlFor={id}>
-          {label}
-          {required ? (
-            <span className="field__required" aria-hidden="true">
-              *
-            </span>
-          ) : null}
-        </label>
-        {trailing}
-      </div>
-
-      <input
-        id={id}
-        name={name}
-        type={type}
-        className="field__control"
-        value={value}
-        onChange={onChange}
-        placeholder={placeholder}
-        aria-invalid={error ? 'true' : undefined}
-        aria-describedby={error ? errorId : hint ? hintId : undefined}
-        aria-required={required || undefined}
-        {...rest}
-      />
-
-      {error ? (
-        <span className="field__error" id={errorId} role="alert">
-          {error}
-        </span>
-      ) : hint ? (
-        <span className="field__hint" id={hintId}>
-          {hint}
-        </span>
-      ) : null}
-    </div>
+    <Field label={label} error={error} hint={hint} required={required} trailing={trailing}>
+      {(control) => <input type={type} {...control} {...rest} />}
+    </Field>
   );
 }
 
 /**
  * A labelled textarea.
  *
- * @param {object} props Component props.
+ * @param {object} props Component props, as for `TextField`.
+ * @param {number} [props.rows] Visible rows.
  * @returns {JSX.Element} The field.
  */
-export function TextAreaField({
-  label,
-  name,
-  value,
-  onChange,
-  error,
-  hint,
-  placeholder,
-  rows = 3,
-  required = false,
-  ...rest
-}) {
-  const id = useId();
-  const errorId = `${id}_error`;
-  const hintId = `${id}_hint`;
-
+export function TextAreaField({ label, error, hint, required, rows = 3, ...rest }) {
   return (
-    <div className="field">
-      <label className="field__label" htmlFor={id}>
-        {label}
-        {required ? (
-          <span className="field__required" aria-hidden="true">
-            *
-          </span>
-        ) : null}
-      </label>
-
-      <textarea
-        id={id}
-        name={name}
-        rows={rows}
-        className="field__control"
-        value={value}
-        onChange={onChange}
-        placeholder={placeholder}
-        aria-invalid={error ? 'true' : undefined}
-        aria-describedby={error ? errorId : hint ? hintId : undefined}
-        {...rest}
-      />
-
-      {error ? (
-        <span className="field__error" id={errorId} role="alert">
-          {error}
-        </span>
-      ) : hint ? (
-        <span className="field__hint" id={hintId}>
-          {hint}
-        </span>
-      ) : null}
-    </div>
+    <Field label={label} error={error} hint={hint} required={required}>
+      {(control) => <textarea rows={rows} {...control} {...rest} />}
+    </Field>
   );
 }
 
 /**
  * A labelled select.
  *
- * @param {object} props Component props.
+ * @param {object} props Component props, as for `TextField`.
+ * @param {Array<{value: string, label: string}>} props.options Choices.
  * @returns {JSX.Element} The field.
  */
-export function SelectField({ label, name, value, onChange, options, error, hint, ...rest }) {
-  const id = useId();
-  const errorId = `${id}_error`;
-  const hintId = `${id}_hint`;
-
+export function SelectField({ label, error, hint, required, options, ...rest }) {
   return (
-    <div className="field">
-      <label className="field__label" htmlFor={id}>
-        {label}
-      </label>
-
-      <select
-        id={id}
-        name={name}
-        className="field__control"
-        value={value}
-        onChange={onChange}
-        aria-invalid={error ? 'true' : undefined}
-        aria-describedby={error ? errorId : hint ? hintId : undefined}
-        {...rest}
-      >
-        {options.map((option) => (
-          <option key={option.value} value={option.value}>
-            {option.label}
-          </option>
-        ))}
-      </select>
-
-      {error ? (
-        <span className="field__error" id={errorId} role="alert">
-          {error}
-        </span>
-      ) : hint ? (
-        <span className="field__hint" id={hintId}>
-          {hint}
-        </span>
-      ) : null}
-    </div>
+    <Field label={label} error={error} hint={hint} required={required}>
+      {(control) => (
+        <select {...control} {...rest}>
+          {options.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+      )}
+    </Field>
   );
 }
 

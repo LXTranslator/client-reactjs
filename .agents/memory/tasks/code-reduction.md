@@ -108,3 +108,22 @@ the point; they hold the behaviour still while the code underneath changed.
 
 `apiClient.js`: 517 lines, down to 494, with one `encodeURIComponent` left where there were
 55. Client suite: 301 passing across 17 files.
+
+### Task 4 — refactor/form-field
+
+`TextField`, `TextAreaField` and `SelectField` each carried their own copy of the label,
+the required marker, the hint, the error and the three accessibility attributes that tie
+them to the control. The copies had already drifted: only the text input set
+`aria-required`, and the select ignored `required` entirely. A private `Field` shell now
+renders all of that once and hands the control the props it must carry, so the three
+exported components are each a few lines.
+
+Checked by rendering every control in its main states through both the old and the new
+module and comparing the markup. Two differences, both deliberate:
+
+* a required textarea or select now gets `aria-required` and the marker, like the text
+  input already did; no current form marks one required, so nothing on screen changes;
+* the flex row around the label is rendered only when there is a `trailing` element
+  beside it. Without one it held a single block label, so the spacing is unchanged.
+
+`FormField.jsx`: 234 lines, down to 179. Client suite: 301 passing across 17 files.
