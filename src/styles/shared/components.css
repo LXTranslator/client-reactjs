@@ -591,11 +591,6 @@ textarea.field__control {
 
 /* Utility ----------------------------------------------------------------- */
 
-.stack {
-  display: grid;
-  gap: 1rem;
-}
-
 .muted {
   color: var(--ink-400);
 }
