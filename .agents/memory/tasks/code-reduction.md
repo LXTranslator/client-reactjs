@@ -37,6 +37,7 @@ Baseline on `master`: 297 tests passing across 16 files, 12,021 lines of JavaScr
 | Branch convention over the harness branch | The harness named `claude/project-thread-mut6ku`; `branching-strategy.md` forbids a tool preset prefix and a generated suffix, and the user asked for the convention. |
 | Work autonomously, choosing the recommended option | The user is away and asked that each question be posed with a recommendation and then answered with it. The plan, the version and opening the pull requests were settled that way; merging is left to the user. |
 | Version 0.17.1 | Nothing new is offered to a user. The links are a fix and the rest is internal, so the release is a patch. |
+| Keep `.btn--sponsor` | No page renders it, but `wiki/information/design-system.md`, which describes itself as the project agnostic source of truth, lists it among the buttons. Removing it would leave that document wrong or make this copy drift, for five lines. |
 
 ## The tasks
 
@@ -232,3 +233,22 @@ error was the absent API answering 502.
 
 Documented in `wiki/information/architecture.md` under "Build". Client suite: 309
 passing across 19 files.
+
+### Task 8 — refactor/unused-css
+
+Two rules that no component renders are gone:
+
+* `.stack` in `src/styles/shared/components.css`, a utility nothing applies.
+* `.auth__divider` and its two rules in `src/styles/auth/auth.css`. It was written with
+  the provider buttons as a labelled rule between them and the credentials form, but no
+  component ever rendered it; `git log -S` shows only the commit that added it. The
+  comments in `auth.css` and `LoginPage.jsx` that described it now say what is there:
+  the provider row, and why its spacing belongs to the component.
+
+The plan named `.btn--sponsor` as well. It stays, for the reason in the decisions table.
+`chat__message--you` looks unused to a plain search but is built from the message role at
+run time, and the `--sponsor` token is used by the danger button, the strength meter and
+several accents, so both stay.
+
+Built CSS: 27.43 kB to 27.18 kB (6.00 kB to 5.96 kB gzip). Client suite: 309 passing
+across 19 files.

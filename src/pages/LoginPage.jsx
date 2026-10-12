@@ -153,8 +153,8 @@ export function LoginPage() {
         <>
         {/*
           Renders nothing at all when this deployment configured no provider,
-          which is why the divider lives inside the same component boundary and
-          not above it.
+          which is why the space below the buttons belongs to the component and
+          not to this page.
         */}
         <OAuthProviderButtons mode="LOGIN" onError={setSubmitError} />
 
