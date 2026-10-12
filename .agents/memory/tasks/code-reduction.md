@@ -205,3 +205,30 @@ components rows of the repository map.
 
 `src/`: 599 lines removed and 414 added across 11 files, the hook and the picker
 included. Client suite: 309 passing across 19 files.
+
+### Task 7 — perf/route-splitting
+
+`src/App.jsx` imported all 24 pages up front, so the first visit to the sign in page
+downloaded the translation editor, the chat workspace and the QR encoder for two factor
+setup as well. The pages now load on demand: `import.meta.glob` collects the page
+modules, a small `page(name)` helper wraps each in `React.lazy` (the pages keep their
+named exports), and `AppLayout` holds the one `Suspense` boundary, so the header and
+footer stay put while a page arrives. A misspelt page name throws when `App.jsx` loads,
+not when somebody first opens that route.
+
+Production build, before and after:
+
+| | Before | After |
+|---|---|---|
+| JavaScript before any page renders | 406.54 kB, 116.62 kB gzip | 255.24 kB, 82.27 kB gzip |
+| Sign in page on top of that | included | 3.13 kB, 1.29 kB gzip |
+| Two factor page (holds the QR encoder) | included | 11.26 kB, 4.44 kB gzip |
+
+The 255 kB is the entry chunk plus the two shared chunks it preloads (the API client,
+and the UI and helpers every page uses). A smoke test against `vite preview` in Chromium
+loaded `/login`, `/register` and `/forgot-password`, each fetching only its own page
+chunk, and followed a link from sign in to the forgot password page; the only console
+error was the absent API answering 502.
+
+Documented in `wiki/information/architecture.md` under "Build". Client suite: 309
+passing across 19 files.

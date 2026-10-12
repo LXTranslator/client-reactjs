@@ -1,31 +1,55 @@
+import { lazy } from 'react';
 import { Route, Routes } from 'react-router';
 import { AppLayout } from './components/layout/AppLayout.jsx';
 import { ProtectedRoute, PublicOnlyRoute } from './components/routing/ProtectedRoute.jsx';
 import { NamespaceRoute } from './components/routing/NamespaceRoute.jsx';
-import { HomePage } from './pages/HomePage.jsx';
-import { LoginPage } from './pages/LoginPage.jsx';
-import { RegisterPage } from './pages/RegisterPage.jsx';
-import { ForgotPasswordPage } from './pages/ForgotPasswordPage.jsx';
-import { ResetPasswordPage } from './pages/ResetPasswordPage.jsx';
-import { NamespacesPage } from './pages/NamespacesPage.jsx';
-import { OrganizationCreatePage } from './pages/OrganizationCreatePage.jsx';
-import { NamespaceSettingsPage } from './pages/NamespaceSettingsPage.jsx';
-import { NamespaceMembersPage } from './pages/NamespaceMembersPage.jsx';
-import { NamespaceExportFormatsPage } from './pages/NamespaceExportFormatsPage.jsx';
-import { NamespaceAiSettingsPage } from './pages/NamespaceAiSettingsPage.jsx';
-import { ChatPage } from './pages/ChatPage.jsx';
-import { ProjectsPage } from './pages/ProjectsPage.jsx';
-import { ProjectDetailPage } from './pages/ProjectDetailPage.jsx';
-import { ProjectUploadsPage } from './pages/ProjectUploadsPage.jsx';
-import { ProjectSettingsPage } from './pages/ProjectSettingsPage.jsx';
-import { TranslationEditorPage } from './pages/TranslationEditorPage.jsx';
-import { AccountSettingsPage } from './pages/AccountSettingsPage.jsx';
-import { TwoFactorPage } from './pages/TwoFactorPage.jsx';
-import { LinkedAccountsPage } from './pages/LinkedAccountsPage.jsx';
-import { OAuthCallbackPage } from './pages/OAuthCallbackPage.jsx';
-import { PrivacyPolicyPage } from './pages/PrivacyPolicyPage.jsx';
-import { TermsOfServicePage } from './pages/TermsOfServicePage.jsx';
-import { NotFoundPage } from './pages/NotFoundPage.jsx';
+
+/** Every page module, each built as its own chunk. */
+const pageModules = import.meta.glob('./pages/*Page.jsx');
+
+/**
+ * Loads a page the first time its route renders.
+ *
+ * Every page is its own chunk, so the sign in page does not wait for the
+ * translation editor, the chat workspace or the QR encoder to download. The
+ * pages keep their named exports, which `lazy` cannot read on its own.
+ *
+ * A misspelt name fails when this module loads rather than when somebody first
+ * opens the route.
+ *
+ * @param {string} name The page's file and export name.
+ * @returns {React.LazyExoticComponent} The lazily loaded page.
+ */
+function page(name) {
+  const load = pageModules[`./pages/${name}.jsx`];
+  if (load === undefined) throw new Error(`There is no page named ${name}.`);
+  return lazy(() => load().then((module) => ({ default: module[name] })));
+}
+
+const HomePage = page('HomePage');
+const LoginPage = page('LoginPage');
+const RegisterPage = page('RegisterPage');
+const ForgotPasswordPage = page('ForgotPasswordPage');
+const ResetPasswordPage = page('ResetPasswordPage');
+const NamespacesPage = page('NamespacesPage');
+const OrganizationCreatePage = page('OrganizationCreatePage');
+const NamespaceSettingsPage = page('NamespaceSettingsPage');
+const NamespaceMembersPage = page('NamespaceMembersPage');
+const NamespaceExportFormatsPage = page('NamespaceExportFormatsPage');
+const NamespaceAiSettingsPage = page('NamespaceAiSettingsPage');
+const ChatPage = page('ChatPage');
+const ProjectsPage = page('ProjectsPage');
+const ProjectDetailPage = page('ProjectDetailPage');
+const ProjectUploadsPage = page('ProjectUploadsPage');
+const ProjectSettingsPage = page('ProjectSettingsPage');
+const TranslationEditorPage = page('TranslationEditorPage');
+const AccountSettingsPage = page('AccountSettingsPage');
+const TwoFactorPage = page('TwoFactorPage');
+const LinkedAccountsPage = page('LinkedAccountsPage');
+const OAuthCallbackPage = page('OAuthCallbackPage');
+const PrivacyPolicyPage = page('PrivacyPolicyPage');
+const TermsOfServicePage = page('TermsOfServicePage');
+const NotFoundPage = page('NotFoundPage');
 
 /**
  * Route table.

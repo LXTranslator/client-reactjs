@@ -222,3 +222,11 @@ no preflight and no need to relax the backend's origin allowlist.
 
 `VITE_API_BASE_URL` is inlined at build time and defaults to a relative path, so
 the bundle calls whatever origin served it.
+
+Each page is its own chunk. `App.jsx` collects the page modules with
+`import.meta.glob` and wraps each in `React.lazy`, and `AppLayout` holds the
+`Suspense` boundary, so the header stays in place while a page arrives. A visitor
+downloads the shell and the page they opened, not every screen: the sign in page
+no longer carries the translation editor or the QR encoder for two factor setup.
+A new page needs only its route and a `page('NamePage')` line; the file name must
+match the exported component.
