@@ -1,8 +1,9 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router';
 import { useNamespace } from '../components/routing/NamespaceRoute.jsx';
 import { paths } from '../lib/paths.js';
 import { api } from '../lib/apiClient.js';
+import { useLoader } from '../hooks/useLoader.js';
 import { SelectField, TextField } from '../components/ui/FormField.jsx';
 import {
   Callout,
@@ -25,8 +26,6 @@ import { PLACEHOLDERS, runValidators, validateProjectName } from '../lib/validat
 export function ProjectsPage() {
   const namespace = useNamespace();
 
-  const [projects, setProjects] = useState([]);
-  const [providers, setProviders] = useState([]);
   const [values, setValues] = useState({
     name: '',
     description: '',
@@ -34,60 +33,36 @@ export function ProjectsPage() {
     ai_model: '',
   });
   const [errors, setErrors] = useState({});
-  const [isLoading, setIsLoading] = useState(true);
-  const [loadError, setLoadError] = useState(null);
   const [submitError, setSubmitError] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [notice, setNotice] = useState(null);
 
-  const selectedProvider = providers.find((entry) => entry.name === values.ai_provider) ?? null;
+  const {
+    data: projects = [],
+    isLoading,
+    error: loadError,
+    reload: loadProjects,
+  } = useLoader(
+    async () => (await api.listProjects(namespace.user_id)).projects ?? [],
+    [namespace],
+  );
 
-  /**
-   * Loads projects for the namespace in the URL.
-   *
-   * @returns {Promise<void>}
+  /*
+   * The provider catalogue loads once and preselects the server's defaults. The
+   * form still works without it; the server applies its own defaults when the
+   * fields are omitted.
    */
-  const loadProjects = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      const result = await api.listProjects(namespace.user_id);
-      setProjects(result.projects ?? []);
-      setLoadError(null);
-    } catch (error) {
-      setLoadError(error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [namespace]);
-
-  useEffect(() => {
-    loadProjects();
-  }, [loadProjects]);
-
-  /* Load the provider catalogue once. */
-  useEffect(() => {
-    let cancelled = false;
-
-    api
-      .listProviders()
-      .then((result) => {
-        if (cancelled) return;
-        setProviders(result.providers ?? []);
-        setValues((current) => ({
-          ...current,
-          ai_provider: current.ai_provider || result.default_provider,
-          ai_model: current.ai_model || result.default_model,
-        }));
-      })
-      .catch(() => {
-        // The form still works without the catalogue; the server applies its
-        // own defaults when the fields are omitted.
-      });
-
-    return () => {
-      cancelled = true;
-    };
+  const { data: providers = [] } = useLoader(async () => {
+    const result = await api.listProviders();
+    setValues((current) => ({
+      ...current,
+      ai_provider: current.ai_provider || result.default_provider,
+      ai_model: current.ai_model || result.default_model,
+    }));
+    return result.providers ?? [];
   }, []);
+
+  const selectedProvider = providers.find((entry) => entry.name === values.ai_provider) ?? null;
 
   /**
    * Updates a field and clears its error.

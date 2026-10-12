@@ -1,6 +1,7 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { api } from '../../lib/apiClient.js';
+import { useLoader } from '../../hooks/useLoader.js';
 import { TextField } from '../ui/FormField.jsx';
 import { Callout, EmptyState, ErrorMessage, LoadingState } from '../ui/Feedback.jsx';
 import { UsagePanel } from './UsagePanel.jsx';
@@ -22,10 +23,18 @@ import { UsagePanel } from './UsagePanel.jsx';
  */
 export function SessionsPanel() {
   const { logout } = useAuth();
-  const [sessions, setSessions] = useState([]);
-  const [tokens, setTokens] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [loadError, setLoadError] = useState(null);
+
+  /* Both lists load together. */
+  const { data, isLoading, error: loadError, reload: load } = useLoader(async () => {
+    const [sessionResult, tokenResult] = await Promise.all([
+      api.listSessions(),
+      api.listApiTokens(),
+    ]);
+    return { sessions: sessionResult.sessions ?? [], tokens: tokenResult.api_tokens ?? [] };
+  }, []);
+  const sessions = data?.sessions ?? [];
+  const tokens = data?.tokens ?? [];
+
   const [actionError, setActionError] = useState(null);
   const [notice, setNotice] = useState(null);
 
@@ -34,32 +43,6 @@ export function SessionsPanel() {
   const [tokenName, setTokenName] = useState('');
   const [tokenError, setTokenError] = useState(null);
   const [isCreating, setIsCreating] = useState(false);
-
-  /**
-   * Loads both lists.
-   *
-   * @returns {Promise<void>}
-   */
-  const load = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      const [sessionResult, tokenResult] = await Promise.all([
-        api.listSessions(),
-        api.listApiTokens(),
-      ]);
-      setSessions(sessionResult.sessions ?? []);
-      setTokens(tokenResult.api_tokens ?? []);
-      setLoadError(null);
-    } catch (error) {
-      setLoadError(error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    load();
-  }, [load]);
 
   /**
    * Ends one session.

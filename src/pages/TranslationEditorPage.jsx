@@ -1,8 +1,9 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router';
 import { useNamespace } from '../components/routing/NamespaceRoute.jsx';
 import { paths } from '../lib/paths.js';
 import { api } from '../lib/apiClient.js';
+import { useLoader } from '../hooks/useLoader.js';
 import { triggerDownload } from '../lib/download.js';
 import { FileGrowthPanel } from '../components/editor/FileGrowthPanel.jsx';
 import { ConsistencyPanel } from '../components/editor/ConsistencyPanel.jsx';
@@ -41,62 +42,45 @@ export function TranslationEditorPage() {
   const namespace = useNamespace();
   const ns = namespace.user_id;
 
-  const [data, setData] = useState(null);
   const [activeLocale, setActiveLocale] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [loadError, setLoadError] = useState(null);
   const [actionError, setActionError] = useState(null);
   const [savingId, setSavingId] = useState(null);
   const [savedIds, setSavedIds] = useState({});
-  const [file, setFile] = useState(null);
   const [isArchiving, setIsArchiving] = useState(false);
-  const [exportFormats, setExportFormats] = useState([]);
   const [exportFormat, setExportFormat] = useState(DEFAULT_FORMAT_ID);
   const [retranslatingIds, setRetranslatingIds] = useState(new Set());
   const [notice, setNotice] = useState(null);
-  const [offlinePlatform, setOfflinePlatform] = useState(null);
+
+  /*
+   * The file record and, once it is ready, the editor payload. Until then the
+   * page shows the pipeline's progress rather than the editor, so there is no
+   * payload to keep.
+   */
+  const {
+    data: loaded,
+    isLoading,
+    error: loadError,
+    reload: load,
+  } = useLoader(async () => {
+    const { file } = await api.getFile(fileId);
+    if (file.status !== 'READY') return { file, translations: null };
+
+    const translations = await api.getTranslations(fileId);
+    setActiveLocale((current) => {
+      if (current && translations.available_locales.includes(current)) return current;
+      // Default to the first locale that is not the master, since the master is
+      // the source being reviewed against.
+      return (
+        translations.available_locales.find((code) => code !== translations.master_lang_code) ??
+        translations.master_lang_code
+      );
+    });
+    return { file, translations };
+  }, [fileId]);
+  const file = loaded?.file ?? null;
+  const data = loaded?.translations ?? null;
 
   const isProcessing = file?.status === 'PENDING' || file?.status === 'PROCESSING';
-
-  /**
-   * Loads the file record and, once it is ready, the editor payload.
-   *
-   * @param {boolean} [quiet] Skip the loading state, used by the poll.
-   * @returns {Promise<void>}
-   */
-  const load = useCallback(
-    async (quiet = false) => {
-      if (!quiet) setIsLoading(true);
-      try {
-        const fileResult = await api.getFile(fileId);
-        setFile(fileResult.file);
-
-        if (fileResult.file.status === 'READY') {
-          const result = await api.getTranslations(fileId);
-          setData(result);
-          setActiveLocale((current) => {
-            if (current && result.available_locales.includes(current)) return current;
-            // Default to the first locale that is not the master, since the
-            // master is the source being reviewed against.
-            return (
-              result.available_locales.find((code) => code !== result.master_lang_code) ??
-              result.master_lang_code
-            );
-          });
-        }
-        setLoadError(null);
-      } catch (error) {
-        setLoadError(error);
-      } finally {
-        if (!quiet) setIsLoading(false);
-      }
-    },
-    [fileId],
-  );
-
-  useEffect(() => {
-    load();
-  }, [load]);
 
   /*
    * Whether this project translates through an offline platform.
@@ -111,31 +95,19 @@ export function TranslationEditorPage() {
    * couple of seconds. A failure here is swallowed: this is an explanation, and
    * an explanation that fails must not take the editor with it.
    */
-  useEffect(() => {
-    let cancelled = false;
-
-    (async () => {
-      try {
-        const [{ project }, catalogue] = await Promise.all([
-          api.getProject(projectId),
-          api.listProviders(),
-        ]);
-
-        const platform = (catalogue.providers ?? []).find(
-          (entry) => entry.name === project.ai_provider,
-        );
-
-        if (!cancelled) {
-          setOfflinePlatform(platform?.requires_network === false ? platform.label : null);
-        }
-      } catch {
-        if (!cancelled) setOfflinePlatform(null);
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-    };
+  const { data: offlinePlatform = null } = useLoader(async () => {
+    try {
+      const [{ project }, catalogue] = await Promise.all([
+        api.getProject(projectId),
+        api.listProviders(),
+      ]);
+      const platform = (catalogue.providers ?? []).find(
+        (entry) => entry.name === project.ai_provider,
+      );
+      return platform?.requires_network === false ? platform.label : null;
+    } catch {
+      return null;
+    }
   }, [projectId]);
 
   /*
@@ -144,27 +116,19 @@ export function TranslationEditorPage() {
    * runs and has no business being re-fetched by the poll below. A failure here
    * leaves the built in default selected rather than blocking the editor.
    */
-  useEffect(() => {
-    let cancelled = false;
-
-    api
-      .listFileExportFormats(fileId)
-      .then((result) => {
-        if (!cancelled) setExportFormats(result.export_formats ?? []);
-      })
-      .catch(() => {
-        if (!cancelled) setExportFormats([]);
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [fileId]);
+  const { data: exportFormats = [] } = useLoader(
+    () =>
+      api.listFileExportFormats(fileId).then(
+        (result) => result.export_formats ?? [],
+        () => [],
+      ),
+    [fileId],
+  );
 
   /* Poll only while the pipeline is still running. */
   useEffect(() => {
     if (!isProcessing) return undefined;
-    const timer = setInterval(() => load(true), POLL_INTERVAL_MS);
+    const timer = setInterval(() => load({ quiet: true }), POLL_INTERVAL_MS);
     return () => clearInterval(timer);
   }, [isProcessing, load]);
 
@@ -186,7 +150,7 @@ export function TranslationEditorPage() {
         () => setSavedIds((current) => ({ ...current, [translationId]: false })),
         2000,
       );
-      await load(true);
+      await load({ quiet: true });
     } catch (error) {
       setActionError(error);
     } finally {
@@ -222,7 +186,7 @@ export function TranslationEditorPage() {
           : 'That text was already saved, so nothing changed.',
       );
 
-      await load(true);
+      await load({ quiet: true });
     } catch (error) {
       setActionError(error);
     } finally {
@@ -252,7 +216,7 @@ export function TranslationEditorPage() {
           : `Refreshing ${keyIds.length} keys in the background.`,
       );
       // 202: the work continues on a worker, so the page returns to polling.
-      await load(true);
+      await load({ quiet: true });
     } catch (error) {
       setActionError(error);
     } finally {

@@ -137,6 +137,19 @@ The probe is debounced and only fires once the value is **locally valid**, which
 keeps it from running on every keystroke of a half typed address. A failed probe
 never blocks the form; the server decides on submit.
 
+## Loading data
+
+A page that reads from the server does it through `useLoader` in `src/hooks/`. The
+hook starts the load, reloads when the values it depends on change, and reports the
+data, whether the load is running, and how it failed.
+
+* **Only the latest load counts.** A response that arrives after a newer load
+  started, because the namespace in the URL changed or a poll overlapped a save, is
+  dropped instead of overwriting fresher data.
+* **A failed reload keeps the last good data**, so a page that reloads after an
+  action still shows what it had.
+* **A quiet reload** refreshes without the busy state. The pollers below use it.
+
 ## Polling
 
 Two pages poll, and both stop as soon as there is nothing to wait for.

@@ -1,8 +1,9 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router';
 import { useNamespace } from '../components/routing/NamespaceRoute.jsx';
 import { paths } from '../lib/paths.js';
 import { api } from '../lib/apiClient.js';
+import { useLoader } from '../hooks/useLoader.js';
 import {
   Callout,
   EmptyState,
@@ -29,10 +30,16 @@ export function ProjectDetailPage() {
   const namespace = useNamespace();
   const ns = namespace.user_id;
 
-  const [project, setProject] = useState(null);
-  const [files, setFiles] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [loadError, setLoadError] = useState(null);
+  /* The project and its files load together. */
+  const { data, isLoading, error: loadError, reload: load } = useLoader(async () => {
+    const [{ project }, filesResult] = await Promise.all([
+      api.getProject(projectId),
+      api.listFiles(projectId),
+    ]);
+    return { project, files: filesResult.files ?? [] };
+  }, [projectId]);
+  const project = data?.project ?? null;
+  const files = data?.files ?? [];
   const [actionError, setActionError] = useState(null);
 
   // Held in a ref so the polling effect does not restart on every file change.
@@ -41,40 +48,10 @@ export function ProjectDetailPage() {
     (file) => file.status === 'PENDING' || file.status === 'PROCESSING',
   );
 
-  /**
-   * Loads the project and its files.
-   *
-   * @param {boolean} [quiet] Skip the loading state, used by the poll.
-   * @returns {Promise<void>}
-   */
-  const load = useCallback(
-    async (quiet = false) => {
-      if (!quiet) setIsLoading(true);
-      try {
-        const [projectResult, filesResult] = await Promise.all([
-          api.getProject(projectId),
-          api.listFiles(projectId),
-        ]);
-        setProject(projectResult.project);
-        setFiles(filesResult.files ?? []);
-        setLoadError(null);
-      } catch (error) {
-        setLoadError(error);
-      } finally {
-        if (!quiet) setIsLoading(false);
-      }
-    },
-    [projectId],
-  );
-
-  useEffect(() => {
-    load();
-  }, [load]);
-
   /* Poll only while something is still being processed. */
   useEffect(() => {
     const timer = setInterval(() => {
-      if (hasPendingWork.current) load(true);
+      if (hasPendingWork.current) load({ quiet: true });
     }, POLL_INTERVAL_MS);
 
     return () => clearInterval(timer);
@@ -108,7 +85,7 @@ export function ProjectDetailPage() {
     setActionError(null);
     try {
       await api.reprocessFile(file.id);
-      await load(true);
+      await load({ quiet: true });
     } catch (error) {
       setActionError(error);
     }

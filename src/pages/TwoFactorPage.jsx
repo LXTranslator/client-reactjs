@@ -1,10 +1,11 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router';
 import { Breadcrumbs } from '../components/layout/AppLayout.jsx';
 import { QrCode } from '../components/ui/QrCode.jsx';
 import { TextField } from '../components/ui/FormField.jsx';
 import { Callout, ErrorMessage, LoadingState } from '../components/ui/Feedback.jsx';
 import { api } from '../lib/apiClient.js';
+import { useLoader } from '../hooks/useLoader.js';
 import { paths } from '../lib/paths.js';
 import { PLACEHOLDERS, validateTotpCode } from '../lib/validation.js';
 
@@ -23,9 +24,12 @@ import { PLACEHOLDERS, validateTotpCode } from '../lib/validation.js';
  * @returns {JSX.Element} The page.
  */
 export function TwoFactorPage() {
-  const [status, setStatus] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [loadError, setLoadError] = useState(null);
+  const {
+    data: status = null,
+    isLoading,
+    error: loadError,
+    reload: load,
+  } = useLoader(() => api.getTwoFactor(), []);
   const [actionError, setActionError] = useState(null);
   const [notice, setNotice] = useState(null);
 
@@ -35,22 +39,6 @@ export function TwoFactorPage() {
   const [code, setCode] = useState('');
   const [codeError, setCodeError] = useState(undefined);
   const [isBusy, setIsBusy] = useState(false);
-
-  const load = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      setStatus(await api.getTwoFactor());
-      setLoadError(null);
-    } catch (error) {
-      setLoadError(error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    load();
-  }, [load]);
 
   /**
    * Confirms the password and returns a single use settings token.

@@ -1,9 +1,10 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useNamespace } from '../components/routing/NamespaceRoute.jsx';
 import { paths } from '../lib/paths.js';
 import { api } from '../lib/apiClient.js';
+import { useLoader } from '../hooks/useLoader.js';
 import { SelectField, TextField } from '../components/ui/FormField.jsx';
 import {
   Callout,
@@ -35,43 +36,24 @@ export function NamespaceMembersPage() {
   const { account } = useAuth();
   const namespace = useNamespace();
 
-  const [members, setMembers] = useState([]);
   const [identifier, setIdentifier] = useState('');
   const [role, setRole] = useState('MEMBER');
-  const [isLoading, setIsLoading] = useState(true);
-  const [loadError, setLoadError] = useState(null);
   const [actionError, setActionError] = useState(null);
   const [notice, setNotice] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const isOrganization = namespace.type === 'ORG';
 
-  /**
-   * Loads the membership list.
-   *
-   * @returns {Promise<void>}
-   */
-  const loadMembers = useCallback(async () => {
-    if (!isOrganization) {
-      setIsLoading(false);
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      const result = await api.listMembers(namespace.user_id);
-      setMembers(result.members ?? []);
-      setLoadError(null);
-    } catch (error) {
-      setLoadError(error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [namespace, isOrganization]);
-
-  useEffect(() => {
-    loadMembers();
-  }, [loadMembers]);
+  /* Only an organization has members, so a personal namespace asks for nothing. */
+  const {
+    data: members = [],
+    isLoading,
+    error: loadError,
+    reload: loadMembers,
+  } = useLoader(
+    async () => (isOrganization ? ((await api.listMembers(namespace.user_id)).members ?? []) : []),
+    [namespace, isOrganization],
+  );
 
   /**
    * Invites an existing account into the organization.

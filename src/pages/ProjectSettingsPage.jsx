@@ -1,8 +1,9 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
 import { useNamespace } from '../components/routing/NamespaceRoute.jsx';
 import { paths } from '../lib/paths.js';
 import { api } from '../lib/apiClient.js';
+import { useLoader } from '../hooks/useLoader.js';
 import { SelectField, TextField, TextAreaField } from '../components/ui/FormField.jsx';
 import {
   Callout,
@@ -30,9 +31,6 @@ export function ProjectSettingsPage() {
   const ns = namespace.user_id;
   const navigate = useNavigate();
 
-  const [project, setProject] = useState(null);
-  const [providers, setProviders] = useState([]);
-  const [accountKeys, setAccountKeys] = useState([]);
   const [values, setValues] = useState({
     name: '',
     description: '',
@@ -40,11 +38,41 @@ export function ProjectSettingsPage() {
     ai_model: '',
   });
   const [errors, setErrors] = useState({});
-  const [isLoading, setIsLoading] = useState(true);
-  const [loadError, setLoadError] = useState(null);
   const [actionError, setActionError] = useState(null);
   const [notice, setNotice] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
+
+  /*
+   * The project, the platform catalogue and the account credential chain load
+   * together, and the form is seeded from the project.
+   *
+   * The chain is read only here. It tells the person choosing a platform whether
+   * the account can actually pay for it, which is the one thing about it that
+   * belongs on this page. Inside an organization a plain member is refused the
+   * list, so a failure there is absorbed rather than failing the whole page.
+   */
+  const { data, isLoading, error: loadError, reload: load } = useLoader(async () => {
+    const [{ project }, providerResult, keysResult] = await Promise.all([
+      api.getProject(projectId),
+      api.listProviders(),
+      api.listAccountKeys(ns).catch(() => null),
+    ]);
+
+    setValues({
+      name: project.name,
+      description: project.description ?? '',
+      ai_provider: project.ai_provider,
+      ai_model: project.ai_model,
+    });
+    return {
+      project,
+      providers: providerResult.providers ?? [],
+      accountKeys: keysResult?.keys ?? [],
+    };
+  }, [projectId, ns]);
+  const project = data?.project ?? null;
+  const providers = data?.providers ?? [];
+  const accountKeys = data?.accountKeys ?? [];
 
   const selectedProvider = providers.find((entry) => entry.name === values.ai_provider) ?? null;
 
@@ -53,46 +81,6 @@ export function ProjectSettingsPage() {
   const keysForPlatform = accountKeys.filter(
     (key) => key.is_active && key.provider === values.ai_provider,
   );
-
-  /**
-   * Loads the project, the platform catalogue and the account credential chain.
-   *
-   * The chain is read only here. It tells the person choosing a platform whether
-   * the account can actually pay for it, which is the one thing about it that
-   * belongs on this page. Inside an organization a plain member is refused the
-   * list, so a failure there is absorbed rather than failing the whole page.
-   *
-   * @returns {Promise<void>}
-   */
-  const load = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      const [projectResult, providerResult, keysResult] = await Promise.all([
-        api.getProject(projectId),
-        api.listProviders(),
-        api.listAccountKeys(ns).catch(() => null),
-      ]);
-
-      setProject(projectResult.project);
-      setAccountKeys(keysResult?.keys ?? []);
-      setProviders(providerResult.providers ?? []);
-      setValues({
-        name: projectResult.project.name,
-        description: projectResult.project.description ?? '',
-        ai_provider: projectResult.project.ai_provider,
-        ai_model: projectResult.project.ai_model,
-      });
-      setLoadError(null);
-    } catch (error) {
-      setLoadError(error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [projectId, ns]);
-
-  useEffect(() => {
-    load();
-  }, [load]);
 
   /**
    * Updates a project field and clears its error.

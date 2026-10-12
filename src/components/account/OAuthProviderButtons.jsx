@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { api } from '../../lib/apiClient.js';
+import { useLoader } from '../../hooks/useLoader.js';
 
 /** Where the callback page reads back which kind of flow it is finishing. */
 export const OAUTH_MODE_KEY = 'lxtranslator_oauth_mode';
@@ -20,27 +21,13 @@ export const OAUTH_MODE_KEY = 'lxtranslator_oauth_mode';
  * @returns {JSX.Element|null} The buttons, or nothing.
  */
 export function OAuthProviderButtons({ mode, onError }) {
-  const [providers, setProviders] = useState([]);
+  // A catalogue that cannot be read is the same as an empty one: offer nothing
+  // rather than a button that leads nowhere.
+  const { data: providers = [] } = useLoader(
+    () => api.listAuthProviders().then((result) => result.providers ?? [], () => []),
+    [],
+  );
   const [pending, setPending] = useState(null);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    api
-      .listAuthProviders()
-      .then((result) => {
-        if (!cancelled) setProviders(result.providers ?? []);
-      })
-      .catch(() => {
-        // A catalogue that cannot be read is the same as an empty one: offer
-        // nothing rather than a button that leads nowhere.
-        if (!cancelled) setProviders([]);
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
 
   if (providers.length === 0) return null;
 

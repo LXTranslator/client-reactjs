@@ -1,8 +1,9 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router';
 import { useNamespace } from '../components/routing/NamespaceRoute.jsx';
 import { paths } from '../lib/paths.js';
 import { api } from '../lib/apiClient.js';
+import { useLoader } from '../hooks/useLoader.js';
 import { SelectField, TextField, TextAreaField } from '../components/ui/FormField.jsx';
 import {
   Callout,
@@ -41,9 +42,13 @@ export function NamespaceExportFormatsPage() {
   const namespace = useNamespace();
   const ns = namespace.user_id;
 
-  const [formats, setFormats] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [loadError, setLoadError] = useState(null);
+  const {
+    data: formats = [],
+    isLoading,
+    error: loadError,
+    reload: load,
+  } = useLoader(async () => (await api.listExportFormats(ns)).export_formats ?? [], [ns]);
+
   const [actionError, setActionError] = useState(null);
   const [notice, setNotice] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -59,28 +64,6 @@ export function NamespaceExportFormatsPage() {
   });
 
   const isStringLeaf = form.leaf_shape === 'STRING';
-
-  /**
-   * Loads the namespace's format catalogue.
-   *
-   * @returns {Promise<void>}
-   */
-  const load = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      const result = await api.listExportFormats(ns);
-      setFormats(result.export_formats ?? []);
-      setLoadError(null);
-    } catch (error) {
-      setLoadError(error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [ns]);
-
-  useEffect(() => {
-    load();
-  }, [load]);
 
   /**
    * Updates a form field and clears its error.
