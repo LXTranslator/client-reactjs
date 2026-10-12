@@ -1,16 +1,16 @@
-import { useCallback, useState } from 'react';
+import { useCallback } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { paths } from '../lib/paths.js';
 import { useAuth } from '../context/AuthContext.jsx';
 import { api } from '../lib/apiClient.js';
 import { useAvailability } from '../hooks/useAvailability.js';
+import { useForm } from '../hooks/useForm.js';
 import { TextField, TextAreaField } from '../components/ui/FormField.jsx';
 import { AvailabilityHint } from '../components/ui/AvailabilityHint.jsx';
 import { Callout, ErrorMessage } from '../components/ui/Feedback.jsx';
 import { Breadcrumbs } from '../components/layout/AppLayout.jsx';
 import {
   PLACEHOLDERS,
-  runValidators,
   validateEmail,
   validateUserId,
   validateWebsiteUrl,
@@ -33,16 +33,13 @@ export function OrganizationCreatePage() {
   const { refresh, selectNamespace } = useAuth();
   const navigate = useNavigate();
 
-  const [values, setValues] = useState({
+  const { values, errors, submitError, isSubmitting, handleChange, submit } = useForm({
     user_id: '',
     email: '',
     display_name: '',
     description: '',
     website_url: '',
   });
-  const [errors, setErrors] = useState({});
-  const [submitError, setSubmitError] = useState(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Stable identities so the hook's effect does not re-run every render.
   const validateId = useCallback((candidate) => validateUserId(candidate), []);
@@ -60,20 +57,6 @@ export function OrganizationCreatePage() {
   });
 
   /**
-   * Updates a field and clears its error.
-   *
-   * @param {string} field Field name.
-   * @returns {Function} Change handler.
-   */
-  function handleChange(field) {
-    return (event) => {
-      const { value } = event.target;
-      setValues((current) => ({ ...current, [field]: value }));
-      setErrors((current) => ({ ...current, [field]: undefined }));
-    };
-  }
-
-  /**
    * Validates and creates the organization.
    *
    * @param {React.FormEvent} event Submit event.
@@ -81,48 +64,37 @@ export function OrganizationCreatePage() {
    */
   async function handleSubmit(event) {
     event.preventDefault();
-    setSubmitError(null);
-
-    const { errors: found } = runValidators({
-      user_id: () => validateUserId(values.user_id),
-      email: () => validateEmail(values.email),
-      website_url: () => validateWebsiteUrl(values.website_url),
-    });
 
     // A known clash is treated as a validation failure rather than a submission
     // the server will certainly reject.
-    if (idAvailability === 'taken') {
-      found.user_id = 'That organization id is already taken.';
-    }
-    if (emailAvailability === 'taken') {
-      found.email = 'That email address is already registered.';
-    }
+    await submit(
+      {
+        user_id: () =>
+          idAvailability === 'taken'
+            ? 'That organization id is already taken.'
+            : validateUserId(values.user_id),
+        email: () =>
+          emailAvailability === 'taken'
+            ? 'That email address is already registered.'
+            : validateEmail(values.email),
+        website_url: () => validateWebsiteUrl(values.website_url),
+      },
+      async () => {
+        const result = await api.createOrganization({
+          user_id: values.user_id.trim(),
+          email: values.email.trim().toLowerCase(),
+          ...(values.display_name.trim() ? { display_name: values.display_name.trim() } : {}),
+          ...(values.description.trim() ? { description: values.description.trim() } : {}),
+        });
 
-    setErrors(found);
-    if (Object.keys(found).length > 0) return;
+        await refresh();
 
-    setIsSubmitting(true);
-    try {
-      const result = await api.createOrganization({
-        user_id: values.user_id.trim(),
-        email: values.email.trim().toLowerCase(),
-        ...(values.display_name.trim() ? { display_name: values.display_name.trim() } : {}),
-        ...(values.description.trim() ? { description: values.description.trim() } : {}),
-      });
-
-      await refresh();
-
-      // Switch straight into the new organization, since that is almost
-      // certainly what the visitor wants to work in next.
-      selectNamespace(result.namespace.user_id);
-      navigate(paths.namespaceSettings(result.namespace.user_id), { replace: true });
-    } catch (error) {
-      setSubmitError(error);
-      const fieldErrors = error?.fieldErrors ?? {};
-      if (Object.keys(fieldErrors).length > 0) setErrors(fieldErrors);
-    } finally {
-      setIsSubmitting(false);
-    }
+        // Switch straight into the new organization, since that is almost
+        // certainly what the visitor wants to work in next.
+        selectNamespace(result.namespace.user_id);
+        navigate(paths.namespaceSettings(result.namespace.user_id), { replace: true });
+      },
+    );
   }
 
   const isBlocked = idAvailability === 'taken' || emailAvailability === 'taken';

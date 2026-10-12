@@ -4,7 +4,9 @@ import { useNamespace } from '../components/routing/NamespaceRoute.jsx';
 import { paths } from '../lib/paths.js';
 import { api } from '../lib/apiClient.js';
 import { useLoader } from '../hooks/useLoader.js';
-import { SelectField, TextField } from '../components/ui/FormField.jsx';
+import { useForm } from '../hooks/useForm.js';
+import { TextField } from '../components/ui/FormField.jsx';
+import { PlatformFields } from '../components/project/PlatformFields.jsx';
 import {
   Callout,
   EmptyState,
@@ -12,7 +14,7 @@ import {
   LoadingState,
 } from '../components/ui/Feedback.jsx';
 import { Breadcrumbs } from '../components/layout/AppLayout.jsx';
-import { PLACEHOLDERS, runValidators, validateProjectName } from '../lib/validation.js';
+import { PLACEHOLDERS, validateProjectName } from '../lib/validation.js';
 
 /**
  * Project list and creation.
@@ -26,15 +28,12 @@ import { PLACEHOLDERS, runValidators, validateProjectName } from '../lib/validat
 export function ProjectsPage() {
   const namespace = useNamespace();
 
-  const [values, setValues] = useState({
+  const { values, setValues, errors, submitError, isSubmitting, handleChange, submit } = useForm({
     name: '',
     description: '',
     ai_provider: '',
     ai_model: '',
   });
-  const [errors, setErrors] = useState({});
-  const [submitError, setSubmitError] = useState(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [notice, setNotice] = useState(null);
 
   const {
@@ -62,41 +61,6 @@ export function ProjectsPage() {
     return result.providers ?? [];
   }, []);
 
-  const selectedProvider = providers.find((entry) => entry.name === values.ai_provider) ?? null;
-
-  /**
-   * Updates a field and clears its error.
-   *
-   * @param {string} field Field name.
-   * @returns {Function} Change handler.
-   */
-  function handleChange(field) {
-    return (event) => {
-      const { value } = event.target;
-      setValues((current) => ({ ...current, [field]: value }));
-      setErrors((current) => ({ ...current, [field]: undefined }));
-    };
-  }
-
-  /**
-   * Switches provider, resetting the model to that provider's default.
-   *
-   * Keeping the old model would almost certainly name something the new
-   * provider does not offer.
-   *
-   * @param {React.ChangeEvent} event Change event.
-   * @returns {void}
-   */
-  function handleProviderChange(event) {
-    const providerName = event.target.value;
-    const provider = providers.find((entry) => entry.name === providerName);
-    setValues((current) => ({
-      ...current,
-      ai_provider: providerName,
-      ai_model: provider?.default_model ?? '',
-    }));
-  }
-
   /**
    * Creates a project.
    *
@@ -105,18 +69,9 @@ export function ProjectsPage() {
    */
   async function handleCreate(event) {
     event.preventDefault();
-    setSubmitError(null);
     setNotice(null);
 
-    const { errors: found, isValid } = runValidators({
-      name: () => validateProjectName(values.name),
-    });
-
-    setErrors(found);
-    if (!isValid) return;
-
-    setIsSubmitting(true);
-    try {
+    await submit({ name: () => validateProjectName(values.name) }, async () => {
       await api.createProject(namespace.user_id, {
         name: values.name.trim(),
         ...(values.description.trim() ? { description: values.description.trim() } : {}),
@@ -127,13 +82,7 @@ export function ProjectsPage() {
       setNotice('Project created.');
       setValues((current) => ({ ...current, name: '', description: '' }));
       await loadProjects();
-    } catch (error) {
-      setSubmitError(error);
-      const fieldErrors = error?.fieldErrors ?? {};
-      if (Object.keys(fieldErrors).length > 0) setErrors(fieldErrors);
-    } finally {
-      setIsSubmitting(false);
-    }
+    });
   }
 
   return (
@@ -202,34 +151,17 @@ export function ProjectsPage() {
           </div>
 
           {providers.length > 0 ? (
-            <div className="field-row">
-              <SelectField
-                label="AI provider"
-                name="ai_provider"
-                value={values.ai_provider}
-                onChange={handleProviderChange}
-                options={providers.map((provider) => ({
-                  value: provider.name,
-                  label: provider.label,
-                }))}
-                hint={
-                  selectedProvider?.requires_network === false
-                    ? 'Runs offline. No API key needed.'
-                    : "Paid for by this account's keys for the platform, in AI settings."
-                }
-              />
-
-              <SelectField
-                label="Model"
-                name="ai_model"
-                value={values.ai_model}
-                onChange={handleChange('ai_model')}
-                options={(selectedProvider?.models ?? []).map((model) => ({
-                  value: model,
-                  label: model,
-                }))}
-              />
-            </div>
+            <PlatformFields
+              providers={providers}
+              provider={values.ai_provider}
+              model={values.ai_model}
+              onChange={(next) => setValues((current) => ({ ...current, ...next }))}
+              hint={(selected) =>
+                selected?.requires_network === false
+                  ? 'Runs offline. No API key needed.'
+                  : "Paid for by this account's keys for the platform, in AI settings."
+              }
+            />
           ) : null}
 
           <button type="submit" className="btn btn--primary" disabled={isSubmitting}>

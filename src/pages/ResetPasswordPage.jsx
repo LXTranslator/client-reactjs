@@ -4,11 +4,8 @@ import { paths } from '../lib/paths.js';
 import { api } from '../lib/apiClient.js';
 import { PasswordField, TextField } from '../components/ui/FormField.jsx';
 import { Callout, ErrorMessage } from '../components/ui/Feedback.jsx';
-import {
-  runValidators,
-  validatePassword,
-  validatePasswordConfirmation,
-} from '../lib/validation.js';
+import { validatePassword, validatePasswordConfirmation } from '../lib/validation.js';
+import { useForm } from '../hooks/useForm.js';
 
 /**
  * Reset password page.
@@ -22,31 +19,14 @@ export function ResetPasswordPage() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
 
-  const [values, setValues] = useState({
+  const { values, errors, submitError, isSubmitting, handleChange, submit } = useForm({
     token: searchParams.get('token') ?? '',
     password: '',
     confirm_password: '',
   });
-  const [errors, setErrors] = useState({});
-  const [submitError, setSubmitError] = useState(null);
   const [isDone, setIsDone] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const hasTokenFromLink = searchParams.get('token') !== null;
-
-  /**
-   * Updates a field and clears its error.
-   *
-   * @param {string} field Field name.
-   * @returns {Function} Change handler.
-   */
-  function handleChange(field) {
-    return (event) => {
-      const { value } = event.target;
-      setValues((current) => ({ ...current, [field]: value }));
-      setErrors((current) => ({ ...current, [field]: undefined }));
-    };
-  }
 
   /**
    * Validates and submits the reset.
@@ -56,33 +36,25 @@ export function ResetPasswordPage() {
    */
   async function handleSubmit(event) {
     event.preventDefault();
-    setSubmitError(null);
 
-    const { errors: found, isValid } = runValidators({
-      token: () => (values.token.trim().length === 0 ? 'The reset token is missing.' : null),
-      password: () => validatePassword(values.password),
-      confirm_password: () =>
-        validatePasswordConfirmation(values.password, values.confirm_password),
-    });
-
-    setErrors(found);
-    if (!isValid) return;
-
-    setIsSubmitting(true);
-    try {
-      await api.resetPassword({
-        token: values.token.trim(),
-        password: values.password,
-        confirm_password: values.confirm_password,
-      });
-      setIsDone(true);
-      // A short pause so the confirmation is actually read before redirecting.
-      setTimeout(() => navigate(paths.login(), { replace: true }), 2500);
-    } catch (error) {
-      setSubmitError(error);
-    } finally {
-      setIsSubmitting(false);
-    }
+    await submit(
+      {
+        token: () => (values.token.trim().length === 0 ? 'The reset token is missing.' : null),
+        password: () => validatePassword(values.password),
+        confirm_password: () =>
+          validatePasswordConfirmation(values.password, values.confirm_password),
+      },
+      async () => {
+        await api.resetPassword({
+          token: values.token.trim(),
+          password: values.password,
+          confirm_password: values.confirm_password,
+        });
+        setIsDone(true);
+        // A short pause so the confirmation is actually read before redirecting.
+        setTimeout(() => navigate(paths.login(), { replace: true }), 2500);
+      },
+    );
   }
 
   return (

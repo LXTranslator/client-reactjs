@@ -5,12 +5,8 @@ import { useAuth } from '../context/AuthContext.jsx';
 import { TextField } from '../components/ui/FormField.jsx';
 import { ErrorMessage } from '../components/ui/Feedback.jsx';
 import { OAuthProviderButtons } from '../components/account/OAuthProviderButtons.jsx';
-import {
-  PLACEHOLDERS,
-  runValidators,
-  validateIdentifier,
-  validateTotpCode,
-} from '../lib/validation.js';
+import { PLACEHOLDERS, validateIdentifier, validateTotpCode } from '../lib/validation.js';
+import { useForm } from '../hooks/useForm.js';
 
 /**
  * Sign in page.
@@ -32,31 +28,22 @@ export function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const [values, setValues] = useState({ identifier: '', password: '' });
-  const [errors, setErrors] = useState({});
-  const [submitError, setSubmitError] = useState(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const {
+    values,
+    setValues,
+    errors,
+    submitError,
+    setSubmitError,
+    isSubmitting,
+    handleChange,
+    submit,
+  } = useForm({ identifier: '', password: '', code: '' });
 
   /*
    * Held in component state for the life of this form and nowhere else. It is a
    * credential, so it never reaches storage and never reaches a URL.
    */
   const [challengeToken, setChallengeToken] = useState(null);
-  const [code, setCode] = useState('');
-
-  /**
-   * Updates a field and clears its error as soon as the user edits it.
-   *
-   * @param {string} field Field name.
-   * @returns {Function} Change handler.
-   */
-  function handleChange(field) {
-    return (event) => {
-      const { value } = event.target;
-      setValues((current) => ({ ...current, [field]: value }));
-      setErrors((current) => ({ ...current, [field]: undefined }));
-    };
-  }
 
   /**
    * Validates and submits the form.
@@ -66,34 +53,22 @@ export function LoginPage() {
    */
   async function handleSubmit(event) {
     event.preventDefault();
-    setSubmitError(null);
 
-    const { errors: found, isValid } = runValidators({
-      identifier: () => validateIdentifier(values.identifier),
-      password: () => (values.password.length === 0 ? 'Enter your password.' : null),
-    });
+    await submit(
+      {
+        identifier: () => validateIdentifier(values.identifier),
+        password: () => (values.password.length === 0 ? 'Enter your password.' : null),
+      },
+      async () => {
+        const result = await login({
+          identifier: values.identifier.trim(),
+          password: values.password,
+        });
 
-    setErrors(found);
-    if (!isValid) return;
-
-    setIsSubmitting(true);
-    try {
-      const result = await login({
-        identifier: values.identifier.trim(),
-        password: values.password,
-      });
-
-      if (result.mfaRequired) {
-        setChallengeToken(result.challengeToken);
-        return;
-      }
-
-      finish(result.account);
-    } catch (error) {
-      setSubmitError(error);
-    } finally {
-      setIsSubmitting(false);
-    }
+        if (result.mfaRequired) setChallengeToken(result.challengeToken);
+        else finish(result.account);
+      },
+    );
   }
 
   /**
@@ -116,25 +91,17 @@ export function LoginPage() {
    */
   async function handleChallenge(event) {
     event.preventDefault();
-    setSubmitError(null);
 
-    const message = validateTotpCode(code);
-    if (message !== null) {
-      setErrors({ code: message });
-      return;
-    }
-
-    setIsSubmitting(true);
-    try {
-      finish(await completeMfa({ challengeToken, code }));
-    } catch (error) {
-      setSubmitError(error);
-      // A wrong code does not spend the challenge, so the field is simply
-      // cleared and they try again.
-      setCode('');
-    } finally {
-      setIsSubmitting(false);
-    }
+    await submit({ code: () => validateTotpCode(values.code) }, async () => {
+      try {
+        finish(await completeMfa({ challengeToken, code: values.code }));
+      } catch (error) {
+        // A wrong code does not spend the challenge, so the field is simply
+        // cleared and they try again.
+        setValues((current) => ({ ...current, code: '' }));
+        throw error;
+      }
+    });
   }
 
   return (
@@ -157,11 +124,8 @@ export function LoginPage() {
             <TextField
               label="Authentication code"
               name="code"
-              value={code}
-              onChange={(event) => {
-                setCode(event.target.value);
-                setErrors((current) => ({ ...current, code: undefined }));
-              }}
+              value={values.code}
+              onChange={handleChange('code')}
               placeholder={PLACEHOLDERS.totpCode}
               hint="Six digits from your authenticator app, or one of your recovery codes."
               error={errors.code}

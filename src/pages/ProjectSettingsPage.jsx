@@ -4,7 +4,9 @@ import { useNamespace } from '../components/routing/NamespaceRoute.jsx';
 import { paths } from '../lib/paths.js';
 import { api } from '../lib/apiClient.js';
 import { useLoader } from '../hooks/useLoader.js';
-import { SelectField, TextField, TextAreaField } from '../components/ui/FormField.jsx';
+import { useForm } from '../hooks/useForm.js';
+import { TextField, TextAreaField } from '../components/ui/FormField.jsx';
+import { PlatformFields } from '../components/project/PlatformFields.jsx';
 import {
   Callout,
   EmptyState,
@@ -12,7 +14,7 @@ import {
   LoadingState,
 } from '../components/ui/Feedback.jsx';
 import { Breadcrumbs } from '../components/layout/AppLayout.jsx';
-import { PLACEHOLDERS, runValidators, validateProjectName } from '../lib/validation.js';
+import { PLACEHOLDERS, validateProjectName } from '../lib/validation.js';
 
 /**
  * Project settings: name, description, AI platform and model.
@@ -31,16 +33,23 @@ export function ProjectSettingsPage() {
   const ns = namespace.user_id;
   const navigate = useNavigate();
 
-  const [values, setValues] = useState({
-    name: '',
-    description: '',
-    ai_provider: '',
-    ai_model: '',
-  });
-  const [errors, setErrors] = useState({});
-  const [actionError, setActionError] = useState(null);
   const [notice, setNotice] = useState(null);
-  const [isSaving, setIsSaving] = useState(false);
+
+  // The form's error doubles as the error for deleting the project, so the page
+  // shows whichever happened last.
+  const {
+    values,
+    setValues,
+    errors,
+    submitError: actionError,
+    setSubmitError: setActionError,
+    isSubmitting: isSaving,
+    handleChange,
+    submit,
+  } = useForm(
+    { name: '', description: '', ai_provider: '', ai_model: '' },
+    { onEdit: () => setNotice(null) },
+  );
 
   /*
    * The project, the platform catalogue and the account credential chain load
@@ -83,38 +92,6 @@ export function ProjectSettingsPage() {
   );
 
   /**
-   * Updates a project field and clears its error.
-   *
-   * @param {string} field Field name.
-   * @returns {Function} Change handler.
-   */
-  function handleChange(field) {
-    return (event) => {
-      const { value } = event.target;
-      setValues((current) => ({ ...current, [field]: value }));
-      setErrors((current) => ({ ...current, [field]: undefined }));
-      setNotice(null);
-    };
-  }
-
-  /**
-   * Switches provider, resetting the model to that provider's default.
-   *
-   * @param {React.ChangeEvent} event Change event.
-   * @returns {void}
-   */
-  function handleProviderChange(event) {
-    const providerName = event.target.value;
-    const provider = providers.find((entry) => entry.name === providerName);
-    setValues((current) => ({
-      ...current,
-      ai_provider: providerName,
-      ai_model: provider?.default_model ?? '',
-    }));
-    setNotice(null);
-  }
-
-  /**
    * Saves the project settings.
    *
    * @param {React.FormEvent} event Submit event.
@@ -122,18 +99,9 @@ export function ProjectSettingsPage() {
    */
   async function handleSaveProject(event) {
     event.preventDefault();
-    setActionError(null);
     setNotice(null);
 
-    const { errors: found, isValid } = runValidators({
-      name: () => validateProjectName(values.name),
-    });
-
-    setErrors(found);
-    if (!isValid) return;
-
-    setIsSaving(true);
-    try {
+    await submit({ name: () => validateProjectName(values.name) }, async () => {
       await api.updateProject(projectId, {
         name: values.name.trim(),
         description: values.description.trim(),
@@ -142,13 +110,7 @@ export function ProjectSettingsPage() {
       });
       setNotice('Project settings saved.');
       await load();
-    } catch (error) {
-      setActionError(error);
-      const fieldErrors = error?.fieldErrors ?? {};
-      if (Object.keys(fieldErrors).length > 0) setErrors(fieldErrors);
-    } finally {
-      setIsSaving(false);
-    }
+    });
   }
 
   /**
@@ -231,34 +193,20 @@ export function ProjectSettingsPage() {
             error={errors.description}
           />
 
-          <div className="field-row">
-            <SelectField
-              label="AI provider"
-              name="ai_provider"
-              value={values.ai_provider}
-              onChange={handleProviderChange}
-              options={providers.map((provider) => ({
-                value: provider.name,
-                label: provider.label,
-              }))}
-              hint={
-                selectedProvider?.requires_network === false
-                  ? 'Offline. Produces placeholder text rather than a translation.'
-                  : `Paid for by the ${ns} keys for this platform.`
-              }
-            />
-
-            <SelectField
-              label="Model"
-              name="ai_model"
-              value={values.ai_model}
-              onChange={handleChange('ai_model')}
-              options={(selectedProvider?.models ?? []).map((model) => ({
-                value: model,
-                label: model,
-              }))}
-            />
-          </div>
+          <PlatformFields
+            providers={providers}
+            provider={values.ai_provider}
+            model={values.ai_model}
+            onChange={(next) => {
+              setValues((current) => ({ ...current, ...next }));
+              setNotice(null);
+            }}
+            hint={(selected) =>
+              selected?.requires_network === false
+                ? 'Offline. Produces placeholder text rather than a translation.'
+                : `Paid for by the ${ns} keys for this platform.`
+            }
+          />
 
           <button type="submit" className="btn btn--primary" disabled={isSaving}>
             {isSaving ? 'Saving' : 'Save settings'}

@@ -1,14 +1,14 @@
-import { useCallback, useState } from 'react';
+import { useCallback } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { paths } from '../lib/paths.js';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useAvailability } from '../hooks/useAvailability.js';
+import { useForm } from '../hooks/useForm.js';
 import { TextField, PasswordField } from '../components/ui/FormField.jsx';
 import { AvailabilityHint } from '../components/ui/AvailabilityHint.jsx';
 import { ErrorMessage } from '../components/ui/Feedback.jsx';
 import {
   PLACEHOLDERS,
-  runValidators,
   validateEmail,
   validatePassword,
   validatePasswordConfirmation,
@@ -27,15 +27,12 @@ export function RegisterPage() {
   const { register } = useAuth();
   const navigate = useNavigate();
 
-  const [values, setValues] = useState({
+  const { values, errors, submitError, isSubmitting, handleChange, submit } = useForm({
     user_id: '',
     email: '',
     password: '',
     confirm_password: '',
   });
-  const [errors, setErrors] = useState({});
-  const [submitError, setSubmitError] = useState(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Stable identities so the hook's effect does not re-run every render.
   const validateId = useCallback((candidate) => validateUserId(candidate), []);
@@ -53,20 +50,6 @@ export function RegisterPage() {
   });
 
   /**
-   * Updates a field and clears its error.
-   *
-   * @param {string} field Field name.
-   * @returns {Function} Change handler.
-   */
-  function handleChange(field) {
-    return (event) => {
-      const { value } = event.target;
-      setValues((current) => ({ ...current, [field]: value }));
-      setErrors((current) => ({ ...current, [field]: undefined }));
-    };
-  }
-
-  /**
    * Validates and submits the registration.
    *
    * @param {React.FormEvent} event Submit event.
@@ -74,42 +57,33 @@ export function RegisterPage() {
    */
   async function handleSubmit(event) {
     event.preventDefault();
-    setSubmitError(null);
-
-    const { errors: found } = runValidators({
-      user_id: () => validateUserId(values.user_id),
-      email: () => validateEmail(values.email),
-      password: () => validatePassword(values.password),
-      confirm_password: () =>
-        validatePasswordConfirmation(values.password, values.confirm_password),
-    });
 
     // A known clash is treated as a validation failure rather than a submission
     // the server will certainly reject.
-    if (idAvailability === 'taken') found.user_id = 'That user id is already taken.';
-    if (emailAvailability === 'taken') {
-      found.email = 'That email address is already registered.';
-    }
-
-    setErrors(found);
-    if (Object.keys(found).length > 0) return;
-
-    setIsSubmitting(true);
-    try {
-      const account = await register({
-        user_id: values.user_id.trim(),
-        email: values.email.trim().toLowerCase(),
-        password: values.password,
-        confirm_password: values.confirm_password,
-      });
-      navigate(paths.namespace(account.user_id), { replace: true });
-    } catch (error) {
-      setSubmitError(error);
-      const fieldErrors = error?.fieldErrors ?? {};
-      if (Object.keys(fieldErrors).length > 0) setErrors(fieldErrors);
-    } finally {
-      setIsSubmitting(false);
-    }
+    await submit(
+      {
+        user_id: () =>
+          idAvailability === 'taken'
+            ? 'That user id is already taken.'
+            : validateUserId(values.user_id),
+        email: () =>
+          emailAvailability === 'taken'
+            ? 'That email address is already registered.'
+            : validateEmail(values.email),
+        password: () => validatePassword(values.password),
+        confirm_password: () =>
+          validatePasswordConfirmation(values.password, values.confirm_password),
+      },
+      async () => {
+        const account = await register({
+          user_id: values.user_id.trim(),
+          email: values.email.trim().toLowerCase(),
+          password: values.password,
+          confirm_password: values.confirm_password,
+        });
+        navigate(paths.namespace(account.user_id), { replace: true });
+      },
+    );
   }
 
   return (

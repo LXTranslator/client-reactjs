@@ -4,6 +4,7 @@ import { useNamespace } from '../components/routing/NamespaceRoute.jsx';
 import { paths } from '../lib/paths.js';
 import { api } from '../lib/apiClient.js';
 import { useLoader } from '../hooks/useLoader.js';
+import { useForm } from '../hooks/useForm.js';
 import { SelectField, TextField } from '../components/ui/FormField.jsx';
 import {
   Callout,
@@ -12,7 +13,7 @@ import {
   LoadingState,
 } from '../components/ui/Feedback.jsx';
 import { Breadcrumbs } from '../components/layout/AppLayout.jsx';
-import { PLACEHOLDERS, runValidators, validateApiKey } from '../lib/validation.js';
+import { PLACEHOLDERS, validateApiKey } from '../lib/validation.js';
 
 /**
  * Namespace level AI credentials.
@@ -39,17 +40,24 @@ export function NamespaceAiSettingsPage() {
   const ns = namespace.user_id;
   const isOrg = namespace.type === 'ORG';
 
-  const [actionError, setActionError] = useState(null);
   const [notice, setNotice] = useState(null);
-  const [errors, setErrors] = useState({});
-  const [isSaving, setIsSaving] = useState(false);
-  const [form, setForm] = useState({
-    provider: '',
-    chat_model: '',
-    embedding_model: '',
-    api_key: '',
-    label: '',
-  });
+
+  // The form's error doubles as the error for the row actions below it, so the
+  // page shows whichever happened last.
+  const {
+    values: form,
+    setValues: setForm,
+    errors,
+    setErrors,
+    submitError: actionError,
+    setSubmitError: setActionError,
+    isSubmitting: isSaving,
+    handleChange,
+    submit,
+  } = useForm(
+    { provider: '', chat_model: '', embedding_model: '', api_key: '', label: '' },
+    { onEdit: () => setNotice(null) },
+  );
 
   /*
    * The credential chain and the platform catalogue load together, and the
@@ -79,21 +87,6 @@ export function NamespaceAiSettingsPage() {
 
   const selectedProvider = providers.find((entry) => entry.name === form.provider) ?? null;
   const embeddingModels = selectedProvider?.embedding_models ?? [];
-
-  /**
-   * Updates a form field and clears its error.
-   *
-   * @param {string} field Field name.
-   * @returns {Function} Change handler.
-   */
-  function handleChange(field) {
-    return (event) => {
-      const { value } = event.target;
-      setForm((current) => ({ ...current, [field]: value }));
-      setErrors((current) => ({ ...current, [field]: undefined }));
-      setNotice(null);
-    };
-  }
 
   /**
    * Switches platform, resetting both models to that platform's own.
@@ -127,20 +120,9 @@ export function NamespaceAiSettingsPage() {
    */
   async function handleAdd(event) {
     event.preventDefault();
-    setActionError(null);
     setNotice(null);
 
-    const { errors: found, isValid } = runValidators({
-      api_key: () => validateApiKey(form.api_key),
-    });
-
-    if (!isValid) {
-      setErrors(found);
-      return;
-    }
-
-    setIsSaving(true);
-    try {
+    await submit({ api_key: () => validateApiKey(form.api_key) }, async () => {
       await api.addAccountKey(ns, {
         provider: form.provider,
         chat_model: form.chat_model,
@@ -154,12 +136,7 @@ export function NamespaceAiSettingsPage() {
       setNotice('Credential added.');
       setForm((current) => ({ ...current, api_key: '', label: '' }));
       await load();
-    } catch (error) {
-      setActionError(error);
-      setErrors(error.fieldErrors ?? {});
-    } finally {
-      setIsSaving(false);
-    }
+    });
   }
 
   /**

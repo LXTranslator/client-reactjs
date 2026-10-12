@@ -167,3 +167,41 @@ row of the repository map.
 
 `src/`: 479 lines removed and 282 added across 14 files, the hook itself included.
 Client suite: 305 passing across 18 files.
+
+### Task 6 — refactor/form-state
+
+`src/hooks/useForm.js` holds a form's values, errors, submission error and busy flag,
+and gives back `handleChange(field)` and `submit(validators, action)`. It applies the
+three form rules from `repository.md` itself, so a page cannot forget one: an error clears
+as soon as its field is edited, nothing is sent until every validator passes, and a server
+rejection is mapped back onto the fields it names.
+
+Nine forms use it: sign in, both steps of it, registration, password reset, organization
+creation, namespace settings, project creation, project settings, AI credentials and
+export formats. `AccountSettingsPage` and `ProjectUploadsPage` keep their own state: the
+first runs several small forms through a settings token, and the second is a file
+picker, and neither has the shape the hook serves.
+
+What changed for a user, deliberately:
+
+* **Sign in and password reset now map field errors** from a server rejection onto the
+  fields, as the other forms already did. A test pins it on the reset page, and it fails
+  against the previous page.
+* **The export format form reports all of its problems at once.** It used to check that
+  the value and hash fields differ only after every other field passed, and then show that
+  one error alone. The check is part of the hash field's validator now.
+
+Three pages share one error between the form and the actions beside it (deleting a
+project, removing a key, removing a format) and show whichever happened last. They keep
+that by renaming the hook's error rather than adding a second one.
+
+`src/components/project/PlatformFields.jsx` is the platform and model picker that project
+creation and project settings each wrote out in full, with the same switch handler that
+resets the model to the new platform's default. Only the hint differs between the two
+pages, so the hint is a prop.
+
+Documented in `wiki/information/architecture.md` under "Validation", and in the hooks and
+components rows of the repository map.
+
+`src/`: 599 lines removed and 414 added across 11 files, the hook and the picker
+included. Client suite: 309 passing across 19 files.

@@ -4,6 +4,7 @@ import { useNamespace } from '../components/routing/NamespaceRoute.jsx';
 import { paths } from '../lib/paths.js';
 import { api } from '../lib/apiClient.js';
 import { useLoader } from '../hooks/useLoader.js';
+import { useForm } from '../hooks/useForm.js';
 import { SelectField, TextField, TextAreaField } from '../components/ui/FormField.jsx';
 import {
   Callout,
@@ -14,10 +15,20 @@ import {
 import { Breadcrumbs } from '../components/layout/AppLayout.jsx';
 import {
   PLACEHOLDERS,
-  runValidators,
   validateFieldName,
   validateFormatId,
 } from '../lib/validation.js';
+
+/** A blank format form, which is also what it resets to after a create. */
+const EMPTY_FORMAT = {
+  format_id: '',
+  name: '',
+  description: '',
+  leaf_shape: 'OBJECT',
+  value_field: 'value',
+  hash_field: 'hash',
+  nested: 'true',
+};
 
 /**
  * Export formats owned by a namespace.
@@ -49,36 +60,22 @@ export function NamespaceExportFormatsPage() {
     reload: load,
   } = useLoader(async () => (await api.listExportFormats(ns)).export_formats ?? [], [ns]);
 
-  const [actionError, setActionError] = useState(null);
   const [notice, setNotice] = useState(null);
-  const [isSaving, setIsSaving] = useState(false);
-  const [errors, setErrors] = useState({});
-  const [form, setForm] = useState({
-    format_id: '',
-    name: '',
-    description: '',
-    leaf_shape: 'OBJECT',
-    value_field: 'value',
-    hash_field: 'hash',
-    nested: 'true',
-  });
+
+  // The form's error doubles as the error for removing a format, so the page
+  // shows whichever happened last.
+  const {
+    values: form,
+    setValues: setForm,
+    errors,
+    submitError: actionError,
+    setSubmitError: setActionError,
+    isSubmitting: isSaving,
+    handleChange,
+    submit,
+  } = useForm(EMPTY_FORMAT, { onEdit: () => setNotice(null) });
 
   const isStringLeaf = form.leaf_shape === 'STRING';
-
-  /**
-   * Updates a form field and clears its error.
-   *
-   * @param {string} field Field name.
-   * @returns {Function} Change handler.
-   */
-  function handleChange(field) {
-    return (event) => {
-      const { value } = event.target;
-      setForm((current) => ({ ...current, [field]: value }));
-      setErrors((current) => ({ ...current, [field]: undefined }));
-      setNotice(null);
-    };
-  }
 
   /**
    * Creates a format.
@@ -88,68 +85,47 @@ export function NamespaceExportFormatsPage() {
    */
   async function handleCreate(event) {
     event.preventDefault();
-    setActionError(null);
     setNotice(null);
 
-    const { errors: found, isValid } = runValidators({
-      format_id: () => validateFormatId(form.format_id),
-      name: () => (form.name.trim().length === 0 ? 'Name the format.' : null),
-      // A string leaf is the translated text itself, so it carries no fields
-      // and naming one is refused rather than quietly ignored.
-      value_field: () => (isStringLeaf ? null : validateFieldName(form.value_field)),
-      hash_field: () => (isStringLeaf ? null : validateFieldName(form.hash_field, false)),
-    });
+    const hashField = form.hash_field.trim();
+    await submit(
+      {
+        format_id: () => validateFormatId(form.format_id),
+        name: () => (form.name.trim().length === 0 ? 'Name the format.' : null),
+        // A string leaf is the translated text itself, so it carries no fields
+        // and naming one is refused rather than quietly ignored.
+        value_field: () => (isStringLeaf ? null : validateFieldName(form.value_field)),
+        hash_field: () => {
+          if (isStringLeaf) return null;
+          const sameAsValue = hashField.length > 0 && hashField === form.value_field.trim();
+          return (
+            validateFieldName(form.hash_field, false) ??
+            (sameAsValue ? 'The value and hash fields must have different names.' : null)
+          );
+        },
+      },
+      async () => {
+        await api.createExportFormat(ns, {
+          format_id: form.format_id.trim(),
+          name: form.name.trim(),
+          ...(form.description.trim().length > 0 ? { description: form.description.trim() } : {}),
+          leaf_shape: form.leaf_shape,
+          // An object leaf names its fields; an empty hash field is an explicit
+          // "no fingerprint" rather than an omission, so it is sent as null.
+          ...(isStringLeaf
+            ? {}
+            : {
+                value_field: form.value_field.trim(),
+                hash_field: hashField.length === 0 ? null : hashField,
+              }),
+          nested: form.nested === 'true',
+        });
 
-    if (!isValid) {
-      setErrors(found);
-      return;
-    }
-
-    if (
-      !isStringLeaf &&
-      form.hash_field.trim().length > 0 &&
-      form.hash_field.trim() === form.value_field.trim()
-    ) {
-      setErrors({ hash_field: 'The value and hash fields must have different names.' });
-      return;
-    }
-
-    setIsSaving(true);
-    try {
-      await api.createExportFormat(ns, {
-        format_id: form.format_id.trim(),
-        name: form.name.trim(),
-        ...(form.description.trim().length > 0 ? { description: form.description.trim() } : {}),
-        leaf_shape: form.leaf_shape,
-        // An object leaf names its fields; an empty hash field is an explicit
-        // "no fingerprint" rather than an omission, so it is sent as null.
-        ...(isStringLeaf
-          ? {}
-          : {
-              value_field: form.value_field.trim(),
-              hash_field:
-                form.hash_field.trim().length === 0 ? null : form.hash_field.trim(),
-            }),
-        nested: form.nested === 'true',
-      });
-
-      setNotice(`Created the format "${form.format_id.trim()}".`);
-      setForm({
-        format_id: '',
-        name: '',
-        description: '',
-        leaf_shape: 'OBJECT',
-        value_field: 'value',
-        hash_field: 'hash',
-        nested: 'true',
-      });
-      await load();
-    } catch (error) {
-      setActionError(error);
-      setErrors(error.fieldErrors ?? {});
-    } finally {
-      setIsSaving(false);
-    }
+        setNotice(`Created the format "${form.format_id.trim()}".`);
+        setForm(EMPTY_FORMAT);
+        await load();
+      },
+    );
   }
 
   /**
