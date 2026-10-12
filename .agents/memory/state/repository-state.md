@@ -7,7 +7,7 @@ description: Current known state of client-reactjs after adopting the shared ins
 
 ## What this is
 
-`lxtranslator_client`, version 0.17.0. The React single page application for
+`lxtranslator_client`, version 0.17.1. The React single page application for
 LXTranslator, consuming the API served by `LXTranslator/server-expressjs`.
 
 ## Stack
@@ -48,6 +48,23 @@ Three sign in paths, and one thing about the first of them worth knowing before 
 * Provider sign in is link only, so the buttons appear on the sign in page and not the
   registration page, and `OAuthProviderButtons` renders nothing at all when the server
   reports no configured provider.
+
+## Shared building blocks, as of 0.17.1
+
+Reach for these before writing the same thing again in a page:
+
+* `useLoader(load, deps)` in `src/hooks/` for anything a page fetches on mount. It drops
+  a response that a newer load has overtaken, keeps the last good data on a failed
+  reload, and takes `reload({ quiet: true })` for polling. `ChatPage` and `AuthContext`
+  are the two deliberate exceptions.
+* `useForm(initialValues, { onEdit })` in `src/hooks/` for a form: `handleChange(field)`
+  clears that field's error, and `submit(validators, action)` maps a server rejection's
+  `fieldErrors` back onto the fields.
+* `endpoint` and `withQuery` in `src/lib/apiClient.js` for a new API helper. The tag
+  encodes every interpolated value as one path segment.
+* The private `Field` shell in `src/components/ui/FormField.jsx` for a new form control.
+* A new page is one route in `src/App.jsx` plus one `page('NamePage')` line, and the file
+  name must match the exported component, because every page is a lazily loaded chunk.
 
 ## Three content security policy facts that shape the interface
 
