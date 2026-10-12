@@ -43,7 +43,7 @@ backend running on port 4000; the backend itself needs no configuration.
 | `src/App.jsx` | The route table — public, protected and fallback routes. |
 | `src/lib/` | Framework free helpers. `apiClient.js` is the only place that talks HTTP. |
 | `src/context/` | `AuthContext.jsx` — session, namespace list, active namespace. |
-| `src/hooks/` | Reusable hooks, currently the debounced availability probe. |
+| `src/hooks/` | Reusable hooks: `useLoader` for every server read, and the debounced availability probe. |
 | `src/components/` | `layout/`, `routing/`, `editor/`, `chat/`, `account/`, `ui/`. |
 | `src/pages/` | One file per route, named `<Name>Page.jsx`. |
 | `src/styles/` | `main.css` then `shared/`, `auth/`, `editor/`, `chat/` — imported in that order. |

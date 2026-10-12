@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useState } from 'react';
 import { api } from '../../lib/apiClient.js';
+import { useLoader } from '../../hooks/useLoader.js';
 import { Callout, EmptyState, ErrorMessage, LoadingState } from '../ui/Feedback.jsx';
 
 /** How many entries the list shows before asking somebody to narrow it. */
@@ -22,41 +23,18 @@ const PAGE_SIZE = 50;
  * @returns {JSX.Element} The panel.
  */
 export function UsagePanel({ credentials = [] }) {
-  const [usage, setUsage] = useState([]);
-  const [summary, setSummary] = useState(null);
   const [filter, setFilter] = useState('');
-  const [isLoading, setIsLoading] = useState(true);
-  const [loadError, setLoadError] = useState(null);
 
-  /**
-   * Loads the list and the summary together.
-   *
-   * @returns {Promise<void>}
-   */
-  const load = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      const [usageResult, summaryResult] = await Promise.all([
-        api.listUsage({
-          limit: PAGE_SIZE,
-          ...(filter === '' ? {} : { sessionId: filter }),
-        }),
-        api.getUsageSummary(),
-      ]);
-
-      setUsage(usageResult.usage ?? []);
-      setSummary(summaryResult);
-      setLoadError(null);
-    } catch (error) {
-      setLoadError(error);
-    } finally {
-      setIsLoading(false);
-    }
+  /* The list and the summary load together. */
+  const { data, isLoading, error: loadError } = useLoader(async () => {
+    const [usageResult, summary] = await Promise.all([
+      api.listUsage({ limit: PAGE_SIZE, sessionId: filter || undefined }),
+      api.getUsageSummary(),
+    ]);
+    return { usage: usageResult.usage ?? [], summary };
   }, [filter]);
-
-  useEffect(() => {
-    load();
-  }, [load]);
+  const usage = data?.usage ?? [];
+  const summary = data?.summary ?? null;
 
   /**
    * Names a credential, falling back to its identifier.

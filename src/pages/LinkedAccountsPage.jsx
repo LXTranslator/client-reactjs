@@ -1,9 +1,10 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router';
 import { Breadcrumbs } from '../components/layout/AppLayout.jsx';
 import { OAuthProviderButtons } from '../components/account/OAuthProviderButtons.jsx';
 import { Callout, EmptyState, ErrorMessage, LoadingState } from '../components/ui/Feedback.jsx';
 import { api } from '../lib/apiClient.js';
+import { useLoader } from '../hooks/useLoader.js';
 import { paths } from '../lib/paths.js';
 
 /**
@@ -17,28 +18,14 @@ import { paths } from '../lib/paths.js';
  * @returns {JSX.Element} The page.
  */
 export function LinkedAccountsPage() {
-  const [identities, setIdentities] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [loadError, setLoadError] = useState(null);
+  const {
+    data: identities = [],
+    isLoading,
+    error: loadError,
+    reload: load,
+  } = useLoader(async () => (await api.listOauthIdentities()).identities ?? [], []);
   const [actionError, setActionError] = useState(null);
   const [notice, setNotice] = useState(null);
-
-  const load = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      const result = await api.listOauthIdentities();
-      setIdentities(result.identities ?? []);
-      setLoadError(null);
-    } catch (error) {
-      setLoadError(error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    load();
-  }, [load]);
 
   /**
    * Removes one linked provider account.

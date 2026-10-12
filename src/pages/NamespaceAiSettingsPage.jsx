@@ -1,8 +1,9 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router';
 import { useNamespace } from '../components/routing/NamespaceRoute.jsx';
 import { paths } from '../lib/paths.js';
 import { api } from '../lib/apiClient.js';
+import { useLoader } from '../hooks/useLoader.js';
 import { SelectField, TextField } from '../components/ui/FormField.jsx';
 import {
   Callout,
@@ -38,10 +39,6 @@ export function NamespaceAiSettingsPage() {
   const ns = namespace.user_id;
   const isOrg = namespace.type === 'ORG';
 
-  const [keys, setKeys] = useState([]);
-  const [providers, setProviders] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [loadError, setLoadError] = useState(null);
   const [actionError, setActionError] = useState(null);
   const [notice, setNotice] = useState(null);
   const [errors, setErrors] = useState({});
@@ -54,46 +51,34 @@ export function NamespaceAiSettingsPage() {
     label: '',
   });
 
+  /*
+   * The credential chain and the platform catalogue load together, and the
+   * first platform is preselected unless somebody has already chosen one.
+   */
+  const { data, isLoading, error: loadError, reload: load } = useLoader(async () => {
+    const [keysResult, providerResult] = await Promise.all([
+      api.listAccountKeys(ns),
+      api.listProviders(),
+    ]);
+
+    const catalogue = providerResult.providers ?? [];
+    setForm((current) => {
+      if (current.provider !== '') return current;
+      const first = catalogue[0];
+      return {
+        ...current,
+        provider: first?.name ?? '',
+        chat_model: first?.default_model ?? '',
+        embedding_model: '',
+      };
+    });
+    return { keys: keysResult.keys ?? [], providers: catalogue };
+  }, [ns]);
+  const keys = data?.keys ?? [];
+  const providers = data?.providers ?? [];
+
   const selectedProvider = providers.find((entry) => entry.name === form.provider) ?? null;
   const embeddingModels = selectedProvider?.embedding_models ?? [];
-
-  /**
-   * Loads the credential chain and the platform catalogue.
-   *
-   * @returns {Promise<void>}
-   */
-  const load = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      const [keysResult, providerResult] = await Promise.all([
-        api.listAccountKeys(ns),
-        api.listProviders(),
-      ]);
-
-      const catalogue = providerResult.providers ?? [];
-      setKeys(keysResult.keys ?? []);
-      setProviders(catalogue);
-      setForm((current) => {
-        if (current.provider !== '') return current;
-        const first = catalogue[0];
-        return {
-          ...current,
-          provider: first?.name ?? '',
-          chat_model: first?.default_model ?? '',
-          embedding_model: '',
-        };
-      });
-      setLoadError(null);
-    } catch (error) {
-      setLoadError(error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [ns]);
-
-  useEffect(() => {
-    load();
-  }, [load]);
 
   /**
    * Updates a form field and clears its error.

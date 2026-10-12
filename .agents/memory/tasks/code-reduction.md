@@ -127,3 +127,43 @@ module and comparing the markup. Two differences, both deliberate:
   beside it. Without one it held a single block label, so the spacing is unchanged.
 
 `FormField.jsx`: 234 lines, down to 179. Client suite: 301 passing across 17 files.
+
+### Task 5 — refactor/load-state
+
+`src/hooks/useLoader.js` takes a loader and its dependencies and returns the data, the
+busy flag, the failure and a `reload`. Twelve pages and panels had written that by hand —
+two `useState` calls, a `useCallback` with a `try`, `catch` and `finally`, and a
+`useEffect` to start it — and four more components had their own `cancelled` flag
+around a one off catalogue fetch. All of them use the hook now:
+
+* the account panels: `SessionsPanel`, `UsagePanel`, `OAuthProviderButtons`;
+* the account pages: `TwoFactorPage`, `LinkedAccountsPage`;
+* the namespace pages: projects, members, settings, export formats, AI settings;
+* the project pages: detail, settings, and the translation editor, whose offline
+  platform notice and format catalogue are two more loaders.
+
+Behaviour the hook fixes in one place rather than twelve:
+
+* **Only the latest load settles.** Before, a slow response could land after a newer
+  one and overwrite it, which is what happens when the namespace in the URL changes
+  while the previous namespace's list is still in flight. A hook test pins this, and
+  it fails when the guard is removed.
+* **A failed reload keeps the last good data**, which is what every page already did
+  by not touching its state on failure.
+* **A quiet reload** keeps the busy state hidden, replacing the `load(true)` boolean
+  the two pollers passed. It is an option object now, so a handler passed straight to
+  `onClick` can never turn an event into "quiet" by accident.
+
+Deliberately left alone: `ChatPage`, whose session list load returns the list to its
+caller and resets the conversation around it, and `AuthContext`, which owns the session
+itself. Neither is the same shape, and forcing them into it would cost clarity.
+
+The translation editor no longer keeps the previous payload while the file is being
+reprocessed. The page shows the pipeline's progress in that state and never rendered
+the stale payload, so nothing visible changes.
+
+Documented in `wiki/information/architecture.md` under "Loading data", and the hooks
+row of the repository map.
+
+`src/`: 479 lines removed and 282 added across 14 files, the hook itself included.
+Client suite: 305 passing across 18 files.

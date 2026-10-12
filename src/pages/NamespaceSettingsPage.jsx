@@ -1,9 +1,10 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useNamespace } from '../components/routing/NamespaceRoute.jsx';
 import { paths } from '../lib/paths.js';
 import { api } from '../lib/apiClient.js';
+import { useLoader } from '../hooks/useLoader.js';
 import { TextField, TextAreaField } from '../components/ui/FormField.jsx';
 import { Callout, ErrorMessage, LoadingState } from '../components/ui/Feedback.jsx';
 import { Modal } from '../components/ui/Modal.jsx';
@@ -35,46 +36,24 @@ export function NamespaceSettingsPage() {
     email: '',
   });
   const [errors, setErrors] = useState({});
-  const [loadError, setLoadError] = useState(null);
   const [submitError, setSubmitError] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
 
   const isOrganization = namespace.type === 'ORG';
   const isOwner = namespace?.role === 'OWNER';
 
-  /**
-   * Loads the current organization profile.
-   *
-   * @returns {Promise<void>}
-   */
-  const load = useCallback(async () => {
-    if (!isOrganization) {
-      setIsLoading(false);
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      const result = await api.getNamespace(namespace.user_id);
-      setValues({
-        display_name: result.namespace.display_name ?? '',
-        description: result.namespace.description ?? '',
-        website_url: result.namespace.website_url ?? '',
-        email: result.namespace.email ?? '',
-      });
-      setLoadError(null);
-    } catch (error) {
-      setLoadError(error);
-    } finally {
-      setIsLoading(false);
-    }
+  /* Seeds the form from the current organization profile. */
+  const { isLoading, error: loadError } = useLoader(async () => {
+    if (!isOrganization) return;
+    const { namespace: profile } = await api.getNamespace(namespace.user_id);
+    setValues({
+      display_name: profile.display_name ?? '',
+      description: profile.description ?? '',
+      website_url: profile.website_url ?? '',
+      email: profile.email ?? '',
+    });
   }, [namespace, isOrganization]);
-
-  useEffect(() => {
-    load();
-  }, [load]);
 
   /**
    * Updates a field and clears its error.
