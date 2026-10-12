@@ -26,3 +26,4 @@ same commit. Writing memory needs no approval.
 |---|---|
 | [`../memory/tasks/agents-setup.md`](../memory/tasks/agents-setup.md) | You are working on the instruction system itself, or need to know how this repository adopted the shared set. |
 | [`../memory/tasks/auth-security-refinement.md`](../memory/tasks/auth-security-refinement.md) | You are working on the policy pages, the second factor interface, account linking, or the client side upload validation. |
+| [`../memory/tasks/code-reduction.md`](../memory/tasks/code-reduction.md) | You are working on the shared hooks, the form field shell, the API client path builder, route splitting, or anything else from the code reduction pass. |
