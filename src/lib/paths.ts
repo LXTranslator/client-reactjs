@@ -19,7 +19,7 @@
  * before the application loads, which is exactly why a namespace may not be
  * called either.
  */
-export const RESERVED_SEGMENTS = Object.freeze([
+export const RESERVED_SEGMENTS: readonly string[] = Object.freeze([
   'api',
   'assets',
   'login',
@@ -32,13 +32,16 @@ export const RESERVED_SEGMENTS = Object.freeze([
 /**
  * Reports whether an identifier collides with a fixed route segment.
  *
- * @param {string} value Candidate namespace identifier.
- * @returns {boolean} True when the identifier may not be used.
+ * @param value Candidate namespace identifier.
+ * @returns True when the identifier may not be used.
  */
-export function isReservedSegment(value) {
+export function isReservedSegment(value: unknown): boolean {
   if (typeof value !== 'string') return false;
   return RESERVED_SEGMENTS.includes(value.trim().toLowerCase());
 }
+
+/** A value that fills one path segment: an identifier or a numeric id. */
+type Segment = string | number;
 
 /**
  * Escapes one path segment.
@@ -47,10 +50,10 @@ export function isReservedSegment(value) {
  * this changes nothing today. It is here so that relaxing the identifier rules
  * later cannot quietly produce a broken URL.
  *
- * @param {string|number} value Segment value.
- * @returns {string} Escaped segment.
+ * @param value Segment value.
+ * @returns Escaped segment.
  */
-function segment(value) {
+function segment(value: Segment): string {
   return encodeURIComponent(String(value));
 }
 
@@ -94,18 +97,19 @@ export const paths = {
   oauthCallback: () => '/oauth-callback',
 
   /** A namespace, which is its project list. */
-  namespace: (namespace) => `/${segment(namespace)}`,
-  namespaceSettings: (namespace) => `/${segment(namespace)}/settings`,
-  namespaceMembers: (namespace) => `/${segment(namespace)}/settings/members`,
-  namespaceExportFormats: (namespace) => `/${segment(namespace)}/settings/export_formats`,
-  namespaceAiSettings: (namespace) => `/${segment(namespace)}/settings/ai`,
-  namespaceChat: (namespace) => `/${segment(namespace)}/chat`,
+  namespace: (namespace: Segment) => `/${segment(namespace)}`,
+  namespaceSettings: (namespace: Segment) => `/${segment(namespace)}/settings`,
+  namespaceMembers: (namespace: Segment) => `/${segment(namespace)}/settings/members`,
+  namespaceExportFormats: (namespace: Segment) => `/${segment(namespace)}/settings/export_formats`,
+  namespaceAiSettings: (namespace: Segment) => `/${segment(namespace)}/settings/ai`,
+  namespaceChat: (namespace: Segment) => `/${segment(namespace)}/chat`,
 
-  project: (namespace, projectId) => `/${segment(namespace)}/project/${segment(projectId)}`,
-  projectUploads: (namespace, projectId) =>
+  project: (namespace: Segment, projectId: Segment) =>
+    `/${segment(namespace)}/project/${segment(projectId)}`,
+  projectUploads: (namespace: Segment, projectId: Segment) =>
     `/${segment(namespace)}/project/${segment(projectId)}/uploads`,
-  projectSettings: (namespace, projectId) =>
+  projectSettings: (namespace: Segment, projectId: Segment) =>
     `/${segment(namespace)}/project/${segment(projectId)}/settings`,
-  projectFile: (namespace, projectId, fileId) =>
+  projectFile: (namespace: Segment, projectId: Segment, fileId: Segment) =>
     `/${segment(namespace)}/project/${segment(projectId)}/file/${segment(fileId)}`,
 };

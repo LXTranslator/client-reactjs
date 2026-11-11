@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { encodeQr } from '../../lib/qrcode.js';
+import { encodeQr } from '../../lib/qrcode.ts';
 
 /**
  * Renders a value as a QR code, inline.

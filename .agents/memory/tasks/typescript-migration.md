@@ -111,3 +111,35 @@ and `.agents/wiki/context/repository-map.md`, and the config file name in
 `wiki/environments/env.md`.
 
 Client suite: 309 passing across 19 files; `tsc` and `npm run build` clean.
+
+### Task 4 — refactor/typescript-lib
+
+Every file in `src/lib/`, `src/hooks/` and `src/context/` is TypeScript now, with
+explicit parameter and return types and no implicit `any`.
+
+* `src/lib/types.ts` is new. It names the shapes the API sends and accepts, in the
+  server's snake_case, and lists only the fields this client reads.
+* `apiRequest<T>` is generic, and every helper on `api` states its parameter types and
+  the payload it resolves to, so a page reading `result.file.id` is checked against
+  what `uploadFile` returns. Request bodies stay `JsonBody`: the pages build them and
+  the server validates them.
+* `ApiError` declares its fields; `RequestOptions` replaces the JSDoc option list.
+* `useForm<V>`, `useLoader<T>` and `useAvailability` export their state types, which
+  task 5's pages consume. `submitError` and a loader's `error` are `Error | null`.
+* `AuthContextValue` types the session context, and `SignInOutcome` the discriminated
+  result `login` and `completeOauthLogin` already returned.
+* `encodeQr` returns a `QrSymbol`; the version table and grids are typed.
+
+No behaviour changed. Two spots now read differently for the compiler only: the
+availability probe builds its query as one of two literal shapes instead of a computed
+key, and `encodeQr` asserts that its mask loop chose a pattern, which it always does.
+
+JSDoc keeps every description, and drops the `{type}` braces the annotations now
+carry. Imports name the `.ts` and `.tsx` files directly, which `tsconfig.json` allows.
+
+Documentation updated for the new file names: `wiki/reference/api.md`,
+`wiki/information/architecture.md`, `wiki/environments/setup.md`, the repository map
+and the repository state. Instruction files that name the old paths are left as they
+are and reported as findings, per `change-propagation`.
+
+Client suite: 309 passing across 19 files; `tsc` and `npm run build` clean.

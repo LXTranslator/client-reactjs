@@ -3,7 +3,7 @@ import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { renderWithProviders, makeAccount, makeNamespace } from './helpers/renderWithProviders.jsx';
 
-vi.mock('../src/lib/apiClient.js', async (importOriginal) => {
+vi.mock('../src/lib/apiClient.ts', async (importOriginal) => {
   const actual = await importOriginal();
   return {
     ...actual,
@@ -24,13 +24,13 @@ vi.mock('../src/lib/apiClient.js', async (importOriginal) => {
   };
 });
 
-vi.mock('../src/lib/download.js', async (importOriginal) => {
+vi.mock('../src/lib/download.ts', async (importOriginal) => {
   const actual = await importOriginal();
   return { ...actual, triggerDownload: vi.fn(), downloadJson: vi.fn() };
 });
 
-const { api, getAuthToken } = await import('../src/lib/apiClient.js');
-const { triggerDownload } = await import('../src/lib/download.js');
+const { api, getAuthToken } = await import('../src/lib/apiClient.ts');
+const { triggerDownload } = await import('../src/lib/download.ts');
 const { App } = await import('../src/App.jsx');
 
 /** A file that has finished processing. */
@@ -152,7 +152,7 @@ describe('translation editor', () => {
     });
 
     it('reports a failed archive instead of saving an error page', async () => {
-      const { ApiError } = await import('../src/lib/apiClient.js');
+      const { ApiError } = await import('../src/lib/apiClient.ts');
       api.downloadArchive.mockRejectedValue(
         new ApiError('This file has no translations to download yet.', { status: 400 }),
       );
@@ -208,7 +208,7 @@ describe('translation editor', () => {
     });
 
     it('surfaces a server rejection', async () => {
-      const { ApiError } = await import('../src/lib/apiClient.js');
+      const { ApiError } = await import('../src/lib/apiClient.ts');
       api.addFileLanguages.mockRejectedValue(
         new ApiError('Every language listed is already on this file.', { status: 400 }),
       );

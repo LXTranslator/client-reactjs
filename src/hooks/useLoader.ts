@@ -1,4 +1,22 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, type DependencyList } from 'react';
+
+/** Options for a reload. */
+export interface ReloadOptions {
+  /** Refresh without showing the busy state. */
+  quiet?: boolean;
+}
+
+/** What {@link useLoader} hands a page. */
+export interface LoaderState<T> {
+  /** The latest data, undefined until the first success. */
+  data: T | undefined;
+  /** Whether the visible load is running. */
+  isLoading: boolean;
+  /** The latest load's failure. */
+  error: Error | null;
+  /** Loads again. */
+  reload: (options?: ReloadOptions) => Promise<void>;
+}
 
 /**
  * Loads data when its inputs change, and tracks whether it is busy and how it failed.
@@ -14,20 +32,23 @@ import { useCallback, useEffect, useRef, useState } from 'react';
  * A failed load keeps the data from the last one that succeeded, so a page that
  * reloads after an action does not lose what it was showing.
  *
- * @param {Function} load Resolves to the data. Starting a load is its only job.
- * @param {Array} deps Values the loader reads; a change starts a new load.
- * @returns {{data: *, isLoading: boolean, error: Error|null, reload: Function}}
+ * @param load Resolves to the data. Starting a load is its only job.
+ * @param deps Values the loader reads; a change starts a new load.
  *   The latest data (undefined until the first success), whether the visible
  *   load is running, its failure, and a function that loads again. Pass
  *   `{ quiet: true }` to `reload` to refresh without showing the busy state.
  */
-export function useLoader(load, deps) {
-  const [state, setState] = useState({ data: undefined, error: null, isLoading: true });
+export function useLoader<T>(load: () => Promise<T>, deps: DependencyList): LoaderState<T> {
+  const [state, setState] = useState<Omit<LoaderState<T>, 'reload'>>({
+    data: undefined,
+    error: null,
+    isLoading: true,
+  });
   const latest = useRef(0);
 
   // Keyed on the caller's deps rather than on the loader itself, whose identity
   // changes on every render.
-  const reload = useCallback(async ({ quiet = false } = {}) => {
+  const reload = useCallback(async ({ quiet = false }: ReloadOptions = {}) => {
     const run = ++latest.current;
     if (!quiet) setState((current) => ({ ...current, isLoading: true }));
 
@@ -35,7 +56,9 @@ export function useLoader(load, deps) {
       const data = await load();
       if (run === latest.current) setState({ data, error: null, isLoading: false });
     } catch (error) {
-      if (run === latest.current) setState((current) => ({ ...current, error, isLoading: false }));
+      if (run === latest.current) {
+        setState((current) => ({ ...current, error: error as Error, isLoading: false }));
+      }
     }
   }, deps);
 

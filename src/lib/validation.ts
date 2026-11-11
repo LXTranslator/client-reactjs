@@ -1,5 +1,5 @@
-import { isReservedSegment } from './paths.js';
-import { LOCALE_CODE_PATTERN, validateLocaleCode } from './locales.js';
+import { isReservedSegment } from './paths.ts';
+import { LOCALE_CODE_PATTERN, validateLocaleCode } from './locales.ts';
 
 /**
  * Client side form validation.
@@ -48,7 +48,7 @@ export const FORMAT_ID_PATTERN = /^[a-z0-9_]{2,50}$/;
 export const FIELD_NAME_PATTERN = /^[a-z][a-z0-9_]{0,39}$/;
 
 /** Identifiers the server ships and refuses to let a namespace redefine. */
-export const BUILT_IN_FORMAT_IDS = Object.freeze([
+export const BUILT_IN_FORMAT_IDS: readonly string[] = Object.freeze([
   'default',
   'key_value',
   'flat_key_value',
@@ -86,13 +86,20 @@ export const PLACEHOLDERS = Object.freeze({
   hashField: 'hash',
 });
 
+/** The password strength meter's state. */
+export interface PasswordScore {
+  score: number;
+  label: string;
+  color: string;
+}
+
 /**
  * Validates a routing user id.
  *
- * @param {string} value Candidate value.
- * @returns {string|null} An error message, or null when valid.
+ * @param value Candidate value.
+ * @returns An error message, or null when valid.
  */
-export function validateUserId(value) {
+export function validateUserId(value: unknown): string | null {
   const trimmed = String(value ?? '').trim();
   if (trimmed.length === 0) return 'Enter a user id.';
   if (trimmed.length < 3) return 'The user id must be at least 3 characters.';
@@ -113,10 +120,10 @@ export function validateUserId(value) {
 /**
  * Validates an email address.
  *
- * @param {string} value Candidate value.
- * @returns {string|null} An error message, or null when valid.
+ * @param value Candidate value.
+ * @returns An error message, or null when valid.
  */
-export function validateEmail(value) {
+export function validateEmail(value: unknown): string | null {
   const trimmed = String(value ?? '').trim();
   if (trimmed.length === 0) return 'Enter an email address.';
   if (trimmed.length > 254) return 'That email address is too long.';
@@ -130,10 +137,10 @@ export function validateEmail(value) {
  * The message names the single missing requirement rather than restating the
  * whole policy, so somebody fixing one problem is not re-read the entire rule.
  *
- * @param {string} value Candidate value.
- * @returns {string|null} An error message, or null when valid.
+ * @param value Candidate value.
+ * @returns An error message, or null when valid.
  */
-export function validatePassword(value) {
+export function validatePassword(value: unknown): string | null {
   const password = String(value ?? '');
   if (password.length === 0) return 'Enter a password.';
   if (password.length < PASSWORD_MIN_LENGTH) {
@@ -149,11 +156,14 @@ export function validatePassword(value) {
 /**
  * Checks that a confirmation matches its password.
  *
- * @param {string} password Original value.
- * @param {string} confirmation Repeated value.
- * @returns {string|null} An error message, or null when valid.
+ * @param password Original value.
+ * @param confirmation Repeated value.
+ * @returns An error message, or null when valid.
  */
-export function validatePasswordConfirmation(password, confirmation) {
+export function validatePasswordConfirmation(
+  password: string,
+  confirmation: string,
+): string | null {
   if (String(confirmation ?? '').length === 0) return 'Repeat the password.';
   if (password !== confirmation) return 'The passwords do not match.';
   return null;
@@ -164,10 +174,10 @@ export function validatePasswordConfirmation(password, confirmation) {
  *
  * Presentational only. It never gates submission; `validatePassword` does that.
  *
- * @param {string} value Candidate value.
- * @returns {{score: number, label: string, color: string}} Meter state.
+ * @param value Candidate value.
+ * @returns Meter state.
  */
-export function scorePassword(value) {
+export function scorePassword(value: unknown): PasswordScore {
   const password = String(value ?? '');
   if (password.length === 0) {
     return { score: 0, label: 'Enter a password', color: 'var(--silver-300)' };
@@ -195,10 +205,10 @@ export function scorePassword(value) {
 /**
  * Validates a login identifier, which may be a user id or an email address.
  *
- * @param {string} value Candidate value.
- * @returns {string|null} An error message, or null when valid.
+ * @param value Candidate value.
+ * @returns An error message, or null when valid.
  */
-export function validateIdentifier(value) {
+export function validateIdentifier(value: unknown): string | null {
   const trimmed = String(value ?? '').trim();
   if (trimmed.length === 0) return 'Enter your user id or email address.';
 
@@ -214,10 +224,10 @@ export function validateIdentifier(value) {
 /**
  * Validates a project name.
  *
- * @param {string} value Candidate value.
- * @returns {string|null} An error message, or null when valid.
+ * @param value Candidate value.
+ * @returns An error message, or null when valid.
  */
-export function validateProjectName(value) {
+export function validateProjectName(value: unknown): string | null {
   const trimmed = String(value ?? '').trim();
   if (trimmed.length === 0) return 'Enter a project name.';
   if (trimmed.length > 100) return 'The project name must be 100 characters or fewer.';
@@ -233,10 +243,10 @@ export function validateProjectName(value) {
  * Only the shape is checked. Whether the credential actually works is proven by
  * the first translation that uses it.
  *
- * @param {string} value Candidate value.
- * @returns {string|null} An error message, or null when valid.
+ * @param value Candidate value.
+ * @returns An error message, or null when valid.
  */
-export function validateApiKey(value) {
+export function validateApiKey(value: unknown): string | null {
   const trimmed = String(value ?? '').trim();
   if (trimmed.length === 0) return 'Paste an API key.';
   if (trimmed.length < 8) return 'That does not look like a valid API key.';
@@ -251,10 +261,10 @@ export function validateApiKey(value) {
  * Only `http` and `https` are accepted, because a `javascript:` URL rendered
  * into a link would be a cross site scripting vector.
  *
- * @param {string} value Candidate value.
- * @returns {string|null} An error message, or null when valid or empty.
+ * @param value Candidate value.
+ * @returns An error message, or null when valid or empty.
  */
-export function validateWebsiteUrl(value) {
+export function validateWebsiteUrl(value: unknown): string | null {
   const trimmed = String(value ?? '').trim();
   if (trimmed.length === 0) return null;
   if (trimmed.length > 255) return 'That URL is too long.';
@@ -275,10 +285,10 @@ export function validateWebsiteUrl(value) {
 /**
  * Validates a locale code.
  *
- * @param {string} value Candidate value.
- * @returns {string|null} An error message, or null when valid.
+ * @param value Candidate value.
+ * @returns An error message, or null when valid.
  */
-export function validateLangCode(value) {
+export function validateLangCode(value: unknown): string | null {
   return validateLocaleCode(value);
 }
 
@@ -304,17 +314,17 @@ const UPLOAD_STEM_PATTERN = /^[A-Za-z0-9_ -]+$/;
  * nothing here is reachable by anything that decides to skip it — the server
  * repeats all of it and adds content verification on top.
  *
- * @param {File|null} file Selected file.
- * @param {{maxBytes?: number}} [options] Size ceiling.
- * @returns {string|null} An error message, or null when valid.
+ * @param file Selected file.
+ * @param options Size ceiling.
+ * @returns An error message, or null when valid.
  */
 /**
  * Validates a second factor code, of either kind.
  *
- * @param {string} value Submitted code.
- * @returns {string|null} An error message, or null when the shape is plausible.
+ * @param value Submitted code.
+ * @returns An error message, or null when the shape is plausible.
  */
-export function validateTotpCode(value) {
+export function validateTotpCode(value: unknown): string | null {
   const trimmed = String(value ?? '').replace(/[\s-]/g, '');
 
   if (trimmed.length === 0) return 'Enter the code from your authenticator app.';
@@ -331,7 +341,10 @@ export function validateTotpCode(value) {
   return 'Enter the six digit code, or one of your recovery codes.';
 }
 
-export function validateTranslationFile(file, options = {}) {
+export function validateTranslationFile(
+  file: File | null,
+  options: { maxBytes?: number } = {},
+): string | null {
   const maxBytes = options.maxBytes ?? 2 * 1024 * 1024;
 
   if (!file) return 'Choose a JSON file to upload.';
@@ -369,10 +382,10 @@ export function validateTranslationFile(file, options = {}) {
 /**
  * Validates an export format identifier.
  *
- * @param {string} value Candidate value.
- * @returns {string|null} An error message, or null when valid.
+ * @param value Candidate value.
+ * @returns An error message, or null when valid.
  */
-export function validateFormatId(value) {
+export function validateFormatId(value: unknown): string | null {
   const trimmed = String(value ?? '').trim();
   if (trimmed.length === 0) return 'Enter an identifier.';
   if (BUILT_IN_FORMAT_IDS.includes(trimmed)) {
@@ -391,11 +404,11 @@ export function validateFormatId(value) {
  * caught before the request rather than after it. The server refuses it too;
  * this is a courtesy, not the defence.
  *
- * @param {string} value Candidate value.
- * @param {boolean} [required] Whether an empty value is a failure.
- * @returns {string|null} An error message, or null when valid.
+ * @param value Candidate value.
+ * @param required Whether an empty value is a failure.
+ * @returns An error message, or null when valid.
  */
-export function validateFieldName(value, required = true) {
+export function validateFieldName(value: unknown, required = true): string | null {
   const trimmed = String(value ?? '').trim();
   if (trimmed.length === 0) return required ? 'Enter a field name.' : null;
   if (!FIELD_NAME_PATTERN.test(trimmed)) {
@@ -404,14 +417,23 @@ export function validateFieldName(value, required = true) {
   return null;
 }
 
+/** Field name to a validator returning that field's error, or null when valid. */
+export type Validators = Record<string, () => string | null | undefined>;
+
+/** What {@link runValidators} collects. */
+export interface ValidationResult {
+  errors: Record<string, string>;
+  isValid: boolean;
+}
+
 /**
  * Runs a set of field validators and collects the failures.
  *
- * @param {Record<string, () => (string|null)>} validators Field name to validator.
- * @returns {{errors: Record<string, string>, isValid: boolean}} Collected result.
+ * @param validators Field name to validator.
+ * @returns Collected result.
  */
-export function runValidators(validators) {
-  const errors = {};
+export function runValidators(validators: Validators): ValidationResult {
+  const errors: Record<string, string> = {};
   for (const [field, validator] of Object.entries(validators)) {
     const message = validator();
     if (message !== null && message !== undefined) errors[field] = message;

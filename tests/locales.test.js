@@ -7,7 +7,7 @@ import {
   localeInitial,
   localeLabel,
   validateLocaleCode,
-} from '../src/lib/locales.js';
+} from '../src/lib/locales.ts';
 
 describe('locale catalogue', () => {
   it('holds the whole supported set', () => {

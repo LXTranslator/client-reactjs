@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { useAuth } from '../../context/AuthContext.jsx';
-import { api } from '../../lib/apiClient.js';
-import { useLoader } from '../../hooks/useLoader.js';
+import { useAuth } from '../../context/AuthContext.tsx';
+import { api } from '../../lib/apiClient.ts';
+import { useLoader } from '../../hooks/useLoader.ts';
 import { TextField } from '../ui/FormField.jsx';
 import { Callout, EmptyState, ErrorMessage, LoadingState } from '../ui/Feedback.jsx';
 import { UsagePanel } from './UsagePanel.jsx';

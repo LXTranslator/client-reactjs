@@ -13,7 +13,7 @@ import { renderWithProviders, makeAccount, makeNamespace } from './helpers/rende
  * say so rather than offering an empty dropdown.
  */
 
-vi.mock('../src/lib/apiClient.js', async (importOriginal) => {
+vi.mock('../src/lib/apiClient.ts', async (importOriginal) => {
   const actual = await importOriginal();
   return {
     ...actual,
@@ -33,7 +33,7 @@ vi.mock('../src/lib/apiClient.js', async (importOriginal) => {
   };
 });
 
-const { api, getAuthToken } = await import('../src/lib/apiClient.js');
+const { api, getAuthToken } = await import('../src/lib/apiClient.ts');
 const { App } = await import('../src/App.jsx');
 
 /** The catalogue as the server reports it, embedding lists included. */

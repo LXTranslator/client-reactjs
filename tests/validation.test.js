@@ -12,7 +12,7 @@ import {
   validateUserId,
   validateWebsiteUrl,
   runValidators,
-} from '../src/lib/validation.js';
+} from '../src/lib/validation.ts';
 
 describe('validation', () => {
   describe('user id', () => {

@@ -3,7 +3,7 @@ import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { renderWithProviders, makeAccount, makeNamespace } from './helpers/renderWithProviders.jsx';
 
-vi.mock('../src/lib/apiClient.js', async (importOriginal) => {
+vi.mock('../src/lib/apiClient.ts', async (importOriginal) => {
   const actual = await importOriginal();
   return {
     ...actual,
@@ -22,7 +22,7 @@ vi.mock('../src/lib/apiClient.js', async (importOriginal) => {
   };
 });
 
-const { api, getAuthToken, ApiError } = await import('../src/lib/apiClient.js');
+const { api, getAuthToken, ApiError } = await import('../src/lib/apiClient.ts');
 const { App } = await import('../src/App.jsx');
 
 /** Namespace fixture for an organization the signed in account owns. */

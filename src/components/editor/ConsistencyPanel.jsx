@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { api } from '../../lib/apiClient.js';
+import { api } from '../../lib/apiClient.ts';
 import { Callout, EmptyState, ErrorMessage } from '../ui/Feedback.jsx';
 
 /**

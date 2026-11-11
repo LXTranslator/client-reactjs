@@ -1,6 +1,6 @@
 import { Link } from 'react-router';
-import { useAuth } from '../context/AuthContext.jsx';
-import { paths } from '../lib/paths.js';
+import { useAuth } from '../context/AuthContext.tsx';
+import { paths } from '../lib/paths.ts';
 
 /**
  * Fallback for an unmatched route.

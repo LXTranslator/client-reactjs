@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { api } from '../../lib/apiClient.js';
-import { useLoader } from '../../hooks/useLoader.js';
+import { api } from '../../lib/apiClient.ts';
+import { useLoader } from '../../hooks/useLoader.ts';
 import { Callout, EmptyState, ErrorMessage, LoadingState } from '../ui/Feedback.jsx';
 
 /** How many entries the list shows before asking somebody to narrow it. */

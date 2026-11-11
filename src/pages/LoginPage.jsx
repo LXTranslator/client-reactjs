@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router';
-import { paths } from '../lib/paths.js';
-import { useAuth } from '../context/AuthContext.jsx';
+import { paths } from '../lib/paths.ts';
+import { useAuth } from '../context/AuthContext.tsx';
 import { TextField } from '../components/ui/FormField.jsx';
 import { ErrorMessage } from '../components/ui/Feedback.jsx';
 import { OAuthProviderButtons } from '../components/account/OAuthProviderButtons.jsx';
-import { PLACEHOLDERS, validateIdentifier, validateTotpCode } from '../lib/validation.js';
-import { useForm } from '../hooks/useForm.js';
+import { PLACEHOLDERS, validateIdentifier, validateTotpCode } from '../lib/validation.ts';
+import { useForm } from '../hooks/useForm.ts';
 
 /**
  * Sign in page.

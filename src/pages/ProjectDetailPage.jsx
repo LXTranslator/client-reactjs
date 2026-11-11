@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router';
 import { useNamespace } from '../components/routing/NamespaceRoute.jsx';
-import { paths } from '../lib/paths.js';
-import { api } from '../lib/apiClient.js';
-import { useLoader } from '../hooks/useLoader.js';
+import { paths } from '../lib/paths.ts';
+import { api } from '../lib/apiClient.ts';
+import { useLoader } from '../hooks/useLoader.ts';
 import {
   Callout,
   EmptyState,

@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { Link } from 'react-router';
 import { useNamespace } from '../components/routing/NamespaceRoute.jsx';
-import { paths } from '../lib/paths.js';
-import { api } from '../lib/apiClient.js';
-import { useLoader } from '../hooks/useLoader.js';
-import { useForm } from '../hooks/useForm.js';
+import { paths } from '../lib/paths.ts';
+import { api } from '../lib/apiClient.ts';
+import { useLoader } from '../hooks/useLoader.ts';
+import { useForm } from '../hooks/useForm.ts';
 import { TextField } from '../components/ui/FormField.jsx';
 import { PlatformFields } from '../components/project/PlatformFields.jsx';
 import {
@@ -14,7 +14,7 @@ import {
   LoadingState,
 } from '../components/ui/Feedback.jsx';
 import { Breadcrumbs } from '../components/layout/AppLayout.jsx';
-import { PLACEHOLDERS, validateProjectName } from '../lib/validation.js';
+import { PLACEHOLDERS, validateProjectName } from '../lib/validation.ts';
 
 /**
  * Project list and creation.

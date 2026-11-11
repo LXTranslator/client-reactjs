@@ -1,5 +1,5 @@
 import { Link } from 'react-router';
-import { paths } from '../lib/paths.js';
+import { paths } from '../lib/paths.ts';
 
 /**
  * The terms of service.

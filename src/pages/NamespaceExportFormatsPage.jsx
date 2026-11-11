@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { Link } from 'react-router';
 import { useNamespace } from '../components/routing/NamespaceRoute.jsx';
-import { paths } from '../lib/paths.js';
-import { api } from '../lib/apiClient.js';
-import { useLoader } from '../hooks/useLoader.js';
-import { useForm } from '../hooks/useForm.js';
+import { paths } from '../lib/paths.ts';
+import { api } from '../lib/apiClient.ts';
+import { useLoader } from '../hooks/useLoader.ts';
+import { useForm } from '../hooks/useForm.ts';
 import { SelectField, TextField, TextAreaField } from '../components/ui/FormField.jsx';
 import {
   Callout,
@@ -17,7 +17,7 @@ import {
   PLACEHOLDERS,
   validateFieldName,
   validateFormatId,
-} from '../lib/validation.js';
+} from '../lib/validation.ts';
 
 /** A blank format form, which is also what it resets to after a create. */
 const EMPTY_FORMAT = {

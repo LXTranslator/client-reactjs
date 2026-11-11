@@ -1,8 +1,8 @@
 import { useRef, useState } from 'react';
-import { api } from '../../lib/apiClient.js';
-import { MAX_UPLOAD_BYTES } from '../../lib/locales.js';
+import { api } from '../../lib/apiClient.ts';
+import { MAX_UPLOAD_BYTES } from '../../lib/locales.ts';
 import { LocalePicker } from '../ui/LocalePicker.jsx';
-import { validateTranslationFile } from '../../lib/validation.js';
+import { validateTranslationFile } from '../../lib/validation.ts';
 import { Callout, ErrorMessage } from '../ui/Feedback.jsx';
 
 /**

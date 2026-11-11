@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { EmptyState, ErrorMessage, LoadingState } from '../ui/Feedback.jsx';
-import { validateTranslationFile } from '../../lib/validation.js';
-import { api } from '../../lib/apiClient.js';
-import { triggerDownload } from '../../lib/download.js';
+import { validateTranslationFile } from '../../lib/validation.ts';
+import { api } from '../../lib/apiClient.ts';
+import { triggerDownload } from '../../lib/download.ts';
 
 /**
  * The conversation pane: the exchange, and the composer beneath it.

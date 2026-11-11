@@ -4,7 +4,7 @@ import {
   SUGGESTED_LOCALES,
   filterLocales,
   localeLabel,
-} from '../../lib/locales.js';
+} from '../../lib/locales.ts';
 
 /**
  * Language picker over the full locale catalogue.

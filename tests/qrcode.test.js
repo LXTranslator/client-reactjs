@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { createHash } from 'node:crypto';
-import { encodeQr } from '../src/lib/qrcode.js';
+import { encodeQr } from '../src/lib/qrcode.ts';
 
 /**
  * The QR encoder.

@@ -15,7 +15,7 @@ main.jsx
                           └── page components
                                 └── ui components
 
-every network call ──> src/lib/apiClient.js ──> /api/v1
+every network call ──> src/lib/apiClient.ts ──> /api/v1
 ```
 
 No component calls `fetch` directly. Routing token attachment, envelope
@@ -47,7 +47,7 @@ namespace absent from the accessible list renders as missing, which spares the
 pages a round of requests they would be refused. That is presentation: the
 server still authorises every request.
 
-Links are built by `src/lib/paths.js` rather than assembled inline, because a
+Links are built by `src/lib/paths.ts` rather than assembled inline, because a
 namespace now appears in nearly every URL and one wrong segment points a visitor
 at somebody else's.
 
@@ -55,7 +55,7 @@ at somebody else's.
 
 `api`, `assets`, `login`, `namespaces`, `organizations`, `register` and
 `settings` are matched before any namespace, so an account named after one would
-never render. The server refuses to register them, and `paths.js` holds the same
+never render. The server refuses to register them, and `paths.ts` holds the same
 list for the client's own validation. **The two lists are one list and must be
 changed together.** `api` and `assets` are not application routes at all: nginx
 answers them before the bundle loads, which is exactly why they are reserved.
@@ -114,7 +114,7 @@ somebody else's data.
 
 ## Validation
 
-`src/lib/validation.js` mirrors every server rule. The client copy exists to
+`src/lib/validation.ts` mirrors every server rule. The client copy exists to
 give fast, specific feedback while somebody types; the server validates
 independently because anything checked only in the browser can be bypassed.
 

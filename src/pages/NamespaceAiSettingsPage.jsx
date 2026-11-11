@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { Link } from 'react-router';
 import { useNamespace } from '../components/routing/NamespaceRoute.jsx';
-import { paths } from '../lib/paths.js';
-import { api } from '../lib/apiClient.js';
-import { useLoader } from '../hooks/useLoader.js';
-import { useForm } from '../hooks/useForm.js';
+import { paths } from '../lib/paths.ts';
+import { api } from '../lib/apiClient.ts';
+import { useLoader } from '../hooks/useLoader.ts';
+import { useForm } from '../hooks/useForm.ts';
 import { SelectField, TextField } from '../components/ui/FormField.jsx';
 import {
   Callout,
@@ -13,7 +13,7 @@ import {
   LoadingState,
 } from '../components/ui/Feedback.jsx';
 import { Breadcrumbs } from '../components/layout/AppLayout.jsx';
-import { PLACEHOLDERS, validateApiKey } from '../lib/validation.js';
+import { PLACEHOLDERS, validateApiKey } from '../lib/validation.ts';
 
 /**
  * Namespace level AI credentials.

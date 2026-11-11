@@ -1,14 +1,14 @@
 import { useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
 import { useNamespace } from '../components/routing/NamespaceRoute.jsx';
-import { paths } from '../lib/paths.js';
-import { LOCALES, MAX_UPLOAD_BYTES } from '../lib/locales.js';
+import { paths } from '../lib/paths.ts';
+import { LOCALES, MAX_UPLOAD_BYTES } from '../lib/locales.ts';
 import { LocalePicker } from '../components/ui/LocalePicker.jsx';
-import { api } from '../lib/apiClient.js';
+import { api } from '../lib/apiClient.ts';
 import { SelectField, TextField } from '../components/ui/FormField.jsx';
 import { Callout, ErrorMessage } from '../components/ui/Feedback.jsx';
 import { Breadcrumbs } from '../components/layout/AppLayout.jsx';
-import { validateTranslationFile } from '../lib/validation.js';
+import { validateTranslationFile } from '../lib/validation.ts';
 
 /**
  * Locales offered as chips.

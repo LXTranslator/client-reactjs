@@ -3,7 +3,7 @@ import { screen, waitFor, within } from '@testing-library/react';
 import { renderWithProviders, makeAccount, makeNamespace } from './helpers/renderWithProviders.jsx';
 
 // The API client is mocked so routing is tested without a server.
-vi.mock('../src/lib/apiClient.js', async (importOriginal) => {
+vi.mock('../src/lib/apiClient.ts', async (importOriginal) => {
   const actual = await importOriginal();
   return {
     ...actual,
@@ -23,7 +23,7 @@ vi.mock('../src/lib/apiClient.js', async (importOriginal) => {
   };
 });
 
-const { api, getAuthToken } = await import('../src/lib/apiClient.js');
+const { api, getAuthToken } = await import('../src/lib/apiClient.ts');
 const { App } = await import('../src/App.jsx');
 
 describe('routing', () => {
@@ -165,7 +165,7 @@ describe('routing', () => {
 
     it('links a project that fails to load back to its namespace', async () => {
       // The link used to point at /namespaces/projects, which no route matches.
-      const { ApiError } = await import('../src/lib/apiClient.js');
+      const { ApiError } = await import('../src/lib/apiClient.ts');
       api.getProject.mockRejectedValue(new ApiError('Project not found.', { status: 404 }));
 
       renderWithProviders(<App />, { initialEntries: ['/jetsada/project/7'] });
@@ -176,7 +176,7 @@ describe('routing', () => {
 
     it('signs the visitor out when the stored token is rejected', async () => {
       // An expired token must land on the login page rather than a broken shell.
-      const { ApiError } = await import('../src/lib/apiClient.js');
+      const { ApiError } = await import('../src/lib/apiClient.ts');
       api.me.mockRejectedValue(new ApiError('expired', { status: 401 }));
 
       renderWithProviders(<App />, { initialEntries: ['/namespaces'] });

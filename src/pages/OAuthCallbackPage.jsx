@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router';
-import { useAuth } from '../context/AuthContext.jsx';
-import { api } from '../lib/apiClient.js';
-import { paths } from '../lib/paths.js';
+import { useAuth } from '../context/AuthContext.tsx';
+import { api } from '../lib/apiClient.ts';
+import { paths } from '../lib/paths.ts';
 import { TextField } from '../components/ui/FormField.jsx';
 import { Callout, ErrorMessage, LoadingState } from '../components/ui/Feedback.jsx';
-import { PLACEHOLDERS, validateTotpCode } from '../lib/validation.js';
+import { PLACEHOLDERS, validateTotpCode } from '../lib/validation.ts';
 import { OAUTH_MODE_KEY } from '../components/account/OAuthProviderButtons.jsx';
 
 /**

@@ -4,10 +4,10 @@ import { Breadcrumbs } from '../components/layout/AppLayout.jsx';
 import { QrCode } from '../components/ui/QrCode.jsx';
 import { TextField } from '../components/ui/FormField.jsx';
 import { Callout, ErrorMessage, LoadingState } from '../components/ui/Feedback.jsx';
-import { api } from '../lib/apiClient.js';
-import { useLoader } from '../hooks/useLoader.js';
-import { paths } from '../lib/paths.js';
-import { PLACEHOLDERS, validateTotpCode } from '../lib/validation.js';
+import { api } from '../lib/apiClient.ts';
+import { useLoader } from '../hooks/useLoader.ts';
+import { paths } from '../lib/paths.ts';
+import { PLACEHOLDERS, validateTotpCode } from '../lib/validation.ts';
 
 /**
  * Manages the account's second factor.
