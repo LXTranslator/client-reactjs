@@ -72,3 +72,17 @@ exists.
 `.gitignore` still does not exclude `.agents/plans/`, as the code reduction record already
 reported. The working plan was kept out of history through `.git/info/exclude` on the
 working clone only.
+
+### Task 2 — build/dependencies
+
+Every dependency moved to its latest release: `react` and `react-dom` 19.3.1,
+`react-router` 8.5.1, `vite` 8.3.8, `vitest` 5.1.0, `@vitejs/plugin-react` 6.3.0,
+`jsdom` 31.0.0 (a major step, from 30) and `@testing-library/user-event` 14.6.9. The
+testing library's `react` and `jest-dom` packages were already current.
+
+Added as development dependencies, so none of them reaches the bundle: `typescript`
+7.0.2, `@types/react`, `@types/react-dom` and `@types/node`. No `tsx` or `ts-node`; see
+the adaptation table above. The three runtime dependencies are unchanged in number.
+
+`npm audit` reports 0 vulnerabilities and `npm outdated` is empty. Client suite: 309
+passing across 19 files, unchanged; `npm run build` clean.
