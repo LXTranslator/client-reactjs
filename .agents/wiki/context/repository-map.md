@@ -24,7 +24,8 @@ The shared instruction set is **not** in this repository. It resolves through th
 ```bash
 npm install             # once, on a clean clone
 npm run dev             # Vite dev server; proxies /api to http://localhost:4000
-npm run build           # production bundle into dist/
+npm run build           # type check, then the production bundle into dist/
+npm run typecheck       # type check only, with tsc
 npm run preview         # serve the built bundle
 npm test                # full Vitest suite, no configuration required
 npm run test:watch      # watch mode
@@ -49,7 +50,8 @@ backend running on port 4000; the backend itself needs no configuration.
 | `src/styles/` | `main.css` then `shared/`, `auth/`, `editor/`, `chat/` — imported in that order. |
 | `tests/` | Vitest and Testing Library. `helpers/renderWithProviders.jsx` is the entry point for rendering. |
 | `index.html` | Application shell and document head. |
-| `vite.config.js` | Build, dev server proxy and test runner configuration. |
+| `vite.config.ts` | Build, dev server proxy and test runner configuration. |
+| `tsconfig.json` | Compiler options. `tsc` only checks; Vite does the emitting. |
 | `Dockerfile`, `nginx.conf.template` | Multi stage image; the template is rendered at container start up. |
 
 ## Generated paths — leave them alone

@@ -34,7 +34,7 @@ design system.
 npm install
 npm run dev        # http://localhost:5173
 npm test
-npm run build      # production bundle into dist/
+npm run build      # type check, then the production bundle into dist/
 ```
 
 The dev server proxies `/api` to `http://localhost:4000`, so run the

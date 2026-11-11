@@ -23,7 +23,7 @@ COPY package.json package-lock.json ./
 # cannot execute code during the build.
 RUN npm ci --ignore-scripts
 
-COPY index.html vite.config.js ./
+COPY index.html vite.config.ts tsconfig.json ./
 COPY src ./src
 
 # The API base path is baked in at build time. It defaults to a relative path so

@@ -70,7 +70,7 @@ deployment, because a variable that has no effect fails silently.
 
 | Moment | Variable | Read by |
 |---|---|---|
-| `npm run dev` | `VITE_API_PROXY_TARGET` | The Vite dev server, in `vite.config.js`. |
+| `npm run dev` | `VITE_API_PROXY_TARGET` | The Vite dev server, in `vite.config.ts`. |
 | `npm run build` | `VITE_API_BASE_URL` | Vite, inlined into the bundle. |
 | Container start up | `API_UPSTREAM` | nginx, through the rendered template. |
 
