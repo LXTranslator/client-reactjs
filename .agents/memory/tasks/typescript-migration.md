@@ -86,3 +86,28 @@ the adaptation table above. The three runtime dependencies are unchanged in numb
 
 `npm audit` reports 0 vulnerabilities and `npm outdated` is empty. Client suite: 309
 passing across 19 files, unchanged; `npm run build` clean.
+
+### Task 3 — build/typescript
+
+`tsconfig.json` added: `ES2022` target and libraries plus the DOM, `ESNext` modules with
+`bundler` resolution, `react-jsx`, `strict`, `noEmit`, `verbatimModuleSyntax` and
+`allowImportingTsExtensions`, so imports keep the explicit extension this codebase
+already writes, now as `.ts` or `.tsx`. The ambient types are `vite/client` for
+`import.meta.env` and `import.meta.glob`, `vitest/globals`, and `node` for the config
+file. `allowJs` is on, without `checkJs`, only so the remaining JavaScript keeps
+resolving while tasks 4 to 6 convert it; task 6 turns it off.
+
+`vite.config.js` is now `vite.config.ts`, typed through `vitest/config` so the `test`
+block is checked too. Tests and coverage match `.ts` and `.tsx` as well as the old
+extensions until task 6.
+
+`npm run build` is now `tsc && vite build`, and `npm run typecheck` runs `tsc` alone.
+The Dockerfile copies `vite.config.ts` and `tsconfig.json` into the build stage, so the
+image type checks before it bundles. `tests/` stays out of the image, and `tsc` simply
+finds nothing there.
+
+Documentation updated: the command lists in `README.md`, `wiki/environments/setup.md`
+and `.agents/wiki/context/repository-map.md`, and the config file name in
+`wiki/environments/env.md`.
+
+Client suite: 309 passing across 19 files; `tsc` and `npm run build` clean.

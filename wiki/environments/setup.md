@@ -30,7 +30,8 @@ No configuration is required for either side. If your backend listens somewhere 
 
 ```bash
 npm run dev             # dev server with hot module replacement, port 5173
-npm run build           # production bundle into dist/
+npm run build           # type check, then the production bundle into dist/
+npm run typecheck       # type check only, with tsc
 npm run preview         # serve the built bundle locally
 npm test                # full Vitest suite
 npm run test:watch      # watch mode
@@ -52,7 +53,7 @@ The full picture is in [`../information/architecture.md`](../information/archite
 
 ## Tests
 
-Vitest with Testing Library, configured inside `vite.config.js` rather than a separate
+Vitest with Testing Library, configured inside `vite.config.ts` rather than a separate
 file. Render through `tests/helpers/renderWithProviders.jsx` so the router and session
 provider are present, and mock `src/lib/apiClient.js` rather than `fetch` — mocking
 `fetch` bypasses the error shaping the components depend on.
@@ -63,6 +64,7 @@ provider are present, and mock `src/lib/apiClient.js` rather than `fetch` — mo
 npm run build
 ```
 
+The build runs `tsc` first, so a type error fails it before anything is bundled.
 Output lands in `dist/` as static files with hashed asset names. Source maps are
 deliberately omitted so the original sources are not published alongside the bundle.
 Serving that output is described in [`docker.md`](docker.md).
