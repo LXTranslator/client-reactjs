@@ -3,7 +3,7 @@ import { act, renderHook, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { renderWithProviders } from './helpers/renderWithProviders.jsx';
 
-vi.mock('../src/lib/apiClient.js', async (importOriginal) => {
+vi.mock('../src/lib/apiClient.ts', async (importOriginal) => {
   const actual = await importOriginal();
   return {
     ...actual,
@@ -18,8 +18,8 @@ vi.mock('../src/lib/apiClient.js', async (importOriginal) => {
   };
 });
 
-const { api, ApiError } = await import('../src/lib/apiClient.js');
-const { useForm } = await import('../src/hooks/useForm.js');
+const { api, ApiError } = await import('../src/lib/apiClient.ts');
+const { useForm } = await import('../src/hooks/useForm.ts');
 const { App } = await import('../src/App.jsx');
 
 describe('useForm', () => {

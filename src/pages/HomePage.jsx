@@ -1,7 +1,7 @@
 import { Navigate } from 'react-router';
-import { useAuth } from '../context/AuthContext.jsx';
+import { useAuth } from '../context/AuthContext.tsx';
 import { LoadingState } from '../components/ui/Feedback.jsx';
-import { paths } from '../lib/paths.js';
+import { paths } from '../lib/paths.ts';
 
 /**
  * Root route.

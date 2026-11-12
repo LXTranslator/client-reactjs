@@ -60,7 +60,7 @@ Reach for these before writing the same thing again in a page:
 * `useForm(initialValues, { onEdit })` in `src/hooks/` for a form: `handleChange(field)`
   clears that field's error, and `submit(validators, action)` maps a server rejection's
   `fieldErrors` back onto the fields.
-* `endpoint` and `withQuery` in `src/lib/apiClient.js` for a new API helper. The tag
+* `endpoint` and `withQuery` in `src/lib/apiClient.ts` for a new API helper. The tag
   encodes every interpolated value as one path segment.
 * The private `Field` shell in `src/components/ui/FormField.jsx` for a new form control.
 * A new page is one route in `src/App.jsx` plus one `page('NamePage')` line, and the file
@@ -74,7 +74,7 @@ Each one rules out an approach that would otherwise be obvious. They are in
 * `img-src 'self' data:` — **no remote image.** A provider avatar is blocked by the
   browser, so the connections page renders initials.
 * `connect-src 'self'` — **no third party service.** The QR code is generated in the
-  bundle by `src/lib/qrcode.js` and drawn as an inline SVG.
+  bundle by `src/lib/qrcode.ts` and drawn as an inline SVG.
 * `Cross-Origin-Opener-Policy: same-origin` — **no popup.** Provider sign in is a full
   page redirect.
 

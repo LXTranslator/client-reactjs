@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { Link } from 'react-router';
-import { useAuth } from '../context/AuthContext.jsx';
-import { api } from '../lib/apiClient.js';
-import { paths } from '../lib/paths.js';
+import { useAuth } from '../context/AuthContext.tsx';
+import { api } from '../lib/apiClient.ts';
+import { paths } from '../lib/paths.ts';
 import { PasswordField, TextField, TextAreaField } from '../components/ui/FormField.jsx';
 import { Callout, ErrorMessage } from '../components/ui/Feedback.jsx';
 import { Breadcrumbs } from '../components/layout/AppLayout.jsx';
@@ -15,7 +15,7 @@ import {
   validatePasswordConfirmation,
   validateUserId,
   validateWebsiteUrl,
-} from '../lib/validation.js';
+} from '../lib/validation.ts';
 
 /**
  * Account settings.

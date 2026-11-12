@@ -3,9 +3,9 @@ import { Link } from 'react-router';
 import { Breadcrumbs } from '../components/layout/AppLayout.jsx';
 import { OAuthProviderButtons } from '../components/account/OAuthProviderButtons.jsx';
 import { Callout, EmptyState, ErrorMessage, LoadingState } from '../components/ui/Feedback.jsx';
-import { api } from '../lib/apiClient.js';
-import { useLoader } from '../hooks/useLoader.js';
-import { paths } from '../lib/paths.js';
+import { api } from '../lib/apiClient.ts';
+import { useLoader } from '../hooks/useLoader.ts';
+import { paths } from '../lib/paths.ts';
 
 /**
  * Manages the provider accounts linked to this account.

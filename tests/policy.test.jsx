@@ -11,7 +11,7 @@ import { renderWithProviders, makeAccount, makeNamespace } from './helpers/rende
  * would occupy the first path segment, which belongs to accounts.
  */
 
-vi.mock('../src/lib/apiClient.js', async (importOriginal) => {
+vi.mock('../src/lib/apiClient.ts', async (importOriginal) => {
   const actual = await importOriginal();
   return {
     ...actual,
@@ -27,9 +27,9 @@ vi.mock('../src/lib/apiClient.js', async (importOriginal) => {
   };
 });
 
-const { api, getAuthToken } = await import('../src/lib/apiClient.js');
+const { api, getAuthToken } = await import('../src/lib/apiClient.ts');
 const { App } = await import('../src/App.jsx');
-const { paths, isReservedSegment, RESERVED_SEGMENTS } = await import('../src/lib/paths.js');
+const { paths, isReservedSegment, RESERVED_SEGMENTS } = await import('../src/lib/paths.ts');
 
 describe('policy pages', () => {
   beforeEach(() => {

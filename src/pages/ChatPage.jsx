@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useNamespace } from '../components/routing/NamespaceRoute.jsx';
-import { paths } from '../lib/paths.js';
-import { api } from '../lib/apiClient.js';
+import { paths } from '../lib/paths.ts';
+import { api } from '../lib/apiClient.ts';
 import { Breadcrumbs } from '../components/layout/AppLayout.jsx';
 import { ChatSessionList } from '../components/chat/ChatSessionList.jsx';
 import { ChatConversation } from '../components/chat/ChatConversation.jsx';

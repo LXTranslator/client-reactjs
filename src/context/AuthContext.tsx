@@ -1,5 +1,14 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { api, setAuthToken, getAuthToken, ApiError } from '../lib/apiClient.js';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from 'react';
+import { api, setAuthToken, getAuthToken, ApiError } from '../lib/apiClient.ts';
+import type { Account, JsonBody, LoginResult, Namespace, SessionGrant } from '../lib/types.ts';
 
 /**
  * Session and namespace state.
@@ -13,7 +22,31 @@ import { api, setAuthToken, getAuthToken, ApiError } from '../lib/apiClient.js';
  * so the common case is not an extra choice on every visit.
  */
 
-const AuthContext = createContext(null);
+/**
+ * A sign in either started a session or stopped at a second factor, which the
+ * caller answers with the challenge token.
+ */
+export type SignInOutcome =
+  | { mfaRequired: true; challengeToken: string }
+  | { mfaRequired: false; account: Account };
+
+/** Session state and actions, as {@link useAuth} returns them. */
+export interface AuthContextValue {
+  account: Account | null;
+  namespaces: Namespace[];
+  landingNamespaceId: string | null;
+  isAuthenticated: boolean;
+  isLoading: boolean;
+  login: (credentials: { identifier: string; password: string }) => Promise<SignInOutcome>;
+  completeMfa: (input: { challengeToken: string; code: string }) => Promise<Account>;
+  completeOauthLogin: (input: { state: string; code: string }) => Promise<SignInOutcome>;
+  register: (payload: JsonBody) => Promise<Account>;
+  logout: () => Promise<void>;
+  selectNamespace: (namespaceUserId: string) => void;
+  refresh: () => Promise<void>;
+}
+
+const AuthContext = createContext<AuthContextValue | null>(null);
 
 /** Remembers the landing namespace across reloads within the same tab. */
 const LANDING_NAMESPACE_KEY = 'lxtranslator_active_namespace';
@@ -21,10 +54,10 @@ const LANDING_NAMESPACE_KEY = 'lxtranslator_active_namespace';
 /**
  * Reads a value from session storage, tolerating storage being unavailable.
  *
- * @param {string} key Storage key.
- * @returns {string|null} Stored value, or null.
+ * @param key Storage key.
+ * @returns Stored value, or null.
  */
-function readStored(key) {
+function readStored(key: string): string | null {
   try {
     return window.sessionStorage.getItem(key);
   } catch {
@@ -35,11 +68,10 @@ function readStored(key) {
 /**
  * Writes a value to session storage, tolerating storage being unavailable.
  *
- * @param {string} key Storage key.
- * @param {string|null} value Value, or null to remove it.
- * @returns {void}
+ * @param key Storage key.
+ * @param value Value, or null to remove it.
  */
-function writeStored(key, value) {
+function writeStored(key: string, value: string | null): void {
   try {
     if (value === null) window.sessionStorage.removeItem(key);
     else window.sessionStorage.setItem(key, value);
@@ -51,13 +83,13 @@ function writeStored(key, value) {
 /**
  * Provides session state to the tree.
  *
- * @param {{children: React.ReactNode}} props Component props.
- * @returns {JSX.Element} The provider.
+ * @param props Component props.
+ * @returns The provider.
  */
-export function AuthProvider({ children }) {
-  const [account, setAccount] = useState(null);
-  const [namespaces, setNamespaces] = useState([]);
-  const [landingNamespaceId, setLandingNamespaceId] = useState(
+export function AuthProvider({ children }: { children: ReactNode }) {
+  const [account, setAccount] = useState<Account | null>(null);
+  const [namespaces, setNamespaces] = useState<Namespace[]>([]);
+  const [landingNamespaceId, setLandingNamespaceId] = useState<string | null>(
     () => readStored(LANDING_NAMESPACE_KEY),
   );
   // Starts true so the router does not flash the login page while the stored
@@ -67,10 +99,10 @@ export function AuthProvider({ children }) {
   /**
    * Loads the namespaces the account can act in.
    *
-   * @param {object} currentAccount The signed in account.
-   * @returns {Promise<Array<object>>} The namespaces.
+   * @param currentAccount The signed in account.
+   * @returns The namespaces.
    */
-  const loadNamespaces = useCallback(async (currentAccount) => {
+  const loadNamespaces = useCallback(async (currentAccount: Account): Promise<Namespace[]> => {
     const result = await api.listNamespaces();
     const list = result?.namespaces ?? [];
     setNamespaces(list);
@@ -119,8 +151,8 @@ export function AuthProvider({ children }) {
   /**
    * Signs in and loads the account's namespaces.
    *
-   * @param {{identifier: string, password: string}} credentials Login payload.
-   * @returns {Promise<object>} The signed in account.
+   * @param credentials Login payload.
+   * @returns The signed in account.
    */
   /**
    * Adopts a completed sign in.
@@ -128,11 +160,11 @@ export function AuthProvider({ children }) {
    * The tail every sign in path shares, whatever proved the identity: a
    * password, a second factor, or a linked provider account.
    *
-   * @param {object} result Server payload carrying a token and an account.
-   * @returns {Promise<object>} The signed in account.
+   * @param result Server payload carrying a token and an account.
+   * @returns The signed in account.
    */
   const adoptSession = useCallback(
-    async (result) => {
+    async (result: SessionGrant): Promise<Account> => {
       setAuthToken(result.access_token);
       setAccount(result.account);
       await loadNamespaces(result.account);
@@ -142,7 +174,7 @@ export function AuthProvider({ children }) {
   );
 
   const login = useCallback(
-    async (credentials) => {
+    async (credentials: { identifier: string; password: string }): Promise<SignInOutcome> => {
       const result = await api.login(credentials);
 
       /*
@@ -164,11 +196,11 @@ export function AuthProvider({ children }) {
   /**
    * Answers a second factor challenge and starts the session.
    *
-   * @param {{challengeToken: string, code: string}} input Challenge and code.
-   * @returns {Promise<object>} The signed in account.
+   * @param input Challenge and code.
+   * @returns The signed in account.
    */
   const completeMfa = useCallback(
-    async ({ challengeToken, code }) => {
+    async ({ challengeToken, code }: { challengeToken: string; code: string }) => {
       const result = await api.completeMfaChallenge({
         challenge_token: challengeToken,
         code,
@@ -181,11 +213,11 @@ export function AuthProvider({ children }) {
   /**
    * Completes a provider sign in, which may itself require a second factor.
    *
-   * @param {{state: string, code: string}} input Callback parameters.
-   * @returns {Promise<object>} The same discriminated result `login` returns.
+   * @param input Callback parameters.
+   * @returns The same discriminated result `login` returns.
    */
   const completeOauthLogin = useCallback(
-    async ({ state, code }) => {
+    async ({ state, code }: { state: string; code: string }): Promise<SignInOutcome> => {
       const result = await api.completeOauthLogin({ state, code });
 
       if (result.mfa_required) {
@@ -200,11 +232,11 @@ export function AuthProvider({ children }) {
   /**
    * Registers a new account and signs it in.
    *
-   * @param {object} payload Registration payload.
-   * @returns {Promise<object>} The new account.
+   * @param payload Registration payload.
+   * @returns The new account.
    */
   const register = useCallback(
-    async (payload) => {
+    async (payload: JsonBody) => {
       // A brand new account can hold no second factor, so registration keeps
       // returning the account directly rather than a discriminated result.
       const result = await api.register(payload);
@@ -225,7 +257,6 @@ export function AuthProvider({ children }) {
    * up signed out of this browser whatever the network did, and the token they
    * were holding is dropped either way.
    *
-   * @returns {Promise<void>}
    */
   const logout = useCallback(async () => {
     try {
@@ -248,10 +279,9 @@ export function AuthProvider({ children }) {
    * it. Keeping the two separate is what stops a remembered value from
    * disagreeing with the address bar.
    *
-   * @param {string} namespaceUserId Routing identifier of the namespace.
-   * @returns {void}
+   * @param namespaceUserId Routing identifier of the namespace.
    */
-  const selectNamespace = useCallback((namespaceUserId) => {
+  const selectNamespace = useCallback((namespaceUserId: string) => {
     setLandingNamespaceId(namespaceUserId);
     writeStored(LANDING_NAMESPACE_KEY, namespaceUserId);
   }, []);
@@ -259,7 +289,6 @@ export function AuthProvider({ children }) {
   /**
    * Re-reads the account and its namespaces, after a settings change.
    *
-   * @returns {Promise<void>}
    */
   const refresh = useCallback(async () => {
     const result = await api.me();
@@ -267,7 +296,7 @@ export function AuthProvider({ children }) {
     await loadNamespaces(result.account);
   }, [loadNamespaces]);
 
-  const value = useMemo(
+  const value = useMemo<AuthContextValue>(
     () => ({
       account,
       namespaces,
@@ -303,10 +332,10 @@ export function AuthProvider({ children }) {
 /**
  * Reads the session context.
  *
- * @returns {object} Session state and actions.
+ * @returns Session state and actions.
  * @throws {Error} When used outside the provider.
  */
-export function useAuth() {
+export function useAuth(): AuthContextValue {
   const context = useContext(AuthContext);
   if (context === null) {
     throw new Error('useAuth must be used inside an AuthProvider.');

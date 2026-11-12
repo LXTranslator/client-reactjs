@@ -14,7 +14,7 @@ import { renderWithProviders, makeAccount, makeNamespace } from './helpers/rende
  * challenged, exactly as a password sign in is.
  */
 
-vi.mock('../src/lib/apiClient.js', async (importOriginal) => {
+vi.mock('../src/lib/apiClient.ts', async (importOriginal) => {
   const actual = await importOriginal();
   return {
     ...actual,
@@ -38,7 +38,7 @@ vi.mock('../src/lib/apiClient.js', async (importOriginal) => {
   };
 });
 
-const { api, getAuthToken, setAuthToken } = await import('../src/lib/apiClient.js');
+const { api, getAuthToken, setAuthToken } = await import('../src/lib/apiClient.ts');
 const { App } = await import('../src/App.jsx');
 
 /** Replaces window.location so a navigation can be observed rather than performed. */
@@ -175,7 +175,7 @@ describe('the callback', () => {
   });
 
   it('explains what to do when the identity is not linked', async () => {
-    const { ApiError } = await import('../src/lib/apiClient.js');
+    const { ApiError } = await import('../src/lib/apiClient.ts');
     api.completeOauthLogin.mockRejectedValue(
       new ApiError('That account is not linked yet.', { status: 401 }),
     );

@@ -8,11 +8,11 @@ Base path: `/api/v1`, configurable at build time through `VITE_API_BASE_URL`.
 
 ## Conventions
 
-Every call goes through `src/lib/apiClient.js`. It attaches the bearer token,
+Every call goes through `src/lib/apiClient.ts`. It attaches the bearer token,
 unwraps the response envelope and turns a failure into an `ApiError`.
 
 ```js
-import { api } from '../lib/apiClient.js';
+import { api } from '../lib/apiClient.ts';
 
 const result = await api.listProjects('acme_corp');
 // result is the `data` payload; the envelope is already removed.
@@ -169,7 +169,7 @@ not parse a document and write it out again: the server already chose the shape,
 the field names and the indentation of the selected export format, and
 re-serialising them here can only lose something.
 
-`triggerDownload` in `src/lib/download.js` is the only place a blob becomes a
+`triggerDownload` in `src/lib/download.ts` is the only place a blob becomes a
 file. It releases the object URL on a timer rather than on the next line,
 because a click only *starts* a download and revoking the URL in the same task
 cancels one the browser has not finished reading.
@@ -420,7 +420,7 @@ stops at 500 entries and sets `truncated`, which the panel says out loud.
 
 Both download helpers return JSON through the authenticated client rather than
 pointing an anchor at the endpoint, because a plain link cannot carry the
-Authorization header. `src/lib/download.js` then hands the result to the browser
+Authorization header. `src/lib/download.ts` then hands the result to the browser
 as a file.
 
 `format` and `export_format` answer different questions and stay separate here

@@ -13,7 +13,7 @@ import { renderWithProviders, makeAccount, makeNamespace } from './helpers/rende
  * silent, which is what makes it worth a test rather than a comment.
  */
 
-vi.mock('../src/lib/apiClient.js', async (importOriginal) => {
+vi.mock('../src/lib/apiClient.ts', async (importOriginal) => {
   const actual = await importOriginal();
   return {
     ...actual,
@@ -37,7 +37,7 @@ vi.mock('../src/lib/apiClient.js', async (importOriginal) => {
   };
 });
 
-const { api, getAuthToken, setAuthToken } = await import('../src/lib/apiClient.js');
+const { api, getAuthToken, setAuthToken } = await import('../src/lib/apiClient.ts');
 const { App } = await import('../src/App.jsx');
 
 describe('signing in with a second factor', () => {
@@ -115,7 +115,7 @@ describe('signing in with a second factor', () => {
   });
 
   it('keeps the challenge on screen when the code is wrong', async () => {
-    const { ApiError } = await import('../src/lib/apiClient.js');
+    const { ApiError } = await import('../src/lib/apiClient.ts');
     api.login.mockResolvedValue({ mfa_required: true, challenge_token: 'challenge_1' });
     api.completeMfaChallenge.mockRejectedValue(
       new ApiError('That code is not correct.', { status: 401 }),

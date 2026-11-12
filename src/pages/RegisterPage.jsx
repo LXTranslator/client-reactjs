@@ -1,9 +1,9 @@
 import { useCallback } from 'react';
 import { Link, useNavigate } from 'react-router';
-import { paths } from '../lib/paths.js';
-import { useAuth } from '../context/AuthContext.jsx';
-import { useAvailability } from '../hooks/useAvailability.js';
-import { useForm } from '../hooks/useForm.js';
+import { paths } from '../lib/paths.ts';
+import { useAuth } from '../context/AuthContext.tsx';
+import { useAvailability } from '../hooks/useAvailability.ts';
+import { useForm } from '../hooks/useForm.ts';
 import { TextField, PasswordField } from '../components/ui/FormField.jsx';
 import { AvailabilityHint } from '../components/ui/AvailabilityHint.jsx';
 import { ErrorMessage } from '../components/ui/Feedback.jsx';
@@ -13,7 +13,7 @@ import {
   validatePassword,
   validatePasswordConfirmation,
   validateUserId,
-} from '../lib/validation.js';
+} from '../lib/validation.ts';
 
 /**
  * Registration page.

@@ -37,7 +37,13 @@ const MODE_BYTE = 0b0100;
  * version. `groups` lists `[blockCount, dataCodewordsPerBlock]` pairs, because
  * larger versions split into blocks of two different sizes.
  */
-const VERSIONS = [
+interface VersionEntry {
+  version: number;
+  ecPerBlock: number;
+  groups: Array<[blockCount: number, dataCodewordsPerBlock: number]>;
+}
+
+const VERSIONS: VersionEntry[] = [
   { version: 1, ecPerBlock: 10, groups: [[1, 16]] },
   { version: 2, ecPerBlock: 16, groups: [[1, 28]] },
   { version: 3, ecPerBlock: 26, groups: [[1, 44]] },
@@ -51,7 +57,7 @@ const VERSIONS = [
 ];
 
 /** Alignment pattern centre coordinates per version. Version 1 has none. */
-const ALIGNMENT_CENTRES = [
+const ALIGNMENT_CENTRES: number[][] = [
   [],
   [],
   [6, 18],
@@ -89,22 +95,22 @@ const GF_LOG = new Uint8Array(256);
 /**
  * Multiplies two field elements.
  *
- * @param {number} left First element.
- * @param {number} right Second element.
- * @returns {number} The product.
+ * @param left First element.
+ * @param right Second element.
+ * @returns The product.
  */
-function gfMultiply(left, right) {
+function gfMultiply(left: number, right: number): number {
   if (left === 0 || right === 0) return 0;
-  return GF_EXP[GF_LOG[left] + GF_LOG[right]];
+  return GF_EXP[(GF_LOG[left] as number) + (GF_LOG[right] as number)] as number;
 }
 
 /**
  * Builds the generator polynomial for a given number of EC codewords.
  *
- * @param {number} degree Error correction codewords per block.
- * @returns {number[]} Polynomial coefficients, highest power first.
+ * @param degree Error correction codewords per block.
+ * @returns Polynomial coefficients, highest power first.
  */
-function generatorPolynomial(degree) {
+function generatorPolynomial(degree: number): number[] {
   let polynomial = [1];
 
   for (let index = 0; index < degree; index += 1) {
@@ -122,11 +128,11 @@ function generatorPolynomial(degree) {
 /**
  * Computes the error correction codewords for one block.
  *
- * @param {number[]} data Data codewords for the block.
- * @param {number} ecCount Error correction codewords wanted.
- * @returns {number[]} The error correction codewords.
+ * @param data Data codewords for the block.
+ * @param ecCount Error correction codewords wanted.
+ * @returns The error correction codewords.
  */
-function errorCorrectionFor(data, ecCount) {
+function errorCorrectionFor(data: number[], ecCount: number): number[] {
   const generator = generatorPolynomial(ecCount);
   const remainder = new Array(data.length + ecCount).fill(0);
 
@@ -150,11 +156,11 @@ function errorCorrectionFor(data, ecCount) {
 /**
  * Chooses the smallest version that holds the payload.
  *
- * @param {number} byteLength Payload length in bytes.
- * @returns {object} The version descriptor.
+ * @param byteLength Payload length in bytes.
+ * @returns The version descriptor.
  * @throws {RangeError} When no supported version is large enough.
  */
-function chooseVersion(byteLength) {
+function chooseVersion(byteLength: number): VersionEntry {
   for (const entry of VERSIONS) {
     const dataCodewords = entry.groups.reduce(
       (total, [blocks, perBlock]) => total + blocks * perBlock,
@@ -172,22 +178,21 @@ function chooseVersion(byteLength) {
 /**
  * Turns the payload into interleaved data and error correction codewords.
  *
- * @param {number[]} bytes Payload bytes.
- * @param {object} entry Version descriptor.
- * @returns {number[]} The final codeword sequence.
+ * @param bytes Payload bytes.
+ * @param entry Version descriptor.
+ * @returns The final codeword sequence.
  */
-function buildCodewords(bytes, entry) {
+function buildCodewords(bytes: number[], entry: VersionEntry): number[] {
   const countBits = entry.version < 10 ? 8 : 16;
-  const bits = [];
+  const bits: number[] = [];
 
   /**
    * Appends a value as a fixed width big endian bit run.
    *
-   * @param {number} value Value to append.
-   * @param {number} width Bit count.
-   * @returns {void}
+   * @param value Value to append.
+   * @param width Bit count.
    */
-  function push(value, width) {
+  function push(value: number, width: number): void {
     for (let index = width - 1; index >= 0; index -= 1) bits.push((value >> index) & 1);
   }
 
@@ -205,7 +210,7 @@ function buildCodewords(bytes, entry) {
   for (let index = 0; index < 4 && bits.length < capacityBits; index += 1) bits.push(0);
   while (bits.length % 8 !== 0) bits.push(0);
 
-  const codewords = [];
+  const codewords: number[] = [];
   for (let index = 0; index < bits.length; index += 8) {
     let byte = 0;
     for (let offset = 0; offset < 8; offset += 1) byte = (byte << 1) | bits[index + offset];
@@ -221,12 +226,12 @@ function buildCodewords(bytes, entry) {
    */
   const PAD = [0xec, 0x11];
   for (let padIndex = 0; codewords.length < dataCodewords; padIndex += 1) {
-    codewords.push(PAD[padIndex % 2]);
+    codewords.push(PAD[padIndex % 2] as number);
   }
 
   // Split into blocks, compute error correction per block, then interleave both
   // sets column wise, which is what spreads a burst of damage across blocks.
-  const blocks = [];
+  const blocks: Array<{ data: number[]; ec: number[] }> = [];
   let cursor = 0;
   for (const [blockCount, perBlock] of entry.groups) {
     for (let index = 0; index < blockCount; index += 1) {
@@ -236,7 +241,7 @@ function buildCodewords(bytes, entry) {
     }
   }
 
-  const result = [];
+  const result: number[] = [];
   const longestData = Math.max(...blocks.map((block) => block.data.length));
   for (let index = 0; index < longestData; index += 1) {
     for (const block of blocks) {
@@ -254,15 +259,21 @@ function buildCodewords(bytes, entry) {
  * The module matrix.
  * ------------------------------------------------------------------ */
 
+/** The module matrix, and which of its modules the function patterns own. */
+interface Grid {
+  modules: Int8Array[];
+  reserved: Uint8Array[];
+}
+
 /**
  * Creates an empty matrix and the mask marking which modules are reserved.
  *
- * @param {number} size Matrix side length.
- * @returns {{modules: Int8Array[], reserved: Uint8Array[]}} The grids.
+ * @param size Matrix side length.
+ * @returns The grids.
  */
-function createGrid(size) {
-  const modules = [];
-  const reserved = [];
+function createGrid(size: number): Grid {
+  const modules: Int8Array[] = [];
+  const reserved: Uint8Array[] = [];
   for (let index = 0; index < size; index += 1) {
     modules.push(new Int8Array(size));
     reserved.push(new Uint8Array(size));
@@ -273,13 +284,17 @@ function createGrid(size) {
 /**
  * Draws one finder pattern and the separator around it.
  *
- * @param {Int8Array[]} modules Module grid.
- * @param {Uint8Array[]} reserved Reservation grid.
- * @param {number} row Top row of the seven by seven pattern.
- * @param {number} column Left column of the pattern.
- * @returns {void}
+ * @param modules Module grid.
+ * @param reserved Reservation grid.
+ * @param row Top row of the seven by seven pattern.
+ * @param column Left column of the pattern.
  */
-function drawFinder(modules, reserved, row, column) {
+function drawFinder(
+  modules: Int8Array[],
+  reserved: Uint8Array[],
+  row: number,
+  column: number,
+): void {
   const size = modules.length;
 
   for (let deltaRow = -1; deltaRow <= 7; deltaRow += 1) {
@@ -302,12 +317,11 @@ function drawFinder(modules, reserved, row, column) {
 /**
  * Draws the function patterns every version carries.
  *
- * @param {Int8Array[]} modules Module grid.
- * @param {Uint8Array[]} reserved Reservation grid.
- * @param {number} version Symbol version.
- * @returns {void}
+ * @param modules Module grid.
+ * @param reserved Reservation grid.
+ * @param version Symbol version.
  */
-function drawFunctionPatterns(modules, reserved, version) {
+function drawFunctionPatterns(modules: Int8Array[], reserved: Uint8Array[], version: number): void {
   const size = modules.length;
 
   drawFinder(modules, reserved, 0, 0);
@@ -379,10 +393,10 @@ function drawFunctionPatterns(modules, reserved, version) {
 /**
  * Computes the eighteen bit version information block.
  *
- * @param {number} version Symbol version, seven or above.
- * @returns {number} The block.
+ * @param version Symbol version, seven or above.
+ * @returns The block.
  */
-function versionInformationBits(version) {
+function versionInformationBits(version: number): number {
   let remainder = version << 12;
   for (let index = 0; index < 12; index += 1) {
     if (remainder & (1 << (17 - index))) {
@@ -395,10 +409,10 @@ function versionInformationBits(version) {
 /**
  * Computes the fifteen bit format information block.
  *
- * @param {number} mask Mask pattern number.
- * @returns {number} The block, already masked with the specified constant.
+ * @param mask Mask pattern number.
+ * @returns The block, already masked with the specified constant.
  */
-function formatInformationBits(mask) {
+function formatInformationBits(mask: number): number {
   const data = (EC_LEVEL_BITS << 3) | mask;
   let remainder = data << 10;
 
@@ -423,11 +437,10 @@ function formatInformationBits(mask) {
  *   - the second copy splits after seven positions rather than eight, because
  *     the eighth module of that column is the dark module.
  *
- * @param {Int8Array[]} modules Module grid.
- * @param {number} mask Mask pattern number.
- * @returns {void}
+ * @param modules Module grid.
+ * @param mask Mask pattern number.
  */
-function drawFormatInformation(modules, mask) {
+function drawFormatInformation(modules: Int8Array[], mask: number): void {
   const size = modules.length;
   const bits = formatInformationBits(mask);
 
@@ -453,12 +466,11 @@ function drawFormatInformation(modules, mask) {
 /**
  * Places the codeword bits in the two module wide zigzag.
  *
- * @param {Int8Array[]} modules Module grid.
- * @param {Uint8Array[]} reserved Reservation grid.
- * @param {number[]} codewords Final codeword sequence.
- * @returns {void}
+ * @param modules Module grid.
+ * @param reserved Reservation grid.
+ * @param codewords Final codeword sequence.
  */
-function placeCodewords(modules, reserved, codewords) {
+function placeCodewords(modules: Int8Array[], reserved: Uint8Array[], codewords: number[]): void {
   const size = modules.length;
   let bitIndex = 0;
   let upward = true;
@@ -488,12 +500,12 @@ function placeCodewords(modules, reserved, codewords) {
 /**
  * Reports whether a module is flipped by a mask pattern.
  *
- * @param {number} mask Mask pattern number.
- * @param {number} row Row index.
- * @param {number} column Column index.
- * @returns {boolean} True when the module flips.
+ * @param mask Mask pattern number.
+ * @param row Row index.
+ * @param column Column index.
+ * @returns True when the module flips.
  */
-function maskApplies(mask, row, column) {
+function maskApplies(mask: number, row: number, column: number): boolean {
   switch (mask) {
     case 0:
       return (row + column) % 2 === 0;
@@ -521,10 +533,10 @@ function maskApplies(mask, row, column) {
  * to read: long same coloured runs, solid blocks, anything resembling a finder,
  * and a strong imbalance between dark and light.
  *
- * @param {Int8Array[]} modules Module grid.
- * @returns {number} The penalty.
+ * @param modules Module grid.
+ * @returns The penalty.
  */
-function penaltyScore(modules) {
+function penaltyScore(modules: Int8Array[]): number {
   const size = modules.length;
   let penalty = 0;
 
@@ -592,18 +604,26 @@ function penaltyScore(modules) {
   return penalty;
 }
 
+/** An encoded symbol: its side length, version, mask, and which modules are dark. */
+export interface QrSymbol {
+  size: number;
+  version: number;
+  mask: number;
+  modules: boolean[][];
+}
+
 /**
  * Encodes a string as a QR matrix.
  *
- * @param {string} text Value to encode. ASCII only.
- * @param {{mask?: number}} [options] `mask` forces one pattern instead of
+ * @param text Value to encode. ASCII only.
+ * @param options `mask` forces one pattern instead of
  *   scoring all eight. Only the tests use it, to pin a fixture against an
  *   independent encoder without both having to agree on penalty scoring.
- * @returns {{size: number, version: number, mask: number, modules: boolean[][]}} The symbol.
+ * @returns The symbol.
  * @throws {TypeError} When the value is not a non empty string.
  * @throws {RangeError} When it does not fit a supported version.
  */
-export function encodeQr(text, options = {}) {
+export function encodeQr(text: string, options: { mask?: number } = {}): QrSymbol {
   if (typeof text !== 'string' || text.length === 0) {
     throw new TypeError('A QR payload must be a non empty string.');
   }
@@ -613,7 +633,7 @@ export function encodeQr(text, options = {}) {
   const codewords = buildCodewords(bytes, entry);
   const size = entry.version * 4 + 17;
 
-  let best = null;
+  let best: { penalty: number; mask: number; modules: Int8Array[] } | null = null;
   const forced = options.mask;
   const candidates = forced === undefined ? [0, 1, 2, 3, 4, 5, 6, 7] : [forced];
 
@@ -636,10 +656,13 @@ export function encodeQr(text, options = {}) {
     if (best === null || penalty < best.penalty) best = { penalty, mask, modules };
   }
 
+  // There are eight candidates, or the one forced, so the loop always sets it.
+  const chosen = best!;
+
   return {
     size,
     version: entry.version,
-    mask: best.mask,
-    modules: best.modules.map((row) => Array.from(row, (value) => value === 1)),
+    mask: chosen.mask,
+    modules: chosen.modules.map((row) => Array.from(row, (value) => value === 1)),
   };
 }

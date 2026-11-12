@@ -1,6 +1,6 @@
 import { render } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
-import { AuthProvider } from '../../src/context/AuthContext.jsx';
+import { AuthProvider } from '../../src/context/AuthContext.tsx';
 
 /**
  * Renders a tree inside the router and session providers.

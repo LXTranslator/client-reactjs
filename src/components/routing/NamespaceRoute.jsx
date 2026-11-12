@@ -1,8 +1,8 @@
 import { createContext, useContext, useMemo } from 'react';
 import { Link, Outlet, useParams } from 'react-router';
-import { useAuth } from '../../context/AuthContext.jsx';
+import { useAuth } from '../../context/AuthContext.tsx';
 import { LoadingState } from '../ui/Feedback.jsx';
-import { paths } from '../../lib/paths.js';
+import { paths } from '../../lib/paths.ts';
 
 /**
  * Resolves the namespace named in the URL, once, for every route beneath it.

@@ -1,13 +1,13 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router';
 import { useNamespace } from '../components/routing/NamespaceRoute.jsx';
-import { paths } from '../lib/paths.js';
-import { api } from '../lib/apiClient.js';
-import { useLoader } from '../hooks/useLoader.js';
-import { triggerDownload } from '../lib/download.js';
+import { paths } from '../lib/paths.ts';
+import { api } from '../lib/apiClient.ts';
+import { useLoader } from '../hooks/useLoader.ts';
+import { triggerDownload } from '../lib/download.ts';
 import { FileGrowthPanel } from '../components/editor/FileGrowthPanel.jsx';
 import { ConsistencyPanel } from '../components/editor/ConsistencyPanel.jsx';
-import { localeLabel } from '../lib/locales.js';
+import { localeLabel } from '../lib/locales.ts';
 
 import {
   Callout,

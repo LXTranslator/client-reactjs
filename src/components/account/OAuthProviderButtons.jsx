@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { api } from '../../lib/apiClient.js';
-import { useLoader } from '../../hooks/useLoader.js';
+import { api } from '../../lib/apiClient.ts';
+import { useLoader } from '../../hooks/useLoader.ts';
 
 /** Where the callback page reads back which kind of flow it is finishing. */
 export const OAUTH_MODE_KEY = 'lxtranslator_oauth_mode';

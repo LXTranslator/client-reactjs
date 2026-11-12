@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router';
-import { paths } from '../lib/paths.js';
-import { api } from '../lib/apiClient.js';
+import { paths } from '../lib/paths.ts';
+import { api } from '../lib/apiClient.ts';
 import { PasswordField, TextField } from '../components/ui/FormField.jsx';
 import { Callout, ErrorMessage } from '../components/ui/Feedback.jsx';
-import { validatePassword, validatePasswordConfirmation } from '../lib/validation.js';
-import { useForm } from '../hooks/useForm.js';
+import { validatePassword, validatePasswordConfirmation } from '../lib/validation.ts';
+import { useForm } from '../hooks/useForm.ts';
 
 /**
  * Reset password page.

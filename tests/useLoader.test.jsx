@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { act, renderHook, waitFor } from '@testing-library/react';
-import { useLoader } from '../src/hooks/useLoader.js';
+import { useLoader } from '../src/hooks/useLoader.ts';
 
 /**
  * A promise whose settlement the test controls.

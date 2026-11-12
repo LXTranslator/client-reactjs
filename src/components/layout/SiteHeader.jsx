@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, NavLink, useLocation, useNavigate, useParams } from 'react-router';
-import { useAuth } from '../../context/AuthContext.jsx';
-import { paths } from '../../lib/paths.js';
+import { useAuth } from '../../context/AuthContext.tsx';
+import { paths } from '../../lib/paths.ts';
 
 /**
  * Sticky glass header.

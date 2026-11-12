@@ -42,8 +42,8 @@ backend running on port 4000; the backend itself needs no configuration.
 |---|---|
 | `src/main.jsx` | Entry point. Mounts React, the router and the session provider, and imports the style layers in order. |
 | `src/App.jsx` | The route table — public, protected and fallback routes. |
-| `src/lib/` | Framework free helpers. `apiClient.js` is the only place that talks HTTP. |
-| `src/context/` | `AuthContext.jsx` — session, namespace list, active namespace. |
+| `src/lib/` | Framework free helpers. `apiClient.ts` is the only place that talks HTTP; `types.ts` holds the shapes the API sends and accepts. |
+| `src/context/` | `AuthContext.tsx` — session, namespace list, active namespace. |
 | `src/hooks/` | Reusable hooks: `useLoader` for every server read, `useForm` for every form, and the debounced availability probe. |
 | `src/components/` | `layout/`, `routing/`, `editor/`, `chat/`, `account/`, `project/`, `ui/`. |
 | `src/pages/` | One file per route, named `<Name>Page.jsx`. |
@@ -62,7 +62,7 @@ backend running on port 4000; the backend itself needs no configuration.
 
 * **A new route** — `src/pages/<Name>Page.jsx`, registered in `src/App.jsx`. The
   procedure is in [`../../rules/repository.md`](../../rules/repository.md).
-* **A new server call** — an endpoint helper in `src/lib/apiClient.js`. Never `fetch`
+* **A new server call** — an endpoint helper in `src/lib/apiClient.ts`. Never `fetch`
   from a component.
 * **A visual change** — tokens first. The specification is
   [`../../../wiki/information/design-system.md`](../../../wiki/information/design-system.md).
@@ -73,11 +73,11 @@ backend running on port 4000; the backend itself needs no configuration.
   can match twice. Scope with `within(main)`.
 * **Pages render their heading before data resolves.** Waiting on the heading and then
   querying a data dependent element races. Wait for the element you are asserting on.
-* **Mock `src/lib/apiClient.js`, not `fetch`.** Mocking `fetch` bypasses the error shaping
+* **Mock `src/lib/apiClient.ts`, not `fetch`.** Mocking `fetch` bypasses the error shaping
   every component depends on.
 * **`VITE_` variables are public.** They are inlined into the bundle at build time and
   readable by anyone. Nothing sensitive goes in one.
 * **Overlays that cover content are opaque on purpose.** Modals and the mobile nav panel
   do not use `backdrop-filter`; section 3 of the design system explains why.
 * **The API speaks snake_case.** JavaScript here is camelCase; the boundary is
-  `src/lib/apiClient.js`.
+  `src/lib/apiClient.ts`.

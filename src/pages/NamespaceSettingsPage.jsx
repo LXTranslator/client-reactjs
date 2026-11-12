@@ -1,16 +1,16 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router';
-import { useAuth } from '../context/AuthContext.jsx';
+import { useAuth } from '../context/AuthContext.tsx';
 import { useNamespace } from '../components/routing/NamespaceRoute.jsx';
-import { paths } from '../lib/paths.js';
-import { api } from '../lib/apiClient.js';
-import { useLoader } from '../hooks/useLoader.js';
-import { useForm } from '../hooks/useForm.js';
+import { paths } from '../lib/paths.ts';
+import { api } from '../lib/apiClient.ts';
+import { useLoader } from '../hooks/useLoader.ts';
+import { useForm } from '../hooks/useForm.ts';
 import { TextField, TextAreaField } from '../components/ui/FormField.jsx';
 import { Callout, ErrorMessage, LoadingState } from '../components/ui/Feedback.jsx';
 import { Modal } from '../components/ui/Modal.jsx';
 import { Breadcrumbs } from '../components/layout/AppLayout.jsx';
-import { PLACEHOLDERS, validateEmail, validateWebsiteUrl } from '../lib/validation.js';
+import { PLACEHOLDERS, validateEmail, validateWebsiteUrl } from '../lib/validation.ts';
 
 /**
  * Organization profile settings, including deletion.

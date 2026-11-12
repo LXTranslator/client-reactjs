@@ -1,5 +1,5 @@
 import { useId } from 'react';
-import { scorePassword } from '../../lib/validation.js';
+import { scorePassword } from '../../lib/validation.ts';
 
 /**
  * Form field primitives.

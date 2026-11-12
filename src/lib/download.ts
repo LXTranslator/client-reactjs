@@ -28,11 +28,10 @@ const REVOKE_DELAY_MS = 60_000;
  * The delay is bounded so a long session cannot pin every file it ever
  * downloaded in memory.
  *
- * @param {string} filename Suggested filename.
- * @param {Blob} blob Content.
- * @returns {void}
+ * @param filename Suggested filename.
+ * @param blob Content.
  */
-export function triggerDownload(filename, blob) {
+export function triggerDownload(filename: string, blob: Blob): void {
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement('a');
 
@@ -52,10 +51,10 @@ export function triggerDownload(filename, blob) {
  * The value originates from a locale code the server already validated, but it
  * is sanitised again here so a future caller cannot pass a path through.
  *
- * @param {string} filename Candidate name.
- * @returns {string} Safe name.
+ * @param filename Candidate name.
+ * @returns Safe name.
  */
-export function sanitizeDownloadName(filename) {
+export function sanitizeDownloadName(filename: string): string {
   const base = String(filename).split(/[\\/]/).pop() ?? 'download.json';
   const cleaned = base.replace(/[^A-Za-z0-9._-]/g, '_').replace(/^\.+/, '');
   return cleaned.length === 0 ? 'download.json' : cleaned.slice(0, 128);

@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { Link } from 'react-router';
-import { paths } from '../lib/paths.js';
-import { api } from '../lib/apiClient.js';
+import { paths } from '../lib/paths.ts';
+import { api } from '../lib/apiClient.ts';
 import { TextField } from '../components/ui/FormField.jsx';
 import { Callout, ErrorMessage } from '../components/ui/Feedback.jsx';
-import { PLACEHOLDERS, validateEmail } from '../lib/validation.js';
+import { PLACEHOLDERS, validateEmail } from '../lib/validation.ts';
 
 /**
  * Forgot password page.

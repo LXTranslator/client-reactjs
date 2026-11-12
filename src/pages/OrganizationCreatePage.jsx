@@ -1,10 +1,10 @@
 import { useCallback } from 'react';
 import { Link, useNavigate } from 'react-router';
-import { paths } from '../lib/paths.js';
-import { useAuth } from '../context/AuthContext.jsx';
-import { api } from '../lib/apiClient.js';
-import { useAvailability } from '../hooks/useAvailability.js';
-import { useForm } from '../hooks/useForm.js';
+import { paths } from '../lib/paths.ts';
+import { useAuth } from '../context/AuthContext.tsx';
+import { api } from '../lib/apiClient.ts';
+import { useAvailability } from '../hooks/useAvailability.ts';
+import { useForm } from '../hooks/useForm.ts';
 import { TextField, TextAreaField } from '../components/ui/FormField.jsx';
 import { AvailabilityHint } from '../components/ui/AvailabilityHint.jsx';
 import { Callout, ErrorMessage } from '../components/ui/Feedback.jsx';
@@ -14,7 +14,7 @@ import {
   validateEmail,
   validateUserId,
   validateWebsiteUrl,
-} from '../lib/validation.js';
+} from '../lib/validation.ts';
 
 /**
  * Organization creation page.

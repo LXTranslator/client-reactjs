@@ -1,7 +1,7 @@
 import { Navigate, Outlet, useLocation } from 'react-router';
-import { useAuth } from '../../context/AuthContext.jsx';
+import { useAuth } from '../../context/AuthContext.tsx';
 import { LoadingState } from '../ui/Feedback.jsx';
-import { paths } from '../../lib/paths.js';
+import { paths } from '../../lib/paths.ts';
 
 /**
  * Route guard for authenticated pages.

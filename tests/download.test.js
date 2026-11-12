@@ -1,6 +1,6 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
-import { api, apiRequest } from '../src/lib/apiClient.js';
-import { sanitizeDownloadName, triggerDownload } from '../src/lib/download.js';
+import { api, apiRequest } from '../src/lib/apiClient.ts';
+import { sanitizeDownloadName, triggerDownload } from '../src/lib/download.ts';
 
 /*
  * Downloading a file.

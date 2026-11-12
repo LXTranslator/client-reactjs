@@ -13,7 +13,7 @@ import { renderWithProviders, makeAccount, makeNamespace } from './helpers/rende
  * rendered as markup.
  */
 
-vi.mock('../src/lib/apiClient.js', async (importOriginal) => {
+vi.mock('../src/lib/apiClient.ts', async (importOriginal) => {
   const actual = await importOriginal();
   return {
     ...actual,
@@ -36,13 +36,13 @@ vi.mock('../src/lib/apiClient.js', async (importOriginal) => {
   };
 });
 
-vi.mock('../src/lib/download.js', async (importOriginal) => {
+vi.mock('../src/lib/download.ts', async (importOriginal) => {
   const actual = await importOriginal();
   return { ...actual, triggerDownload: vi.fn() };
 });
 
-const { api, getAuthToken } = await import('../src/lib/apiClient.js');
-const { triggerDownload } = await import('../src/lib/download.js');
+const { api, getAuthToken } = await import('../src/lib/apiClient.ts');
+const { triggerDownload } = await import('../src/lib/download.ts');
 const { App } = await import('../src/App.jsx');
 
 const CHAT_PATH = '/jetsada/chat';
@@ -757,7 +757,7 @@ describe('the assistant', () => {
 
     it('reports a failed download rather than looking as though nothing happened', async () => {
       const user = await ask([LOCALE_OFFER]);
-      const { ApiError } = await import('../src/lib/apiClient.js');
+      const { ApiError } = await import('../src/lib/apiClient.ts');
       api.downloadLocale.mockRejectedValue(
         new ApiError('That file does not exist.', { status: 404 }),
       );

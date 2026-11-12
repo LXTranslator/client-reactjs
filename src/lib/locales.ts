@@ -15,8 +15,14 @@
  * exact catalogue against it.
  */
 
+/** A locale the interface offers. */
+export interface Locale {
+  code: string;
+  label: string;
+}
+
 /** Every locale the interface offers, ordered by code. */
-export const LOCALES = [
+export const LOCALES: Locale[] = [
   { code: 'af_za', label: 'Afrikaans' },
   { code: 'ar_sa', label: 'Arabic' },
   { code: 'ast_es', label: 'Asturian' },
@@ -184,9 +190,9 @@ const SUGGESTED_CODES = [
  * Having 143 choices with no starting point is its own kind of unusable, so the
  * picker opens on these and the rest is a letter or a search away.
  */
-export const SUGGESTED_LOCALES = SUGGESTED_CODES.map((code) =>
+export const SUGGESTED_LOCALES: Locale[] = SUGGESTED_CODES.map((code) =>
   LOCALES.find((locale) => locale.code === code),
-).filter(Boolean);
+).filter((locale): locale is Locale => locale !== undefined);
 
 /** Locale record by code, for turning a stored code back into a name. */
 const LOCALES_BY_CODE = new Map(LOCALES.map((locale) => [locale.code, locale]));
@@ -197,10 +203,10 @@ const LOCALES_BY_CODE = new Map(LOCALES.map((locale) => [locale.code, locale]));
  * A code outside the catalogue is still valid, since the server validates shape
  * rather than membership, so it is returned as it stands rather than hidden.
  *
- * @param {string} code Locale code.
- * @returns {string} The language name, or the code itself.
+ * @param code Locale code.
+ * @returns The language name, or the code itself.
  */
-export function localeLabel(code) {
+export function localeLabel(code: string): string {
   return LOCALES_BY_CODE.get(code)?.label ?? code;
 }
 
@@ -211,10 +217,10 @@ export function localeLabel(code) {
  * that does not start with a Latin letter files under a single bucket rather
  * than vanishing from the index.
  *
- * @param {{label: string}} locale Locale record.
- * @returns {string} A single uppercase letter, or `#`.
+ * @param locale Locale record.
+ * @returns A single uppercase letter, or `#`.
  */
-export function localeInitial(locale) {
+export function localeInitial(locale: Pick<Locale, 'label'>): string {
   const folded = locale.label
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
@@ -224,7 +230,7 @@ export function localeInitial(locale) {
 }
 
 /** The alphabet the index offers, with a bucket for everything else. */
-export const LOCALE_INITIALS = [
+export const LOCALE_INITIALS: string[] = [
   ...'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
   '#',
 ].filter((letter) => LOCALES.some((locale) => localeInitial(locale) === letter));
@@ -235,13 +241,17 @@ export const LOCALE_INITIALS = [
  * Both the name and the code are searched, because people arrive knowing one or
  * the other: `pt_br` and `Brazilian` should each find the same row.
  *
- * @param {object} [options] Filter options.
- * @param {string} [options.initial] Single letter, or `#`, or empty for all.
- * @param {string} [options.search] Free text over name and code.
- * @param {string[]} [options.exclude] Codes to leave out.
- * @returns {Array<{code: string, label: string}>} Matching locales.
+ * @param options Filter options.
+ * @param options.initial Single letter, or `#`, or empty for all.
+ * @param options.search Free text over name and code.
+ * @param options.exclude Codes to leave out.
+ * @returns Matching locales.
  */
-export function filterLocales({ initial = '', search = '', exclude = [] } = {}) {
+export function filterLocales({
+  initial = '',
+  search = '',
+  exclude = [],
+}: { initial?: string; search?: string; exclude?: readonly string[] } = {}): Locale[] {
   const excluded = new Set(exclude);
   const needle = search.trim().toLowerCase();
 
@@ -272,10 +282,10 @@ export const LOCALE_CODE_PATTERN = /^[a-z]{2,8}(_[a-z0-9]{2,8})?$/;
  * Membership of the catalogue is deliberately not required: the server accepts
  * any well formed code, so a locale it does not list is still usable.
  *
- * @param {string} value Candidate code.
- * @returns {string|null} An error message, or null when valid.
+ * @param value Candidate code.
+ * @returns An error message, or null when valid.
  */
-export function validateLocaleCode(value) {
+export function validateLocaleCode(value: unknown): string | null {
   const trimmed = String(value ?? '').trim().toLowerCase();
   if (trimmed.length === 0) return 'Enter a locale code.';
   if (!LOCALE_CODE_PATTERN.test(trimmed)) {

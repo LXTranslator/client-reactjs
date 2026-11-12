@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, afterEach } from 'vitest';
-import { api } from '../src/lib/apiClient.js';
+import { api } from '../src/lib/apiClient.ts';
 
 /*
  * How an endpoint helper builds its URL.
