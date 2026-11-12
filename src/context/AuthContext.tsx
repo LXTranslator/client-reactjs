@@ -256,7 +256,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
    * A failure is swallowed on purpose. Somebody who pressed sign out must end
    * up signed out of this browser whatever the network did, and the token they
    * were holding is dropped either way.
-   *
    */
   const logout = useCallback(async () => {
     try {
@@ -288,7 +287,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   /**
    * Re-reads the account and its namespaces, after a settings change.
-   *
    */
   const refresh = useCallback(async () => {
     const result = await api.me();

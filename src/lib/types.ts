@@ -50,6 +50,7 @@ export interface Member {
   role: MemberRole;
   created_at: Timestamp;
   member: {
+    id: string;
     user_id: string;
     email?: string | null;
     display_name?: string | null;
@@ -61,8 +62,8 @@ export interface Project {
   id: string;
   name: string;
   description?: string | null;
-  ai_provider?: string | null;
-  ai_model?: string | null;
+  ai_provider: string;
+  ai_model: string;
 }
 
 /** Where a file is in the translation pipeline. */
@@ -76,8 +77,8 @@ export interface ProjectFile {
   status: FileStatus;
   size?: number;
   key_count?: number;
-  source_lang_code?: string;
-  target_lang_codes?: string[];
+  source_lang_code: string;
+  target_lang_codes: string[];
   error_message?: string | null;
 }
 
@@ -88,13 +89,16 @@ export interface Provider {
   default_model?: string;
   models?: string[];
   embedding_models?: string[];
+  /** False for a platform that runs locally and sends nothing over the network. */
+  requires_network?: boolean;
+  supports_caching?: boolean;
 }
 
 /** The platform catalogue. */
 export interface ProviderCatalogue {
   providers: Provider[];
-  default_provider?: string;
-  default_model?: string;
+  default_provider: string;
+  default_model: string;
 }
 
 /** A namespace credential for an AI platform. The key itself is never sent back. */
@@ -164,7 +168,7 @@ export interface TwoFactorStatus {
 /** What setting up a second factor hands the browser to show. */
 export interface TwoFactorEnrolment {
   secret: string;
-  otpauth_url: string;
+  otpauth_uri: string;
 }
 
 /** A shape a namespace can export its documents in. */
@@ -184,14 +188,16 @@ export interface ChatTurn {
   id: string;
   user_prompt: string;
   ai_answer: string;
+  /** Tokens the conversation had spent once this turn was answered. */
+  total_token_usage: number;
 }
 
 /** A conversation with the assistant, as listed. */
 export interface ChatSession {
   id: string;
   title?: string | null;
-  turn_count?: number;
-  created_at?: Timestamp;
+  turn_count: number;
+  created_at: Timestamp;
   last_message_at?: Timestamp | null;
 }
 
@@ -227,6 +233,13 @@ export interface ChatReply {
   downloads?: ChatDownload[];
 }
 
+/** What a search of past conversations found, and how it searched. */
+export interface ChatSearchResults {
+  /** By meaning when an embedding model is configured, by text otherwise. */
+  method: 'EMBEDDING' | 'TEXT';
+  matches: ChatSearchMatch[];
+}
+
 /** A past message that matched a search. */
 export interface ChatSearchMatch {
   id: string;
@@ -241,6 +254,8 @@ export interface Translation {
   id: string;
   lang_code: string;
   translated_text: string;
+  /** True once somebody corrected it by hand. */
+  is_manual?: boolean;
 }
 
 /** One key of a file, with its master text and every translation. */
@@ -264,7 +279,7 @@ export interface FileTranslations {
   master_lang_code: string;
   available_locales: string[];
   keys: TranslationKey[];
-  stale_translations?: StaleTranslation[];
+  stale_translations: StaleTranslation[];
 }
 
 /** One mismatch the consistency check found. */
@@ -307,4 +322,12 @@ export interface UsageSummary {
     requests: number;
     failed: number;
   }>;
+}
+
+/** What embedding past conversations did. */
+export interface ChatBackfill {
+  /** False when the namespace has no embedding model, so nothing was embedded. */
+  configured: boolean;
+  embedded?: number;
+  remaining?: number;
 }

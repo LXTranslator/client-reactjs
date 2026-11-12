@@ -280,9 +280,9 @@ place, and every page stays in sync.
 
 | Specification (§6) | This repository |
 |---|---|
-| `partials/header.html` | `src/components/layout/SiteHeader.jsx` |
-| `partials/footer.html` | `src/components/layout/SiteFooter.jsx` |
-| `js/site.js` loader | `src/components/layout/AppLayout.jsx` |
+| `partials/header.html` | `src/components/layout/SiteHeader.tsx` |
+| `partials/footer.html` | `src/components/layout/SiteFooter.tsx` |
+| `js/site.js` loader | `src/components/layout/AppLayout.tsx` |
 | `{{ROOT}}` token | React Router `<Link>`, which resolves paths itself |
 | `window.PAGE_SECTION` | `<NavLink>` with its `isActive` render prop |
 | `#site-header` / `#site-footer` mount points | `AppLayout` rendering both around an `<Outlet />` |
@@ -293,7 +293,7 @@ still uses the opaque treatment §3 requires for a content-covering overlay.
 ### File layout
 
 §7 describes a `css/` directory for a static site. Here the same layers live
-under `src/styles/`, imported in the specified order by `src/main.jsx`:
+under `src/styles/`, imported in the specified order by `src/main.tsx`:
 
 ```
 src/styles/

@@ -44,10 +44,10 @@ network. If it needs any of those, something has been mocked incorrectly.
 
 ## Project layout
 
-`src/main.jsx` mounts React, the router and the session provider. `src/App.jsx` holds the
+`src/main.tsx` mounts React, the router and the session provider. `src/App.tsx` holds the
 route table. Pages live in `src/pages/`, one per route; components in `src/components/`;
 framework free helpers in `src/lib/`. The style layers in `src/styles/` are imported in a
-fixed order by `main.jsx` and that order matters.
+fixed order by `main.tsx` and that order matters.
 
 The full picture is in [`../information/architecture.md`](../information/architecture.md).
 

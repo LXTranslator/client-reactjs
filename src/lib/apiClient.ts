@@ -12,8 +12,9 @@ import type {
   AccountKey,
   ApiToken,
   AuthProvider,
+  ChatBackfill,
   ChatReply,
-  ChatSearchMatch,
+  ChatSearchResults,
   ChatSession,
   ChatTurn,
   ConsistencyReport,
@@ -380,7 +381,7 @@ export const api = {
   /* Account settings. */
   getSettings: () => apiRequest<{ account: Account }>('/settings'),
   confirmPassword: (body: JsonBody) =>
-    apiRequest<{ token: string; expires_in?: number }>('/settings/confirm', {
+    apiRequest<{ token: string; expires_in: number }>('/settings/confirm', {
       method: 'POST',
       body,
     }),
@@ -577,11 +578,11 @@ export const api = {
       method: 'DELETE',
     }),
   searchChats: (namespace: string, query: string, limit?: number) =>
-    apiRequest<{ results?: ChatSearchMatch[] }>(
+    apiRequest<ChatSearchResults>(
       withQuery(endpoint`/namespaces/${namespace}/chat/search`, { q: query, limit }),
     ),
   backfillChatEmbeddings: (namespace: string, body: JsonBody = {}) =>
-    apiRequest<{ embedded?: number }>(endpoint`/namespaces/${namespace}/chat/embeddings`, {
+    apiRequest<ChatBackfill>(endpoint`/namespaces/${namespace}/chat/embeddings`, {
       method: 'POST',
       body,
     }),
