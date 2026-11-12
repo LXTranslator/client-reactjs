@@ -7,7 +7,7 @@ description: Current known state of client-reactjs after adopting the shared ins
 
 ## What this is
 
-`lxtranslator_client`, version 0.17.1. The React single page application for
+`lxtranslator_client`, version 0.18.0. The React single page application for
 LXTranslator, consuming the API served by `LXTranslator/server-expressjs`.
 
 ## Stack
@@ -88,7 +88,24 @@ Each one rules out an approach that would otherwise be obvious. They are in
 * No interface for registering with a provider. Linking is deliberate on the server side,
   so the buttons never appear on the registration page.
 
+## Types, as of 0.18.0
+
+* The API's shapes are in `src/lib/types.ts`, in the server's snake_case. Add a field
+  there only when a component reads it, and let `tsc` tell you which pages disagree.
+* `npm run typecheck` is the check; `npm run dev` and `npm test` strip types without
+  checking them. `npm run build` runs `tsc` first, so the Docker image will not build
+  with a type error.
+* A test that mocks a module reads it through `asMocked(await import(...))` from
+  `tests/helpers/mocks.ts`.
+
 ## Next obvious step
+
+Several instruction files still name the JavaScript paths: `.agents/rules/repository.md`,
+`.agents/knowledge/domain.md` and four `.agents/security/` policies that cite `src/`
+files, and `.agents/security/supply-chain.md` lists no compiler among the development
+dependencies. Per the discovery protocol
+they are reported in [`../tasks/typescript-migration.md`](../tasks/typescript-migration.md)
+rather than edited.
 
 One client rule is waiting on the user's decision rather than being written, per the
 discovery protocol: that the content security policy forbids a remote image, so no third

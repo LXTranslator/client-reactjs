@@ -47,18 +47,19 @@ application:
 | Branch convention over the harness branch | The harness named `claude/project-thread-wgirs3`; `branching-strategy` forbids a tool preset prefix and a generated suffix. |
 | Work autonomously, choosing the recommended option | The owner is away and asked that each question be posed with a recommendation and then answered with it. The plan and the version were settled that way. |
 | Version 0.18.0 | The source language, the build script and the Docker build inputs change for anyone working on the client, though a user sees nothing new. |
+| Merge in order, each rebased | The owner's standing instruction: once the work is finished, merge the chain in order, each branch rebased onto the updated `master`, with a merge commit as earlier pull requests did. No tag is cut; a tag is a version claim of its own. |
 
 ## The tasks
 
 | # | Title | Scope | Branch | PR |
 |---|---|---|---|---|
-| 1 | Task record | This file and its index row | `plan/typescript-migration` | |
-| 2 | Dependencies | Every dependency to latest, the compiler and type packages, audit | `build/dependencies` | |
-| 3 | Compiler configuration | `tsconfig.json`, `vite.config.ts`, the type check script, the Dockerfile | `build/typescript` | |
-| 4 | Library, hooks and context | `src/lib`, `src/hooks`, `src/context` to typed `.ts` and `.tsx` | `refactor/typescript-lib` | |
-| 5 | Components and pages | `src/components`, `src/pages`, `App` and `main` | `refactor/typescript-ui` | |
-| 6 | Tests | `tests/` to `.ts` and `.tsx`, `allowJs` off | `test/typescript` | |
-| 7 | Release 0.18.0 | Version, change log, logs index, close this record | `release/0.18.0` | |
+| 1 | Task record | This file and its index row | `plan/typescript-migration` | #41 |
+| 2 | Dependencies | Every dependency to latest, the compiler and type packages, audit | `build/dependencies` | #42 |
+| 3 | Compiler configuration | `tsconfig.json`, `vite.config.ts`, the type check script, the Dockerfile | `build/typescript` | #43 |
+| 4 | Library, hooks and context | `src/lib`, `src/hooks`, `src/context` to typed `.ts` and `.tsx` | `refactor/typescript-lib` | #44 |
+| 5 | Components and pages | `src/components`, `src/pages`, `App` and `main` | `refactor/typescript-ui` | #45 |
+| 6 | Tests | `tests/` to `.ts` and `.tsx`, `allowJs` off | `test/typescript` | #46 |
+| 7 | Release 0.18.0 | Version, change log, logs index, close this record | `release/0.18.0` | #47 |
 
 Task 1 branches from `master`; task `k` branches from task `k-1`.
 
@@ -197,3 +198,35 @@ No assertion changed. Documentation updated: the helper path in
 `wiki/environments/setup.md` and the repository map.
 
 Client suite: 309 passing across 19 files; `tsc` and `npm run build` clean.
+
+### Task 7 — release/0.18.0
+
+Version 0.18.0 in `package.json` and `package-lock.json`, `wiki/logs/0/18/0/CHANGELOG.md`,
+its row in `.agents/index/logs-index.md`, and a "Types" section in
+`state/repository-state.md` naming `types.ts`, the type check and the mock helper. There
+were no session memories to fold into a digest. The working plan under `.agents/plans/` is
+deleted.
+
+The pull requests are #41 to #47, one per branch, each based on the branch before it, so
+each diff shows only its own task. They merge in order, each branch rebased onto the
+updated `master` first.
+
+## Outcome
+
+Against the baseline: every file under `src/` and `tests/` is TypeScript, 12,477 lines in
+`src/` where there were 11,594 of JavaScript. `tsc` passes under `strict` with
+`allowJs` off, `npm run build` type checks before it bundles, the client suite is 309
+passing across 19 files as before, and `npm audit` reports 0 vulnerabilities.
+
+Found along the way and reported rather than changed:
+
+* `.gitignore` does not exclude `.agents/plans/`, which `plan-creator` expects. Reported
+  by the code reduction record too.
+* Instruction files still name the JavaScript paths: `.agents/rules/repository.md`,
+  `.agents/knowledge/domain.md`, and `authentication-failures.md`, `csrf.md`,
+  `exceptional-conditions.md` and `secure-file-upload.md` under `.agents/security/`.
+  Per the discovery protocol a path update is a proposal, not written.
+* `.agents/security/supply-chain.md` lists the development dependencies as vite, vitest,
+  jsdom and testing library, and would gain `typescript` and the `@types` packages.
+
+**Status: done** once the chain is merged into `master`.
