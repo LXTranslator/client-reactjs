@@ -1,10 +1,11 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { asMocked } from './helpers/mocks.ts';
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { renderWithProviders, makeAccount, makeNamespace } from './helpers/renderWithProviders.jsx';
+import { renderWithProviders, makeAccount, makeNamespace } from './helpers/renderWithProviders.tsx';
 
 vi.mock('../src/lib/apiClient.ts', async (importOriginal) => {
-  const actual = await importOriginal();
+  const actual = await importOriginal<Record<string, unknown>>();
   return {
     ...actual,
     api: {
@@ -25,13 +26,13 @@ vi.mock('../src/lib/apiClient.ts', async (importOriginal) => {
 });
 
 vi.mock('../src/lib/download.ts', async (importOriginal) => {
-  const actual = await importOriginal();
+  const actual = await importOriginal<Record<string, unknown>>();
   return { ...actual, triggerDownload: vi.fn(), downloadJson: vi.fn() };
 });
 
-const { api, getAuthToken } = await import('../src/lib/apiClient.ts');
-const { triggerDownload } = await import('../src/lib/download.ts');
-const { App } = await import('../src/App.jsx');
+const { api, getAuthToken } = asMocked(await import('../src/lib/apiClient.ts'));
+const { triggerDownload } = asMocked(await import('../src/lib/download.ts'));
+const { App } = await import('../src/App.tsx');
 
 /** A file that has finished processing. */
 const READY_FILE = {
@@ -114,7 +115,7 @@ describe('translation editor', () => {
   /**
    * Renders the editor and waits for it to settle.
    *
-   * @returns {Promise<object>} A user event instance.
+   * @returns A user event instance.
    */
   async function openEditor() {
     const user = userEvent.setup();
@@ -171,7 +172,9 @@ describe('translation editor', () => {
     it('offers only languages the file does not already have', async () => {
       await openEditor();
 
-      const panel = screen.getByRole('heading', { name: /add to this file/i }).closest('section');
+      const panel = screen
+        .getByRole('heading', { name: /add to this file/i })
+        .closest('section') as HTMLElement;
       expect(within(panel).getByRole('button', { name: /japanese/i })).toBeInTheDocument();
       // en_us and th_th are already on the file.
       expect(within(panel).queryByRole('button', { name: /^Thai/i })).not.toBeInTheDocument();
@@ -182,7 +185,9 @@ describe('translation editor', () => {
       api.addFileLanguages.mockResolvedValue({ file: READY_FILE, added: ['ja_jp'] });
 
       const user = await openEditor();
-      const panel = screen.getByRole('heading', { name: /add to this file/i }).closest('section');
+      const panel = screen
+        .getByRole('heading', { name: /add to this file/i })
+        .closest('section') as HTMLElement;
 
       await user.click(within(panel).getByRole('button', { name: /japanese/i }));
       await user.click(within(panel).getByRole('button', { name: /add 1 language$/i }));
@@ -202,7 +207,9 @@ describe('translation editor', () => {
 
     it('keeps the button inert until something is chosen', async () => {
       await openEditor();
-      const panel = screen.getByRole('heading', { name: /add to this file/i }).closest('section');
+      const panel = screen
+        .getByRole('heading', { name: /add to this file/i })
+        .closest('section') as HTMLElement;
 
       expect(within(panel).getByRole('button', { name: /add language/i })).toBeDisabled();
     });
@@ -214,7 +221,9 @@ describe('translation editor', () => {
       );
 
       const user = await openEditor();
-      const panel = screen.getByRole('heading', { name: /add to this file/i }).closest('section');
+      const panel = screen
+        .getByRole('heading', { name: /add to this file/i })
+        .closest('section') as HTMLElement;
 
       await user.click(within(panel).getByRole('button', { name: /japanese/i }));
       await user.click(within(panel).getByRole('button', { name: /add 1 language$/i }));
@@ -271,7 +280,9 @@ describe('translation editor', () => {
   describe('finding a language among many', () => {
     it('opens on a suggested set rather than all 143', async () => {
       await openEditor();
-      const panel = screen.getByRole('heading', { name: /add to this file/i }).closest('section');
+      const panel = screen
+        .getByRole('heading', { name: /add to this file/i })
+        .closest('section') as HTMLElement;
 
       expect(within(panel).getByText(/showing widely used languages/i)).toBeInTheDocument();
       // Bavarian is in the catalogue but not the suggested set.
@@ -280,7 +291,9 @@ describe('translation editor', () => {
 
     it('reaches the rest through the A to Z index', async () => {
       const user = await openEditor();
-      const panel = screen.getByRole('heading', { name: /add to this file/i }).closest('section');
+      const panel = screen
+        .getByRole('heading', { name: /add to this file/i })
+        .closest('section') as HTMLElement;
       const index = within(panel).getByRole('group', { name: /first letter/i });
 
       await user.click(within(index).getByRole('button', { name: 'B' }));
@@ -292,7 +305,9 @@ describe('translation editor', () => {
 
     it('files an accented name under the letter it is looked for', async () => {
       const user = await openEditor();
-      const panel = screen.getByRole('heading', { name: /add to this file/i }).closest('section');
+      const panel = screen
+        .getByRole('heading', { name: /add to this file/i })
+        .closest('section') as HTMLElement;
       const index = within(panel).getByRole('group', { name: /first letter/i });
 
       await user.click(within(index).getByRole('button', { name: 'K' }));
@@ -305,7 +320,9 @@ describe('translation editor', () => {
 
     it('searches by name or by code', async () => {
       const user = await openEditor();
-      const panel = screen.getByRole('heading', { name: /add to this file/i }).closest('section');
+      const panel = screen
+        .getByRole('heading', { name: /add to this file/i })
+        .closest('section') as HTMLElement;
       const search = within(panel).getByLabelText(/search languages/i);
 
       await user.type(search, 'nds_de');
@@ -318,7 +335,9 @@ describe('translation editor', () => {
 
     it('never offers a language the file already has', async () => {
       const user = await openEditor();
-      const panel = screen.getByRole('heading', { name: /add to this file/i }).closest('section');
+      const panel = screen
+        .getByRole('heading', { name: /add to this file/i })
+        .closest('section') as HTMLElement;
       const search = within(panel).getByLabelText(/search languages/i);
 
       await user.type(search, 'thai');
@@ -330,7 +349,9 @@ describe('translation editor', () => {
 
     it('keeps a chosen language on screen when the filter would hide it', async () => {
       const user = await openEditor();
-      const panel = screen.getByRole('heading', { name: /add to this file/i }).closest('section');
+      const panel = screen
+        .getByRole('heading', { name: /add to this file/i })
+        .closest('section') as HTMLElement;
 
       await user.click(within(panel).getByRole('button', { name: /japanese/i }));
 
@@ -348,7 +369,7 @@ describe('translation editor', () => {
     /**
      * A JSON locale document as a File, the way a drop provides one.
      *
-     * @returns {File} The document.
+     * @returns The document.
      */
     function localeFile() {
       return new File([JSON.stringify({ greeting: { farewell: 'Goodbye' } })], 'more.json', {
@@ -368,7 +389,9 @@ describe('translation editor', () => {
       api.mergeFileKeys.mockResolvedValue({ file: READY_FILE, existing_key_count: 2 });
 
       const user = await openEditor();
-      const panel = screen.getByRole('heading', { name: /add to this file/i }).closest('section');
+      const panel = screen
+        .getByRole('heading', { name: /add to this file/i })
+        .closest('section') as HTMLElement;
 
       await user.upload(within(panel).getByLabelText(/locale document to merge/i), localeFile());
       await user.click(within(panel).getByRole('button', { name: /merge new keys/i }));
@@ -385,14 +408,18 @@ describe('translation editor', () => {
 
     it('keeps the button inert until a file is chosen', async () => {
       await openEditor();
-      const panel = screen.getByRole('heading', { name: /add to this file/i }).closest('section');
+      const panel = screen
+        .getByRole('heading', { name: /add to this file/i })
+        .closest('section') as HTMLElement;
 
       expect(within(panel).getByRole('button', { name: /merge new keys/i })).toBeDisabled();
     });
 
     it('rejects a file that is not JSON before sending it', async () => {
       const user = await openEditor();
-      const panel = screen.getByRole('heading', { name: /add to this file/i }).closest('section');
+      const panel = screen
+        .getByRole('heading', { name: /add to this file/i })
+        .closest('section') as HTMLElement;
 
       await user.upload(
         within(panel).getByLabelText(/locale document to merge/i),

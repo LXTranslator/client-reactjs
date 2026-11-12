@@ -1,7 +1,8 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { asMocked } from './helpers/mocks.ts';
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { renderWithProviders, makeAccount, makeNamespace } from './helpers/renderWithProviders.jsx';
+import { renderWithProviders, makeAccount, makeNamespace } from './helpers/renderWithProviders.tsx';
 
 /*
  * Export formats.
@@ -14,7 +15,7 @@ import { renderWithProviders, makeAccount, makeNamespace } from './helpers/rende
  */
 
 vi.mock('../src/lib/apiClient.ts', async (importOriginal) => {
-  const actual = await importOriginal();
+  const actual = await importOriginal<Record<string, unknown>>();
   return {
     ...actual,
     api: {
@@ -36,13 +37,13 @@ vi.mock('../src/lib/apiClient.ts', async (importOriginal) => {
 });
 
 vi.mock('../src/lib/download.ts', async (importOriginal) => {
-  const actual = await importOriginal();
+  const actual = await importOriginal<Record<string, unknown>>();
   return { ...actual, triggerDownload: vi.fn() };
 });
 
-const { api, getAuthToken } = await import('../src/lib/apiClient.ts');
-const { triggerDownload } = await import('../src/lib/download.ts');
-const { App } = await import('../src/App.jsx');
+const { api, getAuthToken } = asMocked(await import('../src/lib/apiClient.ts'));
+const { triggerDownload } = asMocked(await import('../src/lib/download.ts'));
+const { App } = await import('../src/App.tsx');
 
 /** The three formats the server ships. */
 const DEFAULT_FORMAT = {
@@ -162,7 +163,7 @@ describe('export formats', () => {
     /**
      * Opens the editor and waits for the format select to appear.
      *
-     * @returns {Promise<object>} A user event instance.
+     * @returns A user event instance.
      */
     async function openEditor() {
       const user = userEvent.setup();
@@ -268,7 +269,7 @@ describe('export formats', () => {
     /**
      * Opens the management page and waits for it to settle.
      *
-     * @returns {Promise<object>} A user event instance.
+     * @returns A user event instance.
      */
     async function openFormats() {
       const user = userEvent.setup();
@@ -292,12 +293,12 @@ describe('export formats', () => {
       // callout above it names both built in formats too.
       const builtIn = screen
         .getByRole('heading', { name: 'Built in' })
-        .closest('.panel')
-        .querySelector('.formatlist');
+        .closest('.panel')!
+        .querySelector('.formatlist') as HTMLElement;
       const owned = screen
         .getByRole('heading', { name: 'Yours' })
-        .closest('.panel')
-        .querySelector('.formatlist');
+        .closest('.panel')!
+        .querySelector('.formatlist') as HTMLElement;
 
       expect(within(builtIn).getByText('default')).toBeInTheDocument();
       expect(within(builtIn).getByText('key_value')).toBeInTheDocument();
@@ -313,8 +314,10 @@ describe('export formats', () => {
 
       await openFormats();
 
-      const builtIn = screen.getByRole('heading', { name: 'Built in' }).closest('.panel');
-      const owned = screen.getByRole('heading', { name: 'Yours' }).closest('.panel');
+      const builtIn = screen
+        .getByRole('heading', { name: 'Built in' })
+        .closest('.panel') as HTMLElement;
+      const owned = screen.getByRole('heading', { name: 'Yours' }).closest('.panel') as HTMLElement;
 
       expect(within(builtIn).queryByRole('button', { name: /remove/i })).not.toBeInTheDocument();
       expect(within(owned).getByRole('button', { name: /remove/i })).toBeInTheDocument();
@@ -427,7 +430,7 @@ describe('export formats', () => {
       vi.spyOn(window, 'confirm').mockReturnValue(true);
 
       const user = await openFormats();
-      const owned = screen.getByRole('heading', { name: 'Yours' }).closest('.panel');
+      const owned = screen.getByRole('heading', { name: 'Yours' }).closest('.panel') as HTMLElement;
       await user.click(within(owned).getByRole('button', { name: /remove/i }));
 
       await waitFor(() => {
@@ -442,7 +445,7 @@ describe('export formats', () => {
       vi.spyOn(window, 'confirm').mockReturnValue(false);
 
       const user = await openFormats();
-      const owned = screen.getByRole('heading', { name: 'Yours' }).closest('.panel');
+      const owned = screen.getByRole('heading', { name: 'Yours' }).closest('.panel') as HTMLElement;
       await user.click(within(owned).getByRole('button', { name: /remove/i }));
 
       expect(api.removeExportFormat).not.toHaveBeenCalled();

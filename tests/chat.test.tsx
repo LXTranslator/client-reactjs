@@ -1,7 +1,8 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { asMocked } from './helpers/mocks.ts';
 import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { renderWithProviders, makeAccount, makeNamespace } from './helpers/renderWithProviders.jsx';
+import { renderWithProviders, makeAccount, makeNamespace } from './helpers/renderWithProviders.tsx';
 
 /*
  * The assistant.
@@ -14,7 +15,7 @@ import { renderWithProviders, makeAccount, makeNamespace } from './helpers/rende
  */
 
 vi.mock('../src/lib/apiClient.ts', async (importOriginal) => {
-  const actual = await importOriginal();
+  const actual = await importOriginal<Record<string, unknown>>();
   return {
     ...actual,
     api: {
@@ -37,21 +38,21 @@ vi.mock('../src/lib/apiClient.ts', async (importOriginal) => {
 });
 
 vi.mock('../src/lib/download.ts', async (importOriginal) => {
-  const actual = await importOriginal();
+  const actual = await importOriginal<Record<string, unknown>>();
   return { ...actual, triggerDownload: vi.fn() };
 });
 
-const { api, getAuthToken } = await import('../src/lib/apiClient.ts');
-const { triggerDownload } = await import('../src/lib/download.ts');
-const { App } = await import('../src/App.jsx');
+const { api, getAuthToken } = asMocked(await import('../src/lib/apiClient.ts'));
+const { triggerDownload } = asMocked(await import('../src/lib/download.ts'));
+const { App } = await import('../src/App.tsx');
 
 const CHAT_PATH = '/jetsada/chat';
 
 /**
  * Builds an assistant response.
  *
- * @param {object} [overrides] Field overrides.
- * @returns {object} Response payload.
+ * @param overrides Field overrides.
+ * @returns Response payload.
  */
 function makeAnswer(overrides = {}) {
   return {
@@ -71,8 +72,8 @@ function makeAnswer(overrides = {}) {
 /**
  * Builds a stored turn as the history endpoint returns it.
  *
- * @param {object} [overrides] Field overrides.
- * @returns {object} Turn payload.
+ * @param overrides Field overrides.
+ * @returns Turn payload.
  */
 function makeTurn(overrides = {}) {
   return {
@@ -94,8 +95,8 @@ function makeTurn(overrides = {}) {
 /**
  * Builds a conversation as the list endpoint returns it.
  *
- * @param {object} [overrides] Field overrides.
- * @returns {object} Session payload.
+ * @param overrides Field overrides.
+ * @returns Session payload.
  */
 function makeSession(overrides = {}) {
   return {
@@ -124,7 +125,7 @@ describe('the assistant', () => {
   /**
    * Opens the page and waits for the composer.
    *
-   * @returns {Promise<object>} A user event instance.
+   * @returns A user event instance.
    */
   async function openChat() {
     const user = userEvent.setup();
@@ -342,10 +343,10 @@ describe('the assistant', () => {
     /**
      * Sends one message and returns the context pane.
      *
-     * @param {object} answer Response the server gives.
-     * @returns {Promise<HTMLElement>} The pane.
+     * @param answer Response the server gives.
+     * @returns The pane.
      */
-    async function sendAndRead(answer) {
+    async function sendAndRead(answer: ReturnType<typeof makeAnswer>) {
       const user = await openChat();
       api.sendChat.mockResolvedValue(answer);
 
@@ -690,10 +691,10 @@ describe('the assistant', () => {
     /**
      * Sends a message whose answer offers the given downloads.
      *
-     * @param {Array<object>} downloads What the answer offers.
-     * @returns {Promise<object>} A user event instance.
+     * @param downloads What the answer offers.
+     * @returns A user event instance.
      */
-    async function ask(downloads) {
+    async function ask(downloads: unknown[]) {
       const user = await openChat();
       api.sendChat.mockResolvedValue(makeAnswer({ downloads }));
       api.getChatSession.mockResolvedValue({

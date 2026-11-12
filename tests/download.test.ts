@@ -29,11 +29,11 @@ describe('downloading a file', () => {
     /**
      * Answers one request with a body of the given content type.
      *
-     * @param {string} contentType Response content type.
-     * @param {object} bodies Handlers for `json` and `blob`.
-     * @returns {object} The fetch mock.
+     * @param contentType Response content type.
+     * @param bodies Handlers for `json` and `blob`.
+     * @returns The fetch mock.
      */
-    function respondWith(contentType, bodies) {
+    function respondWith(contentType: string, bodies: { json?: unknown; blob?: Blob | null }) {
       const fetchMock = vi.fn().mockResolvedValue({
         ok: true,
         status: 200,
@@ -119,8 +119,8 @@ describe('downloading a file', () => {
   });
 
   describe('handing it to the browser', () => {
-    let created;
-    let revoked;
+    let created: Blob[];
+    let revoked: string[];
 
     beforeEach(() => {
       created = [];
@@ -129,11 +129,11 @@ describe('downloading a file', () => {
       // jsdom implements neither, so both are stood up here and recorded.
       vi.stubGlobal('URL', {
         ...URL,
-        createObjectURL: vi.fn((blob) => {
+        createObjectURL: vi.fn((blob: Blob) => {
           created.push(blob);
           return `blob:mock/${created.length}`;
         }),
-        revokeObjectURL: vi.fn((url) => revoked.push(url)),
+        revokeObjectURL: vi.fn((url: string) => revoked.push(url)),
       });
     });
 
@@ -155,10 +155,10 @@ describe('downloading a file', () => {
     });
 
     it('names the file and leaves no anchor behind', () => {
-      const clicks = [];
+      const clicks: Array<{ href: string; download: string }> = [];
       const click = vi
         .spyOn(HTMLAnchorElement.prototype, 'click')
-        .mockImplementation(function record() {
+        .mockImplementation(function record(this: HTMLAnchorElement) {
           clicks.push({ href: this.href, download: this.download });
         });
 

@@ -16,7 +16,7 @@ describe('endpoint URLs', () => {
   /**
    * Stubs `fetch` with an empty success and returns the mock.
    *
-   * @returns {object} The fetch mock.
+   * @returns The fetch mock.
    */
   function stubFetch() {
     const fetchMock = vi.fn().mockResolvedValue({ ok: true, status: 204, headers: new Headers() });

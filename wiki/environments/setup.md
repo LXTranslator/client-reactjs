@@ -54,7 +54,7 @@ The full picture is in [`../information/architecture.md`](../information/archite
 ## Tests
 
 Vitest with Testing Library, configured inside `vite.config.ts` rather than a separate
-file. Render through `tests/helpers/renderWithProviders.jsx` so the router and session
+file. Render through `tests/helpers/renderWithProviders.tsx` so the router and session
 provider are present, and mock `src/lib/apiClient.ts` rather than `fetch` — mocking
 `fetch` bypasses the error shaping the components depend on.
 

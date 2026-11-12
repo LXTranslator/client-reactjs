@@ -1,7 +1,8 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { asMocked } from './helpers/mocks.ts';
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { renderWithProviders, makeAccount, makeNamespace } from './helpers/renderWithProviders.jsx';
+import { renderWithProviders, makeAccount, makeNamespace } from './helpers/renderWithProviders.tsx';
 
 /*
  * Sessions and API tokens.
@@ -18,7 +19,7 @@ import { renderWithProviders, makeAccount, makeNamespace } from './helpers/rende
  */
 
 vi.mock('../src/lib/apiClient.ts', async (importOriginal) => {
-  const actual = await importOriginal();
+  const actual = await importOriginal<Record<string, unknown>>();
   return {
     ...actual,
     api: {
@@ -40,16 +41,16 @@ vi.mock('../src/lib/apiClient.ts', async (importOriginal) => {
   };
 });
 
-const { api, getAuthToken, setAuthToken } = await import('../src/lib/apiClient.ts');
-const { App } = await import('../src/App.jsx');
+const { api, getAuthToken, setAuthToken } = asMocked(await import('../src/lib/apiClient.ts'));
+const { App } = await import('../src/App.tsx');
 
 const SETTINGS_PATH = '/settings';
 
 /**
  * Builds a session as the server reports it.
  *
- * @param {object} [overrides] Field overrides.
- * @returns {object} Session payload.
+ * @param overrides Field overrides.
+ * @returns Session payload.
  */
 function makeSession(overrides = {}) {
   return {
@@ -69,8 +70,8 @@ function makeSession(overrides = {}) {
 /**
  * Builds an API token as the server reports it.
  *
- * @param {object} [overrides] Field overrides.
- * @returns {object} Token payload.
+ * @param overrides Field overrides.
+ * @returns Token payload.
  */
 function makeToken(overrides = {}) {
   return {
@@ -107,7 +108,7 @@ describe('sessions and API tokens', () => {
   /**
    * Opens account settings and waits for the panel.
    *
-   * @returns {Promise<object>} A user event instance.
+   * @returns A user event instance.
    */
   async function openSettings() {
     const user = userEvent.setup();
@@ -384,7 +385,7 @@ describe('sessions and API tokens', () => {
       await user.click(await screen.findByRole('button', { name: /show all/i }));
 
       await waitFor(() => {
-        const last = api.listUsage.mock.calls.at(-1)[0];
+        const last = api.listUsage.mock.calls.at(-1)?.[0];
         expect(last.sessionId).toBeUndefined();
       });
     });

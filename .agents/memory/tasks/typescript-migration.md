@@ -177,3 +177,23 @@ Documentation updated: the component paths in `wiki/information/architecture.md`
 on `tsc` checking while Vite only transforms.
 
 Client suite: 309 passing across 19 files; `tsc` and `npm run build` clean.
+
+### Task 6 — test/typescript
+
+Every file under `tests/` is `.ts` or `.tsx` now, including `tests/setup.ts` and
+`tests/helpers/renderWithProviders.tsx`, so the repository holds no JavaScript outside
+its dependencies. `allowJs` is off in `tsconfig.json`, and `vite.config.ts` matches tests,
+the setup file and coverage on the TypeScript extensions alone.
+
+* `tests/helpers/mocks.ts` is new. `asMocked` views a module that `vi.mock` replaced as
+  its mocked shape, so a test calls `api.listFiles.mockResolvedValue(...)` with the
+  compiler's agreement instead of an untyped import.
+* Fixtures name their types: `makeAccount` takes a `Partial<Account>`, `makeNamespace`
+  returns a `Namespace`, and a deferred promise is `deferred<T>`.
+* An element found through `.closest()` is asserted present, as the test already
+  assumed when it queried inside it.
+
+No assertion changed. Documentation updated: the helper path in
+`wiki/environments/setup.md` and the repository map.
+
+Client suite: 309 passing across 19 files; `tsc` and `npm run build` clean.

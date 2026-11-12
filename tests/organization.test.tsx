@@ -1,10 +1,11 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { asMocked } from './helpers/mocks.ts';
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { renderWithProviders, makeAccount, makeNamespace } from './helpers/renderWithProviders.jsx';
+import { renderWithProviders, makeAccount, makeNamespace } from './helpers/renderWithProviders.tsx';
 
 vi.mock('../src/lib/apiClient.ts', async (importOriginal) => {
-  const actual = await importOriginal();
+  const actual = await importOriginal<Record<string, unknown>>();
   return {
     ...actual,
     api: {
@@ -22,8 +23,8 @@ vi.mock('../src/lib/apiClient.ts', async (importOriginal) => {
   };
 });
 
-const { api, getAuthToken, ApiError } = await import('../src/lib/apiClient.ts');
-const { App } = await import('../src/App.jsx');
+const { api, getAuthToken, ApiError } = asMocked(await import('../src/lib/apiClient.ts'));
+const { App } = await import('../src/App.tsx');
 
 /** Namespace fixture for an organization the signed in account owns. */
 const ORGANIZATION = makeNamespace({
@@ -49,7 +50,7 @@ describe('organization creation', () => {
   /**
    * Renders the creation page and waits for it to settle.
    *
-   * @returns {Promise<object>} A user event instance.
+   * @returns A user event instance.
    */
   async function openCreatePage() {
     const user = userEvent.setup();
@@ -210,7 +211,7 @@ describe('organization settings and deletion', () => {
   /**
    * Renders the organization settings page and waits for it to settle.
    *
-   * @returns {Promise<object>} A user event instance.
+   * @returns A user event instance.
    */
   async function openSettings() {
     const user = userEvent.setup();

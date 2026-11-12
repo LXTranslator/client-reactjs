@@ -33,11 +33,11 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     globals: true,
-    setupFiles: ['./tests/setup.js'],
-    include: ['tests/**/*.test.{js,jsx,ts,tsx}'],
+    setupFiles: ['./tests/setup.ts'],
+    include: ['tests/**/*.test.{ts,tsx}'],
     coverage: {
-      include: ['src/**/*.{js,jsx,ts,tsx}'],
-      exclude: ['src/main.{jsx,tsx}', 'src/**/*.d.ts'],
+      include: ['src/**/*.{ts,tsx}'],
+      exclude: ['src/main.tsx', 'src/**/*.d.ts'],
     },
   },
 });
