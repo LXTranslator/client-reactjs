@@ -1,0 +1,675 @@
+import { useEffect, useState } from 'react';
+import { Link, useParams } from 'react-router';
+import { useNamespace } from '../components/routing/NamespaceRoute.tsx';
+import { paths } from '../lib/paths.ts';
+import { api } from '../lib/apiClient.ts';
+import { useLoader } from '../hooks/useLoader.ts';
+import { triggerDownload } from '../lib/download.ts';
+import { FileGrowthPanel } from '../components/editor/FileGrowthPanel.tsx';
+import { ConsistencyPanel } from '../components/editor/ConsistencyPanel.tsx';
+import { localeLabel } from '../lib/locales.ts';
+
+import {
+  Callout,
+  EmptyState,
+  ErrorMessage,
+  LoadingState,
+  StatusBadge,
+} from '../components/ui/Feedback.tsx';
+import { Breadcrumbs } from '../components/layout/AppLayout.tsx';
+import type { StaleTranslation, Translation, TranslationKey } from '../lib/types.ts';
+
+/** The name the server always serves the archive under, whatever the format. */
+const ARCHIVE_FILENAME = 'langs.zip';
+
+/** The format used when none is chosen, matching the server's own default. */
+const DEFAULT_FORMAT_ID = 'default';
+
+/** How often to re-check a file that is still being processed. */
+const POLL_INTERVAL_MS = 2000;
+
+/**
+ * Translation editor and download page.
+ *
+ * Pairs each English master string with its translation in the selected locale
+ * so a reviewer can read them side by side and correct anything the model got
+ * wrong. A corrected row is flagged manual by the server, which protects it
+ * from being overwritten if the pipeline runs again.
+ *
+ * @returns The page.
+ */
+export function TranslationEditorPage() {
+  // The route pattern names both segments, so they are always present here.
+  const { projectId, fileId } = useParams() as { projectId: string; fileId: string };
+  const namespace = useNamespace();
+  const ns = namespace.user_id;
+
+  const [activeLocale, setActiveLocale] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<Error | null>(null);
+  const [savingId, setSavingId] = useState<string | null>(null);
+  const [savedIds, setSavedIds] = useState<Record<string, boolean>>({});
+  const [isArchiving, setIsArchiving] = useState(false);
+  const [exportFormat, setExportFormat] = useState(DEFAULT_FORMAT_ID);
+  const [retranslatingIds, setRetranslatingIds] = useState<Set<string>>(new Set());
+  const [notice, setNotice] = useState<string | null>(null);
+
+  /*
+   * The file record and, once it is ready, the editor payload. Until then the
+   * page shows the pipeline's progress rather than the editor, so there is no
+   * payload to keep.
+   */
+  const {
+    data: loaded,
+    isLoading,
+    error: loadError,
+    reload: load,
+  } = useLoader(async () => {
+    const { file } = await api.getFile(fileId);
+    if (file.status !== 'READY') return { file, translations: null };
+
+    const translations = await api.getTranslations(fileId);
+    setActiveLocale((current) => {
+      if (current && translations.available_locales.includes(current)) return current;
+      // Default to the first locale that is not the master, since the master is
+      // the source being reviewed against.
+      return (
+        translations.available_locales.find((code) => code !== translations.master_lang_code) ??
+        translations.master_lang_code
+      );
+    });
+    return { file, translations };
+  }, [fileId]);
+  const file = loaded?.file ?? null;
+  const data = loaded?.translations ?? null;
+
+  const isProcessing = file?.status === 'PENDING' || file?.status === 'PROCESSING';
+
+  /*
+   * Whether this project translates through an offline platform.
+   *
+   * The offline platform returns the English text with a locale marker in front
+   * of it, and the file still reports itself as ready, so the editor fills with
+   * rows that look like translations and are not. Nothing else on this page
+   * would ever tell somebody that, which is exactly the kind of silent success
+   * worth spending a request on.
+   *
+   * Read once per project rather than inside `load`, which the poll calls every
+   * couple of seconds. A failure here is swallowed: this is an explanation, and
+   * an explanation that fails must not take the editor with it.
+   */
+  const { data: offlinePlatform = null } = useLoader(async () => {
+    try {
+      const [{ project }, catalogue] = await Promise.all([
+        api.getProject(projectId),
+        api.listProviders(),
+      ]);
+      const platform = (catalogue.providers ?? []).find(
+        (entry) => entry.name === project.ai_provider,
+      );
+      return platform?.requires_network === false ? platform.label : null;
+    } catch {
+      return null;
+    }
+  }, [projectId]);
+
+  /*
+   * The format catalogue is loaded once and separately. It belongs to the
+   * namespace rather than to the file, so it does not change while the pipeline
+   * runs and has no business being re-fetched by the poll below. A failure here
+   * leaves the built in default selected rather than blocking the editor.
+   */
+  const { data: exportFormats = [] } = useLoader(
+    () =>
+      api.listFileExportFormats(fileId).then(
+        (result) => result.export_formats ?? [],
+        () => [],
+      ),
+    [fileId],
+  );
+
+  /* Poll only while the pipeline is still running. */
+  useEffect(() => {
+    if (!isProcessing) return undefined;
+    const timer = setInterval(() => load({ quiet: true }), POLL_INTERVAL_MS);
+    return () => clearInterval(timer);
+  }, [isProcessing, load]);
+
+  /**
+   * Saves a corrected translation.
+   *
+   * @param translationId Translation identifier.
+   * @param text Corrected text.
+   */
+  async function handleSaveTranslation(translationId: string, text: string): Promise<void> {
+    setActionError(null);
+    setSavingId(translationId);
+    try {
+      await api.updateTranslation(fileId, translationId, { translated_text: text });
+      setSavedIds((current) => ({ ...current, [translationId]: true }));
+      // Clear the confirmation after a moment so it does not linger.
+      setTimeout(
+        () => setSavedIds((current) => ({ ...current, [translationId]: false })),
+        2000,
+      );
+      await load({ quiet: true });
+    } catch (error) {
+      setActionError(error as Error);
+    } finally {
+      setSavingId(null);
+    }
+  }
+
+  /**
+   * Saves a corrected master string, which restamps its fingerprint.
+   *
+   * @param keyId Key identifier.
+   * @param text Corrected master text.
+   */
+  async function handleSaveMaster(keyId: string, text: string): Promise<void> {
+    setActionError(null);
+    setSavingId(keyId);
+    try {
+      const result = await api.updateMasterText(fileId, keyId, { original_text: text });
+
+      /*
+       * The server reports whether the text actually moved. Saying "saved" for
+       * a write that changed nothing is a small lie that costs a person their
+       * trust in the rest of the page, so the two cases read differently.
+       */
+      setNotice(
+        result.changed
+          ? result.stale_lang_codes.length > 0
+            ? `Master updated. ${result.stale_lang_codes.length} translation${
+                result.stale_lang_codes.length === 1 ? '' : 's'
+              } are now behind it.`
+            : 'Master updated.'
+          : 'That text was already saved, so nothing changed.',
+      );
+
+      await load({ quiet: true });
+    } catch (error) {
+      setActionError(error as Error);
+    } finally {
+      setSavingId(null);
+    }
+  }
+
+  /**
+   * Refreshes the translations of specific keys, and nothing else.
+   *
+   * The whole file rerun exists and is the wrong price for a corrected string:
+   * it would send every key to a provider to update one of them.
+   *
+   * @param keyIds Keys to refresh.
+   */
+  async function handleRetranslate(keyIds: string[]): Promise<void> {
+    if (keyIds.length === 0) return;
+
+    setActionError(null);
+    setRetranslatingIds(new Set(keyIds));
+    try {
+      await api.retranslateKeys(fileId, { key_ids: keyIds });
+      setNotice(
+        keyIds.length === 1
+          ? 'Refreshing that key in the background.'
+          : `Refreshing ${keyIds.length} keys in the background.`,
+      );
+      // 202: the work continues on a worker, so the page returns to polling.
+      await load({ quiet: true });
+    } catch (error) {
+      setActionError(error as Error);
+    } finally {
+      setRetranslatingIds(new Set());
+    }
+  }
+
+  /**
+   * Downloads a single locale document.
+   */
+  async function handleDownloadLocale() {
+    setActionError(null);
+    try {
+      // The server already wrote the document in the chosen export format, so
+      // its bytes are saved as they arrived rather than parsed and rebuilt.
+      // The editor, and this button with it, renders only once a locale is chosen.
+      const locale = await api.downloadLocale(fileId, activeLocale as string, exportFormat);
+      triggerDownload(`${activeLocale}.json`, locale);
+    } catch (error) {
+      setActionError(error as Error);
+    }
+  }
+
+  /**
+   * Downloads every locale as one archive.
+   *
+   * One file rather than one download per language, which a browser blocks
+   * after the first few anyway once it decides the page is spamming downloads.
+   */
+  async function handleDownloadArchive() {
+    setActionError(null);
+    setIsArchiving(true);
+    try {
+      const archive = await api.downloadArchive(fileId, exportFormat);
+      triggerDownload(ARCHIVE_FILENAME, archive);
+    } catch (error) {
+      setActionError(error as Error);
+    } finally {
+      setIsArchiving(false);
+    }
+  }
+
+  if (isLoading) {
+    return (
+      <div className="container">
+        <LoadingState label="Loading translations" />
+      </div>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <div className="container narrow">
+        <ErrorMessage error={loadError} />
+        <Link className="btn" to={paths.project(ns, projectId)}>
+          Back to project
+        </Link>
+      </div>
+    );
+  }
+
+  const breadcrumbs = (
+    <Breadcrumbs
+      items={[
+        { label: 'Namespaces', to: paths.namespaces() },
+        { label: ns, to: paths.namespace(ns) },
+        { label: 'Project', to: paths.project(ns, projectId) },
+        { label: file?.filename ?? 'File' },
+      ]}
+    />
+  );
+
+  if (isProcessing) {
+    return (
+      <div className="container narrow">
+        {breadcrumbs}
+        <h1>{file?.filename}</h1>
+        <Callout tone="info" title="Translation in progress">
+          <span className="spinner" aria-hidden="true" /> The file is being translated on a
+          worker thread. This page refreshes automatically.
+        </Callout>
+      </div>
+    );
+  }
+
+  if (file?.status === 'FAILED') {
+    return (
+      <div className="container narrow">
+        {breadcrumbs}
+        <h1>{file.filename}</h1>
+        <Callout tone="danger" title="Translation failed">
+          {file.error_message ?? 'The translation could not be completed.'}
+        </Callout>
+        <div className="btn-row">
+          <button
+            type="button"
+            className="btn btn--primary"
+            onClick={async () => {
+              await api.reprocessFile(fileId);
+              await load();
+            }}
+          >
+            Try again
+          </button>
+          <Link className="btn" to={paths.namespaceAiSettings(ns)}>
+            Check API keys
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  if (data === null) {
+    return (
+      <div className="container narrow">
+        {breadcrumbs}
+        <EmptyState title="No translations available yet." />
+      </div>
+    );
+  }
+
+  /*
+   * A format with no hash field cannot carry staleness into the downloaded
+   * file, which is a real trade rather than a detail: `key_value` is chosen
+   * precisely because it drops straight into an application, and the cost is
+   * that the file stops describing whether it is current.
+   */
+  const selectedFormat =
+    exportFormats.find((format) => format.format_id === exportFormat) ?? null;
+
+  const staleByKey = new Map(
+    (data.stale_translations ?? []).map((entry) => [
+      `${entry.key_name}_${entry.lang_code}`,
+      entry,
+    ]),
+  );
+
+  /*
+   * Which keys have fallen behind, by identifier rather than by name, because
+   * that is what the refresh endpoint takes. A key is behind when any of its
+   * languages is, so the whole key is refreshed rather than one language of it.
+   */
+  const staleKeyNames = new Set((data.stale_translations ?? []).map((entry) => entry.key_name));
+  const staleKeyIds = data.keys
+    .filter((key) => staleKeyNames.has(key.key_name))
+    .map((key) => key.id);
+
+  return (
+    <div className="container">
+      {breadcrumbs}
+
+      <div className="editor__toolbar">
+        <div>
+          <h1 style={{ marginBottom: '0.2rem' }}>{file?.filename}</h1>
+          <p className="muted" style={{ margin: 0 }}>
+            {data.keys.length} keys, master locale{' '}
+            <span className="mono">{data.master_lang_code}</span>{' '}
+            <StatusBadge status={file?.status ?? 'READY'} />
+          </p>
+        </div>
+
+        <div className="editor__download">
+          {exportFormats.length > 1 ? (
+            <div className="editor__locales">
+              <label className="field__label editor__compare-label" htmlFor="export_format">
+                Format
+              </label>
+              <select
+                id="export_format"
+                className="field__control editor__compare"
+                value={exportFormat}
+                onChange={(event) => setExportFormat(event.target.value)}
+              >
+                {exportFormats.map((format) => (
+                  <option key={format.format_id} value={format.format_id}>
+                    {format.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          ) : null}
+
+          <div className="btn-row">
+            <button type="button" className="btn" onClick={handleDownloadLocale}>
+              Download {activeLocale}
+            </button>
+            <button
+              type="button"
+              className="btn btn--primary"
+              disabled={isArchiving}
+              onClick={handleDownloadArchive}
+            >
+              {isArchiving ? 'Preparing…' : `Download all (${ARCHIVE_FILENAME})`}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {selectedFormat !== null && selectedFormat.hash_field === null ? (
+        <Callout tone="info" title={`Downloads use the ${selectedFormat.name} format`}>
+          This format carries no fingerprint, so a consumer cannot tell from the file alone
+          that an English source string changed. The stale markers on this page still show
+          it.
+        </Callout>
+      ) : null}
+
+      <ErrorMessage error={actionError} />
+      {notice ? <Callout tone="ok">{notice}</Callout> : null}
+
+      {offlinePlatform !== null ? (
+        <Callout tone="warn" title="These are placeholders, not translations">
+          <p style={{ margin: '0 0 0.6rem' }}>
+            This project is set to <span className="mono">{offlinePlatform}</span>, which
+            never contacts a vendor. It returns the English text with a locale marker in
+            front of it, which is why every row below reads like{' '}
+            <span className="mono">[th:711f] Dirt</span>.
+          </p>
+          <p style={{ margin: '0 0 0.6rem' }}>
+            Choose a real platform in project settings, then re translate. Anything you
+            corrected by hand is marked manual and survives.
+          </p>
+          <Link className="btn btn--small" to={paths.projectSettings(ns, projectId)}>
+            Project settings
+          </Link>
+        </Callout>
+      ) : null}
+
+      {data.stale_translations?.length > 0 ? (
+        <Callout tone="warn" title="Some translations are out of date">
+          <p style={{ margin: '0 0 0.6rem' }}>
+            {data.stale_translations.length} translation
+            {data.stale_translations.length === 1 ? '' : 's'} were produced from an older
+            version of the English text. Their tracking hash no longer matches the source.
+          </p>
+          <button
+            type="button"
+            className="btn btn--small btn--primary"
+            disabled={retranslatingIds.size > 0}
+            onClick={() => handleRetranslate(staleKeyIds)}
+          >
+            {retranslatingIds.size > 0
+              ? 'Refreshing'
+              : `Update ${staleKeyIds.length} key${staleKeyIds.length === 1 ? '' : 's'}`}
+          </button>
+          <span className="field__hint" style={{ marginTop: '0.4rem' }}>
+            Only these keys are sent to the provider. Everything else is left alone, and a
+            translation you corrected by hand survives unless its English source moved.
+          </span>
+        </Callout>
+      ) : null}
+
+      <ConsistencyPanel fileId={fileId} locales={data.available_locales} />
+
+      <section className="panel">
+        <div className="panel__header">
+          <h2>Language</h2>
+          <div className="editor__locales">
+            <label className="field__label editor__compare-label" htmlFor="compare_locale">
+              Compare with
+            </label>
+            <select
+              id="compare_locale"
+              className="field__control editor__compare"
+              value={activeLocale ?? ''}
+              onChange={(event) => setActiveLocale(event.target.value)}
+            >
+              {data.available_locales.map((code) => (
+                <option key={code} value={code}>
+                  {code === data.master_lang_code
+                    ? `${localeLabel(code)} (${code}) — master`
+                    : `${localeLabel(code)} (${code})`}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        {data.keys.length === 0 ? (
+          <EmptyState title="This file has no translatable keys." />
+        ) : (
+          data.keys.map((key) => (
+            <EditorRow
+              key={key.id}
+              entry={key}
+              locale={activeLocale}
+              masterLocale={data.master_lang_code}
+              stale={staleByKey.get(`${key.key_name}_${activeLocale}`) ?? null}
+              isBehind={staleKeyNames.has(key.key_name)}
+              isRetranslating={retranslatingIds.has(key.id)}
+              savingId={savingId}
+              savedIds={savedIds}
+              onSaveTranslation={handleSaveTranslation}
+              onSaveMaster={handleSaveMaster}
+              onRetranslate={handleRetranslate}
+            />
+          ))
+        )}
+      </section>
+
+      <FileGrowthPanel
+        fileId={fileId}
+        existingLocales={data.available_locales}
+        onStarted={load}
+      />
+    </div>
+  );
+}
+
+/**
+ * One editable key: the English master beside its translation.
+ *
+ * @param props Component props.
+ * @returns The row.
+ */
+function EditorRow({
+  entry,
+  locale,
+  masterLocale,
+  stale,
+  isBehind,
+  isRetranslating,
+  savingId,
+  savedIds,
+  onSaveTranslation,
+  onSaveMaster,
+  onRetranslate,
+}: {
+  entry: TranslationKey;
+  locale: string | null;
+  masterLocale: string;
+  stale: StaleTranslation | null;
+  isBehind: boolean;
+  isRetranslating: boolean;
+  savingId: string | null;
+  savedIds: Record<string, boolean>;
+  onSaveTranslation: (translationId: string, text: string) => Promise<void>;
+  onSaveMaster: (keyId: string, text: string) => Promise<void>;
+  onRetranslate: (keyIds: string[]) => Promise<void>;
+}) {
+  const translation = entry.translations?.find((item) => item.lang_code === locale) ?? null;
+  const isMasterView = locale === masterLocale;
+
+  const [draft, setDraft] = useState(
+    isMasterView ? entry.original_text : (translation?.translated_text ?? ''),
+  );
+
+  // Re-sync when the locale changes or the server sends fresh data.
+  useEffect(() => {
+    setDraft(isMasterView ? entry.original_text : (translation?.translated_text ?? ''));
+  }, [isMasterView, entry.original_text, translation?.translated_text, locale]);
+
+  const targetId = isMasterView ? entry.id : translation?.id;
+  const isSaving = savingId === targetId;
+  const isSaved = targetId !== undefined && Boolean(savedIds[targetId]);
+  const isDirty = isMasterView
+    ? draft !== entry.original_text
+    : draft !== (translation?.translated_text ?? '');
+
+  return (
+    <div className={`editor__row${isMasterView ? ' editor__row--single' : ''}`}>
+      <div className="editor__key">
+        <span className="editor__key-name">{entry.key_name}</span>
+        {translation?.is_manual ? <span className="badge badge--ok">manual</span> : null}
+        {stale ? <span className="badge badge--warn">stale</span> : null}
+        <span className="editor__hash" title="Tracking hash of the English source text">
+          {entry.text_hash}
+        </span>
+      </div>
+
+      {/*
+        The master and en_us are one and the same text, so comparing the master
+        against itself would print every string twice. Selecting it drops the
+        read only column and leaves the master editable on its own.
+      */}
+      {isMasterView ? null : (
+        <div>
+          <span className="editor__cell-label">
+            Source ({masterLocale})
+            {entry.source_text ? ' — translated from upload' : ''}
+          </span>
+          <div className="editor__source">{entry.original_text}</div>
+          {entry.source_text ? (
+            <span className="field__hint">Original upload: {entry.source_text}</span>
+          ) : null}
+        </div>
+      )}
+
+      <div>
+        <span className="editor__cell-label">
+          {isMasterView
+            ? `Master (${locale})${entry.source_text ? ' — translated from upload' : ''}`
+            : `Translation (${locale})`}
+        </span>
+        {isMasterView && entry.source_text ? (
+          <span className="field__hint">Original upload: {entry.source_text}</span>
+        ) : null}
+
+        {isMasterView || translation ? (
+          <>
+            <label className="visually-hidden" htmlFor={`draft_${entry.id}_${locale}`}>
+              {isMasterView ? 'Master text' : `Translation for ${locale}`} of {entry.key_name}
+            </label>
+            <textarea
+              id={`draft_${entry.id}_${locale}`}
+              className="field__control"
+              rows={3}
+              value={draft}
+              onChange={(event) => setDraft(event.target.value)}
+            />
+
+            <div className="btn-row" style={{ marginTop: '0.5rem' }}>
+              <button
+                type="button"
+                className="btn btn--small btn--primary"
+                disabled={!isDirty || isSaving}
+                onClick={() =>
+                  isMasterView
+                    ? onSaveMaster(entry.id, draft)
+                    : // Outside the master view this renders only when a translation exists.
+                      onSaveTranslation((translation as Translation).id, draft)
+                }
+              >
+                {isSaving ? 'Saving' : 'Save'}
+              </button>
+              {isSaved ? <span className="editor__saved">Saved</span> : null}
+
+              {/*
+                The update button is the answer to "I changed the English, now
+                what". It is offered only when the key is actually behind its
+                master, so it is never a button that would spend provider quota
+                to produce the translation that is already there.
+              */}
+              {isBehind ? (
+                <button
+                  type="button"
+                  className="btn btn--small"
+                  disabled={isRetranslating}
+                  onClick={() => onRetranslate([entry.id])}
+                >
+                  {isRetranslating ? 'Updating' : 'Update translations'}
+                </button>
+              ) : null}
+
+              {isMasterView && isDirty ? (
+                <span className="field__hint" style={{ marginTop: 0 }}>
+                  Saving restamps the hash and marks translations stale.
+                </span>
+              ) : null}
+            </div>
+          </>
+        ) : (
+          <p className="muted">No translation for this language.</p>
+        )}
+      </div>
+    </div>
+  );
+}

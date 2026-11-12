@@ -143,3 +143,37 @@ and the repository state. Instruction files that name the old paths are left as 
 are and reported as findings, per `change-propagation`.
 
 Client suite: 309 passing across 19 files; `tsc` and `npm run build` clean.
+
+### Task 5 — refactor/typescript-ui
+
+Every component and page, `App` and `main` are `.tsx` now, and `src/` holds no
+JavaScript. `index.html` loads `src/main.tsx`, and the page glob in `App.tsx` matches
+`*Page.tsx` and is typed to the named exports it reads.
+
+* Props are typed inline at each component, or as a named interface where another file
+  needs it: `BreadcrumbItem`, `PendingMessage`, `PlatformChange`, `UsageCredential`,
+  `ErrorLike`, `CalloutTone` and the field props in `FormField.tsx`.
+* State that starts as `null` names what it will hold. A message shown under a field is
+  `string | null`; a failure shown in a callout is `Error | null`; a caught value is
+  narrowed with `as Error` where it is stored.
+* Route parameters are asserted present where the route pattern guarantees them, and
+  the two places that use a challenge or a locale only after it exists say so.
+* `useNamespace` returns `Namespace`, since `NamespaceRoute` renders its outlet only once
+  the namespace resolved.
+
+The compiler corrected `types.ts` against what the pages actually read: the enrolment
+field is `otpauth_uri`, a search returns `{ method, matches }`, a backfill reports
+`configured`, `embedded` and `remaining`, a member carries its own `id`, a turn carries
+its running `total_token_usage`, a translation may be `is_manual`, and a provider may
+say it `requires_network` or `supports_caching`. Fields every response carries are no
+longer optional.
+
+No behaviour changed. One lookup now guards an undefined key explicitly
+(`savedIds[targetId]`), and a grouping map uses `?.push` on a key it has just set.
+
+Documentation updated: the component paths in `wiki/information/architecture.md`,
+`wiki/information/design-system.md` and `wiki/environments/setup.md`, the language in
+`wiki/information/overview.md`, and the repository map and state, which gain a gotcha
+on `tsc` checking while Vite only transforms.
+
+Client suite: 309 passing across 19 files; `tsc` and `npm run build` clean.

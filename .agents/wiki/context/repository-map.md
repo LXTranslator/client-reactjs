@@ -13,7 +13,7 @@ the rules live in [`../../rules/repository.md`](../../rules/repository.md).
 
 `lxtranslator_client`, the React single page application for LXTranslator. It talks to
 `LXTranslator/server-expressjs` over HTTP and holds no server logic of its own. Node.js
-20 or newer, ES modules, Vite, React Router, Vitest.
+20 or newer, strict TypeScript, ES modules, Vite, React Router, Vitest.
 
 The shared instruction set is **not** in this repository. It resolves through the
 `lxagents-agents-base` MCP connector — see the bootstrap block in
@@ -40,13 +40,13 @@ backend running on port 4000; the backend itself needs no configuration.
 
 | Path | What it holds |
 |---|---|
-| `src/main.jsx` | Entry point. Mounts React, the router and the session provider, and imports the style layers in order. |
-| `src/App.jsx` | The route table — public, protected and fallback routes. |
+| `src/main.tsx` | Entry point. Mounts React, the router and the session provider, and imports the style layers in order. |
+| `src/App.tsx` | The route table — public, protected and fallback routes. |
 | `src/lib/` | Framework free helpers. `apiClient.ts` is the only place that talks HTTP; `types.ts` holds the shapes the API sends and accepts. |
 | `src/context/` | `AuthContext.tsx` — session, namespace list, active namespace. |
 | `src/hooks/` | Reusable hooks: `useLoader` for every server read, `useForm` for every form, and the debounced availability probe. |
 | `src/components/` | `layout/`, `routing/`, `editor/`, `chat/`, `account/`, `project/`, `ui/`. |
-| `src/pages/` | One file per route, named `<Name>Page.jsx`. |
+| `src/pages/` | One file per route, named `<Name>Page.tsx`. |
 | `src/styles/` | `main.css` then `shared/`, `auth/`, `editor/`, `chat/` — imported in that order. |
 | `tests/` | Vitest and Testing Library. `helpers/renderWithProviders.jsx` is the entry point for rendering. |
 | `index.html` | Application shell and document head. |
@@ -60,7 +60,7 @@ backend running on port 4000; the backend itself needs no configuration.
 
 ## Entry points for a change
 
-* **A new route** — `src/pages/<Name>Page.jsx`, registered in `src/App.jsx`. The
+* **A new route** — `src/pages/<Name>Page.tsx`, registered in `src/App.tsx`. The
   procedure is in [`../../rules/repository.md`](../../rules/repository.md).
 * **A new server call** — an endpoint helper in `src/lib/apiClient.ts`. Never `fetch`
   from a component.
@@ -79,5 +79,9 @@ backend running on port 4000; the backend itself needs no configuration.
   readable by anyone. Nothing sensitive goes in one.
 * **Overlays that cover content are opaque on purpose.** Modals and the mobile nav panel
   do not use `backdrop-filter`; section 3 of the design system explains why.
-* **The API speaks snake_case.** JavaScript here is camelCase; the boundary is
-  `src/lib/apiClient.ts`.
+* **The API speaks snake_case.** The client's code is camelCase; the boundary is
+  `src/lib/apiClient.ts`, and the payload shapes keep the server's names in
+  `src/lib/types.ts`.
+* **`tsc` checks, Vite emits.** `tsconfig.json` sets `noEmit`, so a type error fails
+  `npm run build` and `npm run typecheck` but never `npm run dev` or `npm test`, which
+  transform without checking.

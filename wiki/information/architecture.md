@@ -7,7 +7,7 @@ fetch it through the API client, and every mutation goes back through that same
 client.
 
 ```
-main.jsx
+main.tsx
   └── BrowserRouter
         └── AuthProvider          session, namespaces, landing namespace
               └── App             route table
@@ -40,7 +40,7 @@ session. Two people opening the same link see the same thing, a bookmark keeps
 working, and the back button moves between namespaces the way it moves between
 anything else.
 
-`components/routing/NamespaceRoute.jsx` resolves the segment once and supplies
+`components/routing/NamespaceRoute.tsx` resolves the segment once and supplies
 it to every nested route through `useNamespace()`, mirroring how the server
 resolves namespace access once in middleware rather than in each handler. A
 namespace absent from the accessible list renders as missing, which spares the
@@ -186,7 +186,7 @@ independently requires the identifier to be echoed and refuses anyone below
 ## Styling
 
 The Silver Glass design system, described in [`design-system.md`](design-system.md). Layers
-are imported in the specified order by `main.jsx`:
+are imported in the specified order by `main.tsx`:
 
 ```
 main.css  ->  shared/layout.css  ->  shared/components.css  ->  <section>/<section>.css
@@ -223,7 +223,7 @@ no preflight and no need to relax the backend's origin allowlist.
 `VITE_API_BASE_URL` is inlined at build time and defaults to a relative path, so
 the bundle calls whatever origin served it.
 
-Each page is its own chunk. `App.jsx` collects the page modules with
+Each page is its own chunk. `App.tsx` collects the page modules with
 `import.meta.glob` and wraps each in `React.lazy`, and `AppLayout` holds the
 `Suspense` boundary, so the header stays in place while a page arrives. A visitor
 downloads the shell and the page they opened, not every screen: the sign in page

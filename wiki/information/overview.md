@@ -36,8 +36,8 @@ enough tracking to know which translations went stale when the English changed.
 
 ## How it is built
 
-React with React Router, bundled by Vite, written as ES modules against Node.js 20 or
-newer. State lives in a session context; everything that talks to the server goes through
+React with React Router, bundled by Vite, written in strict TypeScript as ES modules
+against Node.js 20 or newer. State lives in a session context; everything that talks to the server goes through
 a single API client, so token handling and error shaping cannot drift between pages.
 Styling comes from the Silver Glass design system, described in
 [`design-system.md`](design-system.md).
@@ -52,5 +52,6 @@ client consumes is in [`../reference/api.md`](../reference/api.md).
   [`../environments/env.md`](../environments/env.md).
 * **Route guards are presentation.** They decide what to render, not what a user may
   reach. The server authorizes every request.
-* **The API speaks snake_case**, JavaScript here speaks camelCase, and the boundary
-  between them is the API client.
+* **The API speaks snake_case**, the client's own code speaks camelCase, and the boundary
+  between them is the API client. The shapes it exchanges are typed in `src/lib/types.ts`,
+  in the server's own field names.

@@ -12,7 +12,7 @@ LXTranslator, consuming the API served by `LXTranslator/server-expressjs`.
 
 ## Stack
 
-React with React Router, Vite, ES modules, Node.js 20 or newer. Vitest and Testing
+React with React Router, Vite, strict TypeScript, ES modules, Node.js 20 or newer. Vitest and Testing
 Library for tests. Deployed as a multi stage Docker image serving the built bundle
 through nginx, with the server configuration rendered from `nginx.conf.template` at
 container start up.
@@ -62,8 +62,8 @@ Reach for these before writing the same thing again in a page:
   `fieldErrors` back onto the fields.
 * `endpoint` and `withQuery` in `src/lib/apiClient.ts` for a new API helper. The tag
   encodes every interpolated value as one path segment.
-* The private `Field` shell in `src/components/ui/FormField.jsx` for a new form control.
-* A new page is one route in `src/App.jsx` plus one `page('NamePage')` line, and the file
+* The private `Field` shell in `src/components/ui/FormField.tsx` for a new form control.
+* A new page is one route in `src/App.tsx` plus one `page('NamePage')` line, and the file
   name must match the exported component, because every page is a lazily loaded chunk.
 
 ## Three content security policy facts that shape the interface
