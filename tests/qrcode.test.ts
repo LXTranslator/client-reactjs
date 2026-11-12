@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { createHash } from 'node:crypto';
-import { encodeQr } from '../src/lib/qrcode.ts';
+import { encodeQr, type QrSymbol } from '../src/lib/qrcode.ts';
 
 /**
  * The QR encoder.
@@ -29,10 +29,10 @@ import { encodeQr } from '../src/lib/qrcode.ts';
 /**
  * Reduces a matrix to a short stable digest.
  *
- * @param {{modules: boolean[][]}} qr Encoder output.
- * @returns {string} Digest.
+ * @param qr Encoder output.
+ * @returns Digest.
  */
-function digest(qr) {
+function digest(qr: QrSymbol): string {
   const flat = qr.modules.map((row) => row.map((m) => (m ? '1' : '0')).join('')).join('');
   return createHash('sha256').update(flat).digest('hex').slice(0, 32);
 }
@@ -74,7 +74,8 @@ describe('qr encoder', () => {
 
     it('refuses an empty or non string payload', () => {
       expect(() => encodeQr('')).toThrow(TypeError);
-      expect(() => encodeQr(null)).toThrow(TypeError);
+      // A caller outside the type checker can still pass anything, so the guard stays.
+      expect(() => encodeQr(null as unknown as string)).toThrow(TypeError);
     });
   });
 
@@ -92,11 +93,11 @@ describe('qr encoder', () => {
 
     it('places a finder pattern in three corners and not the fourth', () => {
       /**
-       * @param {number} row Top row.
-       * @param {number} column Left column.
-       * @returns {boolean} Whether a finder sits there.
+       * @param row Top row.
+       * @param column Left column.
+       * @returns Whether a finder sits there.
        */
-      function isFinder(row, column) {
+      function isFinder(row: number, column: number): boolean {
         for (let r = 0; r < 7; r += 1) {
           for (let c = 0; c < 7; c += 1) {
             const ring = r === 0 || r === 6 || c === 0 || c === 6;

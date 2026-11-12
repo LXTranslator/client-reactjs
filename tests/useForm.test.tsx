@@ -1,10 +1,12 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
+import type { ChangeEvent } from 'react';
+import { asMocked } from './helpers/mocks.ts';
 import { act, renderHook, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { renderWithProviders } from './helpers/renderWithProviders.jsx';
+import { renderWithProviders } from './helpers/renderWithProviders.tsx';
 
 vi.mock('../src/lib/apiClient.ts', async (importOriginal) => {
-  const actual = await importOriginal();
+  const actual = await importOriginal<Record<string, unknown>>();
   return {
     ...actual,
     api: {
@@ -18,9 +20,9 @@ vi.mock('../src/lib/apiClient.ts', async (importOriginal) => {
   };
 });
 
-const { api, ApiError } = await import('../src/lib/apiClient.ts');
+const { api, ApiError } = asMocked(await import('../src/lib/apiClient.ts'));
 const { useForm } = await import('../src/hooks/useForm.ts');
-const { App } = await import('../src/App.jsx');
+const { App } = await import('../src/App.tsx');
 
 describe('useForm', () => {
   it('clears a field error as soon as the field is edited', async () => {
@@ -29,7 +31,11 @@ describe('useForm', () => {
     await act(() => result.current.submit({ name: () => 'Name it.' }, vi.fn()));
     expect(result.current.errors).toEqual({ name: 'Name it.' });
 
-    act(() => result.current.handleChange('name')({ target: { value: 'x' } }));
+    act(() =>
+      result.current.handleChange('name')({
+        target: { value: 'x' },
+      } as ChangeEvent<HTMLInputElement>),
+    );
     expect(result.current.errors.name).toBeUndefined();
     expect(result.current.values.name).toBe('x');
   });

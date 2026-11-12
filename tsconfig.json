@@ -16,10 +16,7 @@
     "skipLibCheck": true,
     "noFallthroughCasesInSwitch": true,
     "noImplicitOverride": true,
-    "forceConsistentCasingInFileNames": true,
-
-    "allowJs": true,
-    "checkJs": false
+    "forceConsistentCasingInFileNames": true
   },
   "include": ["src", "tests", "vite.config.ts"]
 }

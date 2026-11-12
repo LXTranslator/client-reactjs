@@ -1,7 +1,8 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { asMocked } from './helpers/mocks.ts';
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { renderWithProviders, makeAccount, makeNamespace } from './helpers/renderWithProviders.jsx';
+import { renderWithProviders, makeAccount, makeNamespace } from './helpers/renderWithProviders.tsx';
 
 /*
  * Namespace AI credentials.
@@ -14,7 +15,7 @@ import { renderWithProviders, makeAccount, makeNamespace } from './helpers/rende
  */
 
 vi.mock('../src/lib/apiClient.ts', async (importOriginal) => {
-  const actual = await importOriginal();
+  const actual = await importOriginal<Record<string, unknown>>();
   return {
     ...actual,
     api: {
@@ -33,8 +34,8 @@ vi.mock('../src/lib/apiClient.ts', async (importOriginal) => {
   };
 });
 
-const { api, getAuthToken } = await import('../src/lib/apiClient.ts');
-const { App } = await import('../src/App.jsx');
+const { api, getAuthToken } = asMocked(await import('../src/lib/apiClient.ts'));
+const { App } = await import('../src/App.tsx');
 
 /** The catalogue as the server reports it, embedding lists included. */
 const PROVIDERS = [
@@ -74,8 +75,8 @@ const PROVIDERS = [
 /**
  * Builds a stored credential.
  *
- * @param {object} [overrides] Field overrides.
- * @returns {object} Credential payload.
+ * @param overrides Field overrides.
+ * @returns Credential payload.
  */
 function makeKey(overrides = {}) {
   return {
@@ -111,8 +112,8 @@ describe('namespace AI settings', () => {
   /**
    * Opens the page and waits for it to settle.
    *
-   * @param {string[]} [entries] Initial history entries.
-   * @returns {Promise<object>} A user event instance.
+   * @param entries Initial history entries.
+   * @returns A user event instance.
    */
   async function openPage(entries = [AI_PATH]) {
     const user = userEvent.setup();

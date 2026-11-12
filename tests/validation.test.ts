@@ -183,12 +183,13 @@ describe('validation', () => {
     /**
      * Builds a stand in for a browser File object.
      *
-     * @param {string} name Filename.
-     * @param {number} size Size in bytes.
-     * @returns {object} File like value.
+     * @param name Filename.
+     * @param size Size in bytes.
+     * @returns File like value.
      */
-    function fakeFile(name, size) {
-      return { name, size };
+    function fakeFile(name: string, size: number): File {
+      // Only the two fields the validator reads; nothing here reads the bytes.
+      return { name, size } as File;
     }
 
     it('accepts a reasonable json file', () => {

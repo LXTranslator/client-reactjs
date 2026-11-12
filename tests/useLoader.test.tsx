@@ -5,12 +5,12 @@ import { useLoader } from '../src/hooks/useLoader.ts';
 /**
  * A promise whose settlement the test controls.
  *
- * @returns {{promise: Promise, resolve: Function, reject: Function}} The handles.
+ * @returns The handles.
  */
-function deferred() {
-  let resolve;
-  let reject;
-  const promise = new Promise((ok, fail) => {
+function deferred<T = unknown>() {
+  let resolve!: (value: T) => void;
+  let reject!: (reason: unknown) => void;
+  const promise = new Promise<T>((ok, fail) => {
     resolve = ok;
     reject = fail;
   });
@@ -34,9 +34,10 @@ describe('useLoader', () => {
     const fast = deferred();
     const responses = { first: slow.promise, second: fast.promise };
 
-    const { result, rerender } = renderHook(({ key }) => useLoader(() => responses[key], [key]), {
-      initialProps: { key: 'first' },
-    });
+    const { result, rerender } = renderHook(
+      ({ key }: { key: keyof typeof responses }) => useLoader(() => responses[key], [key]),
+      { initialProps: { key: 'first' as keyof typeof responses } },
+    );
     rerender({ key: 'second' });
 
     await act(async () => fast.resolve('second'));

@@ -1,7 +1,8 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { asMocked } from './helpers/mocks.ts';
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { renderWithProviders, makeAccount, makeNamespace } from './helpers/renderWithProviders.jsx';
+import { renderWithProviders, makeAccount, makeNamespace } from './helpers/renderWithProviders.tsx';
 
 /*
  * Correcting one string, and checking the file for drift.
@@ -13,7 +14,7 @@ import { renderWithProviders, makeAccount, makeNamespace } from './helpers/rende
  */
 
 vi.mock('../src/lib/apiClient.ts', async (importOriginal) => {
-  const actual = await importOriginal();
+  const actual = await importOriginal<Record<string, unknown>>();
   return {
     ...actual,
     api: {
@@ -37,8 +38,8 @@ vi.mock('../src/lib/apiClient.ts', async (importOriginal) => {
   };
 });
 
-const { api, getAuthToken } = await import('../src/lib/apiClient.ts');
-const { App } = await import('../src/App.jsx');
+const { api, getAuthToken } = asMocked(await import('../src/lib/apiClient.ts'));
+const { App } = await import('../src/App.tsx');
 
 const READY_FILE = {
   id: 'file_1',
@@ -54,9 +55,9 @@ const READY_FILE = {
 /**
  * Builds an editor payload.
  *
- * @param {object} [options] Options.
- * @param {boolean} [options.stale] Whether the first key is behind its master.
- * @returns {object} Editor payload.
+ * @param options Options.
+ * @param options.stale Whether the first key is behind its master.
+ * @returns Editor payload.
  */
 function makeEditorData({ stale = false } = {}) {
   return {
@@ -154,7 +155,7 @@ describe('partial updates and consistency', () => {
   /**
    * Renders the editor and waits for the key rows.
    *
-   * @returns {Promise<object>} A user event instance.
+   * @returns A user event instance.
    */
   async function openEditor() {
     const user = userEvent.setup();
@@ -304,12 +305,12 @@ describe('partial updates and consistency', () => {
   describe('the consistency check', () => {
     /**
      * Opens the editor and returns the consistency panel.
-     *
-     * @returns {Promise<{user: object, panel: HTMLElement}>}
      */
     async function openPanel() {
       const user = await openEditor();
-      const panel = screen.getByRole('heading', { name: /key consistency/i }).closest('.panel');
+      const panel = screen
+        .getByRole('heading', { name: /key consistency/i })
+        .closest('.panel') as HTMLElement;
       return { user, panel };
     }
 

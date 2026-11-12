@@ -48,7 +48,7 @@ backend running on port 4000; the backend itself needs no configuration.
 | `src/components/` | `layout/`, `routing/`, `editor/`, `chat/`, `account/`, `project/`, `ui/`. |
 | `src/pages/` | One file per route, named `<Name>Page.tsx`. |
 | `src/styles/` | `main.css` then `shared/`, `auth/`, `editor/`, `chat/` — imported in that order. |
-| `tests/` | Vitest and Testing Library. `helpers/renderWithProviders.jsx` is the entry point for rendering. |
+| `tests/` | Vitest and Testing Library. `helpers/renderWithProviders.tsx` is the entry point for rendering. |
 | `index.html` | Application shell and document head. |
 | `vite.config.ts` | Build, dev server proxy and test runner configuration. |
 | `tsconfig.json` | Compiler options. `tsc` only checks; Vite does the emitting. |
